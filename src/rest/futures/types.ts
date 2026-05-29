@@ -382,12 +382,6 @@ export interface AggTrade {
  */
 export type Kline = Candle;
 
-export interface FundingRateEntry {
-  symbol: string;
-  fundingRate: string;
-  fundingTime: number;
-}
-
 export interface FundingInfo {
   symbol: string;
   interestRate: string;
@@ -471,13 +465,6 @@ export interface KlinesQuery {
 export interface IndexPriceKlinesQuery {
   pair: string;
   interval: KlineInterval;
-  startTime?: number;
-  endTime?: number;
-  limit?: number;
-}
-
-export interface FundingRateQuery {
-  symbol?: string;
   startTime?: number;
   endTime?: number;
   limit?: number;

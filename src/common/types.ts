@@ -177,6 +177,21 @@ export interface Trade {
 }
 
 /**
+ * Point d'historique de **taux de funding** au format unifié (cœur identique entre SDK).
+ * `xtras` porte le natif hors cœur (premium HL, oracle/impact/next Pacifica…), omis si vide.
+ */
+export interface FundingRate {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Taux de funding (chaîne décimale). */
+  fundingRate: string;
+  /** Timestamp du funding (ms). */
+  time: number;
+  /** Champs natifs hors cœur (rien jeté), omis si vide. */
+  xtras?: Record<string, unknown>;
+}
+
+/**
  * Identité de signature Aster. Le **type est auto-détecté** depuis `privateKey` :
  * préfixe `0x…` → **EVM** (secp256k1 / EIP-712), sinon → **Solana** (ed25519 / base58).
  *
