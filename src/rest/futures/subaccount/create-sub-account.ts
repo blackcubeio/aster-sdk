@@ -2,7 +2,7 @@ import { AGENT_CHAIN_ID } from '../../../common/constants';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce, serializeParams } from '../../../common/utils';
 import { httpPostForm } from '../../client';
-import { buildSignedForm, resolveMainSigner, signMessage } from '../../signing';
+import { assertEvmSigner, buildSignedForm, resolveMainSigner, signMessage } from '../../signing';
 import type { CodeMsg, CreateSubAccountParams } from '../types';
 
 /**
@@ -11,6 +11,7 @@ import type { CodeMsg, CreateSubAccountParams } from '../types';
  * `childSignature`**. Les deux en EIP-712 chainId 1666/714.
  */
 export function createSubAccount(params: CreateSubAccountParams, label: string): Promise<CodeMsg> {
+  assertEvmSigner(label, 'createSubAccount');
   const resolved = resolveMainSigner(label);
   const chainId = AGENT_CHAIN_ID[resolved.network];
   const nonce = microsecondNonce();

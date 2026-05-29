@@ -49,15 +49,19 @@ Aster exposes two products on distinct hosts; every REST/WS call targets one of 
 - **futures** — `fapi.asterdex.com` / `fstream.asterdex.com`, paths under `/fapi/v3/*`
 - **spot** — `sapi.asterdex.com` / `sstream.asterdex.com`, paths under `/api/v3/*`
 
-## The signer model (EVM)
+## The signer model (EVM & Solana)
 
-Aster is an EVM DEX. A `Signer` ties a main account to its API wallet (agent):
+A `Signer` ties an account to its signing key. The **key type is auto-detected** from
+`privateKey`: `0x…` → **EVM** (secp256k1 / EIP-712), otherwise → **Solana** (ed25519 / base58).
 
-- `privateKey` — the **API wallet** (agent) key. Signs all TRADE / USER_DATA actions.
-- `user` — the **main account** address. Used for reads and account identity.
-- `signer` — the API wallet address (derived from `privateKey` if omitted).
-- `mainPrivateKey` — the **main wallet** key, required only by account-management endpoints
-  (agent approval, sub-accounts, withdraw, migrate) which are signed by the main account.
+- `privateKey` — the key that signs TRADE / USER_DATA actions (EVM API wallet, or Solana wallet).
+- `user` — the account address (EVM `0x…` or Solana base58). Used for reads and identity.
+- `signer` — the signing-wallet address (derived from `privateKey` if omitted).
+- `mainPrivateKey` — EVM only: the **main wallet** key for account-management endpoints
+  (agent approval, migrate). In Solana the same key does everything.
+
+> **Solana caveat:** API **sub-accounts are not supported** for Solana accounts — those endpoints
+> throw. See [signing](./doc/signing.md).
 
 ## Labels, networks & read/write rules
 

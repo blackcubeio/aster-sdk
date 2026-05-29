@@ -1,7 +1,7 @@
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce } from '../../../common/utils';
 import { httpPostForm } from '../../client';
-import { buildSignedForm, resolveMainSigner } from '../../signing';
+import { assertEvmSigner, buildSignedForm, resolveMainSigner } from '../../signing';
 import type { CodeMsg, SubAccountTransferParams } from '../types';
 
 /**
@@ -12,6 +12,7 @@ export function subAccountTransfer(
   params: SubAccountTransferParams,
   label: string,
 ): Promise<CodeMsg> {
+  assertEvmSigner(label, 'subAccountTransfer');
   const resolved = resolveMainSigner(label);
   const ordered: Record<string, JsonValue | undefined> = {
     toAccountAddress: params.toAccountAddress,

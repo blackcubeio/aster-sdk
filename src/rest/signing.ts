@@ -1,6 +1,8 @@
+import { ed25519 } from '@noble/curves/ed25519';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
+import bs58 from 'bs58';
 import { getConfig } from '../common/config';
 import {
   AGENT_CHAIN_ID,
@@ -9,8 +11,29 @@ import {
   SIGNATURE_CHAIN_ID,
   ZERO_ADDRESS,
 } from '../common/constants';
-import type { Hex, JsonValue, Network, Signature, Signer } from '../common/types';
+import type { Hex, JsonValue, KeyType, Network, Signature, Signer } from '../common/types';
 import { microsecondNonce, serializeParams } from '../common/utils';
+
+/** Une clé EVM est préfixée `0x` ; sinon elle est traitée comme une clé Solana (base58). */
+export function keyTypeOf(privateKey: string): KeyType {
+  return privateKey.startsWith('0x') ? 'evm' : 'solana';
+}
+
+/** Graine ed25519 (32 octets) d'une clé privée Solana base58 (64 → 32 si keypair complet). */
+function solanaSeed(privateKey: string): Uint8Array {
+  const decoded = bs58.decode(privateKey);
+  return decoded.length === 64 ? decoded.slice(0, 32) : decoded;
+}
+
+/** Adresse Solana (pubkey base58) dérivée d'une clé privée base58. */
+export function solanaAddress(privateKey: string): string {
+  return bs58.encode(ed25519.getPublicKey(solanaSeed(privateKey)));
+}
+
+/** Signature ed25519 (base58) du message, pour un compte Solana. */
+export function signEd25519(msg: string, privateKey: string): string {
+  return bs58.encode(ed25519.sign(utf8ToBytes(msg), solanaSeed(privateKey)));
+}
 
 interface Eip712Field {
   name: string;
@@ -198,6 +221,17 @@ export function signMessage(msg: string, privateKey: Hex, chainId: number): Sign
   return signDigest(hashMessage(msg, chainId), privateKey);
 }
 
+/**
+ * Signe la querystring `msg` selon le **type de clé** : EVM (`0x…`) → EIP-712 `Message{msg}`
+ * (secp256k1, hex, chainId du réseau) ; Solana → ed25519 sur les octets bruts du message
+ * (base58). C'est le point d'aiguillage EVM/Solana de toutes les requêtes signées.
+ */
+export function signQueryString(msg: string, privateKey: string, network: Network): Signature {
+  return keyTypeOf(privateKey) === 'solana'
+    ? signEd25519(msg, privateKey)
+    : signMessage(msg, privateKey as Hex, AGENT_CHAIN_ID[network]);
+}
+
 /** Adresse EVM checksummée (EIP-55) dérivée d'une clé privée secp256k1. */
 export function privateKeyToAddress(privateKey: Hex): Hex {
   const publicKey = secp256k1.getPublicKey(hexToBytes(privateKey.slice(2)), false);
@@ -218,17 +252,25 @@ export function toChecksumAddress(address: string): Hex {
 
 export interface ResolvedSigner {
   label: string;
-  user: Hex;
-  signer: Hex;
-  privateKey: Hex;
-  mainPrivateKey?: Hex;
+  keyType: KeyType;
+  user: string;
+  signer: string;
+  privateKey: string;
+  mainPrivateKey?: string;
   network: Network;
+}
+
+/** Adresse (EVM checksummée ou Solana base58) dérivée d'une clé privée selon son type. */
+function addressFromKey(privateKey: string): string {
+  return keyTypeOf(privateKey) === 'solana'
+    ? solanaAddress(privateKey)
+    : privateKeyToAddress(privateKey as Hex);
 }
 
 /**
  * Résout le signer d'une **écriture** par son label. Obligatoire : lève si le label est
- * absent ou inconnu. `signer` (adresse de l'API wallet) est dérivé de `privateKey` s'il
- * n'est pas fourni explicitement.
+ * absent ou inconnu. Le `keyType` est déduit de `privateKey` (`0x…` → EVM, sinon Solana) ;
+ * `signer` est dérivé de `privateKey` s'il n'est pas fourni explicitement.
  */
 export function resolveSigner(label?: string): ResolvedSigner {
   if (label === undefined) {
@@ -240,8 +282,9 @@ export function resolveSigner(label?: string): ResolvedSigner {
   }
   return {
     label,
+    keyType: keyTypeOf(signer.privateKey),
     user: signer.user,
-    signer: signer.signer ?? privateKeyToAddress(signer.privateKey),
+    signer: signer.signer ?? addressFromKey(signer.privateKey),
     privateKey: signer.privateKey,
     mainPrivateKey: signer.mainPrivateKey,
     network: signer.network,
@@ -249,23 +292,32 @@ export function resolveSigner(label?: string): ResolvedSigner {
 }
 
 /** Account address for a raw signer (used where a Signer is passed directly). */
-export function signerAddress(signer: Signer): Hex {
-  return signer.signer ?? privateKeyToAddress(signer.privateKey);
+export function signerAddress(signer: Signer): string {
+  return signer.signer ?? addressFromKey(signer.privateKey);
 }
 
 /**
- * Résout le **main wallet** d'une action de gestion de compte (approveAgent, sous-comptes,
- * withdraw, migrate…). `mainPrivateKey` est obligatoire pour ces actions signées par le
- * compte principal ; lève s'il est absent.
+ * Résout le **main wallet** d'une action de gestion de compte (approveAgent, migrate…).
+ * En **Solana**, la même clé fait tout : `mainPrivateKey` retombe sur `privateKey`. En EVM,
+ * `mainPrivateKey` est obligatoire et lève s'il est absent.
  */
-export function resolveMainSigner(label?: string): ResolvedSigner & { mainPrivateKey: Hex } {
+export function resolveMainSigner(label?: string): ResolvedSigner & { mainPrivateKey: string } {
   const resolved = resolveSigner(label);
-  if (resolved.mainPrivateKey === undefined) {
+  const mainPrivateKey =
+    resolved.mainPrivateKey ?? (resolved.keyType === 'solana' ? resolved.privateKey : undefined);
+  if (mainPrivateKey === undefined) {
     throw new Error(
       `Le signer "${resolved.label}" n'a pas de mainPrivateKey ; requis pour les actions signées par le compte principal`,
     );
   }
-  return { ...resolved, mainPrivateKey: resolved.mainPrivateKey };
+  return { ...resolved, mainPrivateKey };
+}
+
+/** Lève si le signer est un compte Solana, pour les fonctionnalités EVM-only (sous-comptes). */
+export function assertEvmSigner(label: string | undefined, feature: string): void {
+  if (resolveSigner(label).keyType === 'solana') {
+    throw new Error(`${feature} : non supporté pour un compte Solana (agent EVM requis).`);
+  }
 }
 
 export interface SignedForm {
@@ -282,11 +334,11 @@ export interface SignedForm {
  */
 export function buildSignedForm(
   orderedParams: Record<string, JsonValue | undefined>,
-  privateKey: Hex,
+  privateKey: string,
   network: Network,
 ): SignedForm {
   const msg = serializeParams(orderedParams);
-  const signature = signMessage(msg, privateKey, AGENT_CHAIN_ID[network]);
+  const signature = signQueryString(msg, privateKey, network);
   return { body: `${msg}&signature=${signature}`, network };
 }
 
@@ -329,6 +381,20 @@ export function buildMainTypedRequest(
   label?: string,
 ): SignedForm {
   const resolved = resolveMainSigner(label);
+  // Solana : ed25519 sur la querystring brute `{…params, nonce, user}` (cf. sol_agent.py),
+  // sans `asterChain`/`signatureChainId` ni typage dynamique (réservé à l'EVM).
+  if (resolved.keyType === 'solana') {
+    const ordered: Record<string, JsonValue> = {
+      ...params,
+      nonce: Number(microsecondNonce()),
+      user: resolved.user,
+    };
+    const msg = serializeParams(ordered);
+    return {
+      body: `${msg}&signature=${signEd25519(msg, resolved.mainPrivateKey)}`,
+      network: resolved.network,
+    };
+  }
   const full: Record<string, JsonValue> = {
     ...params,
     asterChain: resolved.network === 'mainnet' ? 'Mainnet' : 'Testnet',
@@ -338,7 +404,7 @@ export function buildMainTypedRequest(
   const signature = signDynamicTypedData(
     primaryType,
     capitalizeKeys(full),
-    resolved.mainPrivateKey,
+    resolved.mainPrivateKey as Hex,
     SIGNATURE_CHAIN_ID,
   );
   const body = serializeParams({ ...full, signatureChainId: SIGNATURE_CHAIN_ID, signature });

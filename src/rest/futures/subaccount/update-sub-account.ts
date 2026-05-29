@@ -1,7 +1,7 @@
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce } from '../../../common/utils';
 import { httpPostForm } from '../../client';
-import { buildSignedForm, resolveMainSigner } from '../../signing';
+import { assertEvmSigner, buildSignedForm, resolveMainSigner } from '../../signing';
 import type { CodeMsg, UpdateSubAccountParams } from '../types';
 
 /**
@@ -10,6 +10,7 @@ import type { CodeMsg, UpdateSubAccountParams } from '../types';
  * `subSourceAddr&nonce&user&signer[&subAccountName][&status]`.
  */
 export function updateSubAccount(params: UpdateSubAccountParams, label: string): Promise<CodeMsg> {
+  assertEvmSigner(label, 'updateSubAccount');
   const resolved = resolveMainSigner(label);
   const ordered: Record<string, JsonValue | undefined> = {
     subSourceAddr: params.subSourceAddr,

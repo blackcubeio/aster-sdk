@@ -1,7 +1,8 @@
 import { ZERO_ADDRESS } from '../../../common/constants';
+import type { Hex } from '../../../common/types';
 import { microsecondNonce, serializeParams } from '../../../common/utils';
 import { httpGet, httpPostForm } from '../../client';
-import { resolveMainSigner, signEip712 } from '../../signing';
+import { assertEvmSigner, resolveMainSigner, signEip712 } from '../../signing';
 import type { WithdrawFee, WithdrawFeeQuery, WithdrawParams, WithdrawResult } from '../types';
 
 const CHAIN_NAMES: Record<string, string> = { '1': 'ETH', '56': 'BSC', '42161': 'Arbitrum' };
@@ -35,6 +36,7 @@ export function getWithdrawFeeSpot(query: WithdrawFeeQuery, label?: string): Pro
  * `receiver` doit être le compte courant (défaut : `user`).
  */
 export function withdrawSpot(params: WithdrawParams, label: string): Promise<WithdrawResult> {
+  assertEvmSigner(label, 'withdrawSpot');
   const resolved = resolveMainSigner(label);
   const receiver = params.receiver ?? resolved.user;
   const destinationChain = params.destinationChain ?? CHAIN_NAMES[params.chainId] ?? params.chainId;
@@ -55,7 +57,7 @@ export function withdrawSpot(params: WithdrawParams, label: string): Promise<Wit
       nonce,
       'aster chain': asterChain,
     },
-    resolved.mainPrivateKey,
+    resolved.mainPrivateKey as Hex,
   );
 
   const body = serializeParams({

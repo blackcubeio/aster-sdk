@@ -1,6 +1,6 @@
 import { microsecondNonce } from '../../../common/utils';
 import { httpGetSigned } from '../../client';
-import { buildSignedForm, resolveSigner } from '../../signing';
+import { assertEvmSigner, buildSignedForm, resolveSigner } from '../../signing';
 import type { SubAccount } from '../types';
 
 /**
@@ -9,6 +9,7 @@ import type { SubAccount } from '../types';
  * `nonce&user&signer`).
  */
 export function getSubAccountList(label: string): Promise<SubAccount[]> {
+  assertEvmSigner(label, 'getSubAccountList');
   const resolved = resolveSigner(label);
   const { body, network } = buildSignedForm(
     { nonce: microsecondNonce(), user: resolved.user, signer: resolved.signer },

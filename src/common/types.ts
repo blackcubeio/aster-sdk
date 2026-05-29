@@ -13,26 +13,30 @@ export type Network = 'mainnet' | 'testnet';
 export type Product = 'futures' | 'spot';
 
 /**
- * Identité de signature Aster (EVM). Un signer = un compte principal (`user`) et son
- * API wallet / agent (`privateKey`) qui signe le trading.
+ * Identité de signature Aster. Le **type est auto-détecté** depuis `privateKey` :
+ * préfixe `0x…` → **EVM** (secp256k1 / EIP-712), sinon → **Solana** (ed25519 / base58).
  *
- * - `privateKey` : clé de l'API wallet (agent). Signe les actions TRADE / USER_DATA.
- * - `user` : adresse du compte principal (main wallet). Sert aux lectures et identifie
- *   le compte côté backend.
- * - `signer` : adresse de l'API wallet. Dérivée de `privateKey` si omise.
- * - `mainPrivateKey` : clé du main wallet, requise par la gestion de compte
- *   (approveAgent, sous-comptes, withdraw, migrate…) signée par le compte principal.
+ * - `privateKey` : clé qui signe les actions TRADE / USER_DATA (API wallet EVM, ou wallet
+ *   Solana). Hex `0x…` pour EVM, base58 pour Solana.
+ * - `user` : adresse du compte principal (Hex EVM ou base58 Solana). Sert aux lectures et
+ *   identifie le compte côté backend.
+ * - `signer` : adresse de l'API wallet / du wallet signataire. Dérivée de `privateKey` si omise.
+ * - `mainPrivateKey` : clé du main wallet pour la gestion de compte EVM (approveAgent,
+ *   migrate…). En Solana, la même clé fait tout (pas de sous-comptes — voir doc).
  */
 export interface Signer {
-  privateKey: Hex;
-  user: Hex;
-  signer?: Hex;
-  mainPrivateKey?: Hex;
+  privateKey: string;
+  user: string;
+  signer?: string;
+  mainPrivateKey?: string;
   network: Network;
 }
 
-/** Signature ECDSA secp256k1 sérialisée (r ‖ s ‖ v), 65 octets, préfixée `0x`. */
-export type Signature = Hex;
+/** Type de clé d'un signer, déduit du format de `privateKey`. */
+export type KeyType = 'evm' | 'solana';
+
+/** Signature sérialisée : `0x…` (ECDSA secp256k1, EVM) ou base58 (ed25519, Solana). */
+export type Signature = string;
 
 export enum OrderSide {
   Buy = 'BUY',

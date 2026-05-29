@@ -85,6 +85,25 @@ This is exactly the kind of detail that must be **validated empirically** agains
 before shipping. The account-management group is therefore **deferred** (see [PLAN.md](../PLAN.md));
 `SIGNATURE_CHAIN_ID = 56` is declared in `common/constants` but not yet wired to a signer.
 
+## Solana accounts (ed25519)
+
+Aster also supports **native Solana accounts**. The SDK **auto-detects** the key type from
+`privateKey`: prefix `0x…` → EVM (secp256k1 / EIP-712) ; otherwise → **Solana** (ed25519 / base58).
+No `keyType` field to set.
+
+```ts
+init({ signers: { sol: { privateKey: '<base58>', user: '<base58 pubkey>', network: 'mainnet' } } });
+await getBalance('sol');          // signé en ed25519
+```
+
+- The Solana account signs the **same querystring** as EVM, but with **ed25519** (signature
+  base58) instead of EIP-712 — `signQueryString` branches on the key type. The Solana wallet is its
+  own authority (no separate `mainPrivateKey`).
+- **No API sub-accounts in Solana.** `getSubAccountList`, `createSubAccount`, `bindSubAccount`,
+  `updateSubAccount`, `subAccountTransfer` (and `withdrawSpot`) **throw** for a Solana signer
+  (`assertEvmSigner`) — verified non-functional on testnet (they require an EVM agent). Agent/builder
+  management for Solana signs ed25519 over the plain querystring.
+
 ## Validation status
 
 - ✅ `privateKeyToAddress` is checked against a real key/address vector from the Aster docs
@@ -92,5 +111,7 @@ before shipping. The account-management group is therefore **deferred** (see [PL
 - ✅ `signMessage` round-trips: the signature recovers to the signer public key.
 - ✅ **End-to-end accepted by the live backend**: a real agent-signed `GET /fapi/v3/balance` on
   **mainnet** returns the account balances (`tests/futures-signed.test.ts`) — the `Message{msg}`
-  envelope, nonce, and signature are correct. Account-management (main-wallet) signing remains the
-  only open question.
+  envelope, nonce, and signature are correct.
+- ✅ **Solana ed25519** accepted on testnet (a `GET /fapi/v3/balance` signed with the Solana key
+  reached business logic — `No agent found`, not a signature error). `solanaAddress` checked against
+  the real `SOLANA_PUBLIC_KEY` vector; `signEd25519` round-trips (`tests/solana-signing.test.ts`).

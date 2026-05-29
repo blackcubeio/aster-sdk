@@ -2,7 +2,7 @@ import { AGENT_CHAIN_ID } from '../../../common/constants';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce, serializeParams } from '../../../common/utils';
 import { httpPostForm } from '../../client';
-import { buildSignedForm, resolveMainSigner, signMessage } from '../../signing';
+import { assertEvmSigner, buildSignedForm, resolveMainSigner, signMessage } from '../../signing';
 import type { BindSubAccountParams, CodeMsg } from '../types';
 
 /**
@@ -11,6 +11,7 @@ import type { BindSubAccountParams, CodeMsg } from '../types';
  * message + `childSignature`. Adresses à whitelister côté Aster.
  */
 export function bindSubAccount(params: BindSubAccountParams, label: string): Promise<CodeMsg> {
+  assertEvmSigner(label, 'bindSubAccount');
   const resolved = resolveMainSigner(label);
   const chainId = AGENT_CHAIN_ID[resolved.network];
   const nonce = microsecondNonce();

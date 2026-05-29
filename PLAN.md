@@ -67,9 +67,12 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
   userTrades, transactionHistory), withdraw (fee + EVM-signed `withdrawSpot`), spot WS
   (`SpotWsClient`) + user-data (`SpotUserDataStream`) + listenKey. **Fonctions suffixées `Spot`**
   (collision de noms avec futures). Tests réels testnet : market public + lectures signées.
-- **Phase 6 — Solana (ed25519/base58).** Signature agent/main en ed25519 (clés Solana) au lieu de
-  secp256k1/EIP-712. ⚠️ **Pas de sous-comptes API en Solana.** Schéma de signature à valider
-  empiriquement (clés `SOLANA_*`) avant build.
+- **Phase 6 — Solana (ed25519/base58) — ✅ DONE.** Auto-détection EVM (`0x…`) / Solana depuis
+  `privateKey` (pas de `keyType`). `signQueryString` branche EIP-712 (EVM) / ed25519 base58 (Solana) ;
+  `solanaAddress`/`signEd25519` ; `resolveMainSigner` Solana = même clé. **Sous-comptes (+ withdraw)
+  throw pour un signer Solana** (`assertEvmSigner`) — non fonctionnels vérifié sur testnet. Signature
+  ed25519 acceptée par le backend (testnet) ; vecteur réel `SOLANA_PUBLIC_KEY` + round-trip testés.
+  Dépendance `bs58` ajoutée.
 
 ## Endpoint inventory
 
