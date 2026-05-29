@@ -1,9 +1,9 @@
 import { type WebSocketFactory, type WebSocketLike, getConfig } from '../common/config';
 import type { JsonObject, JsonValue, KlineInterval } from '../common/types';
 import { resolveReadNetwork } from '../rest/client';
+import type { Unsubscribe } from './types';
 
 export type StreamHandler = (data: JsonValue) => void;
-export type Unsubscribe = () => void;
 
 /** Vitesse de rafraîchissement optionnelle des flux de profondeur. */
 export type DepthSpeed = '100ms' | '500ms';

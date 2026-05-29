@@ -42,7 +42,9 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
   getPositionRisk, queryOrder, getOpenOrder, getOpenOrders, getAllOrders, getUserTrades, getIncome,
   getLeverageBracket, getAdlQuantile, getForceOrders, getCommissionRate, getPositionMarginHistory.
   Real signed reads validated on mainnet (account info, positions, open orders, commission).
-  **MMP (×4) and user-data WebSocket (`listenKey`) deferred to Phase 3b.**
+- **Phase 3b — Futures user-data stream — ✅ DONE.** createListenKey / keepAliveListenKey /
+  closeListenKey (USER_STREAM) + `FuturesUserDataStream` (raw `/ws/<listenKey>`, dispatch by event
+  `e`). listenKey create+close validated on mainnet. **MMP (×4) still deferred.**
 - **Phase 4 — Account management (main-wallet signed).** ⚠️ blocked on empirically validating the
   main-wallet signing scheme (chainId 56 vs 1666, dynamic-typed vs `Message{msg}`). Covers
   registerAndApproveAgent, approve/update/del/get agent, builders, sub-accounts (×5), asset

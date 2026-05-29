@@ -99,6 +99,10 @@ export interface ServerTime {
   serverTime: number;
 }
 
+export interface ListenKey {
+  listenKey: string;
+}
+
 export interface PriceLevel {
   price: string;
   qty: string;

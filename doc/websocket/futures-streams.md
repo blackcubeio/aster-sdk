@@ -47,8 +47,27 @@ is handled by the underlying WebSocket; no application heartbeat is needed.
 
 `onMessage` (every raw frame), `onError`, `onClose`, `onReconnect`.
 
+## User-data stream
+
+Account/order push lives on a separate raw connection bound to a `listenKey` (REST
+`createListenKey` / `keepAliveListenKey` / `closeListenKey`, all agent-signed). `FuturesUserDataStream`
+connects to `/ws/<listenKey>` and dispatches each event by its `e` type.
+
+```ts
+import { init, createListenKey, FuturesUserDataStream } from '@blackcube/aster-sdk';
+
+init({ signers: { trader: { privateKey, user, network: 'mainnet' } } });
+const { listenKey } = await createListenKey('trader');
+
+const stream = new FuturesUserDataStream(listenKey, { label: 'trader' });
+await stream.connect();
+stream.on('ORDER_TRADE_UPDATE', (e) => console.log(e));
+stream.on('ACCOUNT_UPDATE', (e) => console.log(e));
+stream.on('listenKeyExpired', () => { /* refresh the listenKey */ });
+```
+
+Refresh the `listenKey` (`keepAliveListenKey`) roughly every 60 min; the key expires otherwise.
+
 ## Limits (per Aster)
 
-A connection lives at most 24h, accepts ≤ 10 incoming messages/s, and ≤ 200 streams. User-data
-streams (account/order updates over `listenKey`) are part of the trading roadmap — see
-[PLAN.md](../PLAN.md).
+A connection lives at most 24h, accepts ≤ 10 incoming messages/s, and ≤ 200 streams.

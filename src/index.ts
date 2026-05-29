@@ -57,4 +57,8 @@ export * from './rest/futures/trade/set-leverage';
 export * from './rest/futures/trade/set-margin-type';
 export * from './rest/futures/trade/modify-isolated-margin';
 
+export * from './rest/futures/user-stream/listen-key';
+
+export * from './ws/types';
 export * from './ws/futures-client';
+export * from './ws/futures-user-data';
