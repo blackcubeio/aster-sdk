@@ -14,3 +14,6 @@ dist
 .ref
 docs/blackcube
 rewrite-history.sh
+
+# Stub doc 404 (placeholder)
+llms-full.md
