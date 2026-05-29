@@ -9,13 +9,13 @@ export * from './rest/get-pairs';
 export * from './rest/get-candles';
 export * from './rest/get-order-book';
 export * from './rest/get-prices';
+export * from './rest/get-trades';
 
 export * from './rest/futures/types';
 
 export * from './rest/futures/market/ping';
 export * from './rest/futures/market/get-server-time';
 export * from './rest/futures/market/get-exchange-info';
-export * from './rest/futures/market/get-recent-trades';
 export * from './rest/futures/market/get-historical-trades';
 export * from './rest/futures/market/get-agg-trades';
 export * from './rest/futures/market/get-klines';
@@ -84,7 +84,6 @@ export * from './rest/spot/types';
 export * from './rest/spot/market/ping';
 export * from './rest/spot/market/get-server-time';
 export * from './rest/spot/market/get-exchange-info';
-export * from './rest/spot/market/get-recent-trades';
 export * from './rest/spot/market/get-historical-trades';
 export * from './rest/spot/market/get-agg-trades';
 export * from './rest/spot/market/get-klines';

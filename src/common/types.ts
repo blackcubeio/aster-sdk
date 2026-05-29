@@ -151,6 +151,31 @@ export interface Price {
   xtras?: Record<string, unknown>;
 }
 
+/** Côté d'un ordre/trade : achat ou vente. */
+export type Side = 'buy' | 'sell';
+
+/**
+ * Trade public au **format unifié Blackcube** (cœur identique entre les SDK).
+ * `side` = direction du **taker** (agresseur). `maker` = ce record est-il le maker
+ * (`null` si modèle par-trade, ex. Aster). `xtras` porte le natif hors cœur.
+ */
+export interface Trade {
+  /** Prix d'exécution (chaîne décimale). */
+  price: string;
+  /** Taille exécutée (chaîne décimale). */
+  size: string;
+  /** Direction du taker/agresseur ; `null` si indéterminé. */
+  side: Side | null;
+  /** Ce record est-il le maker ; `null` si non applicable (modèle par-trade). */
+  maker: boolean | null;
+  /** Timestamp (ms). */
+  time: number;
+  /** ID du trade ; `null` si non fourni. */
+  id: number | null;
+  /** Champs natifs hors cœur (rien jeté), omis si vide. */
+  xtras?: Record<string, unknown>;
+}
+
 /**
  * Identité de signature Aster. Le **type est auto-détecté** depuis `privateKey` :
  * préfixe `0x…` → **EVM** (secp256k1 / EIP-712), sinon → **Solana** (ed25519 / base58).

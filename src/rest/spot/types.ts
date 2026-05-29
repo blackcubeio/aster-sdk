@@ -126,11 +126,6 @@ export interface SpotCommissionRate {
   takerCommissionRate: string;
 }
 
-export interface SpotTradesQuery {
-  symbol: string;
-  limit?: number;
-}
-
 export interface SpotHistoricalTradesQuery {
   symbol: string;
   limit?: number;

@@ -9,6 +9,7 @@ import { ping } from '../src/rest/futures/market/ping';
 import { getOrderBook } from '../src/rest/get-order-book';
 import { getPairs } from '../src/rest/get-pairs';
 import { getPrices } from '../src/rest/get-prices';
+import { getTrades } from '../src/rest/get-trades';
 
 // Lectures market data réelles sur le **testnet** futures (fapi.asterdex-testnet.com),
 // non signées. Le label `tn` ne sert qu'à sélectionner le réseau (aucune signature).
@@ -88,6 +89,16 @@ describe('futures market data (testnet réel)', () => {
     expect(Number(btc?.oracle)).toBeGreaterThan(0);
     expect(btc?.mid).toBeNull();
     expect(typeof btc?.xtras?.interestRate).toBe('string');
+  });
+
+  it('getTrades renvoie des trades unifiés (side taker, maker null)', async () => {
+    const trades = await getTrades({ name: 'BTCUSDT', limit: 5 }, TN);
+    expect(trades.length).toBeGreaterThan(0);
+    const trade = trades[0];
+    expect(Number(trade?.price)).toBeGreaterThan(0);
+    expect(['buy', 'sell']).toContain(trade?.side);
+    expect(trade?.maker).toBeNull();
+    expect(typeof trade?.id).toBe('number');
   });
 
   it('getBookTicker renvoie le meilleur bid/ask', async () => {

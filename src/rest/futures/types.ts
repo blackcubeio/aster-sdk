@@ -356,7 +356,8 @@ export interface UpdateBuilderParams {
   maxFeeRate: string;
 }
 
-export interface Trade {
+/** Trade public natif Aster futures (utilisé par `getHistoricalTrades`, spécifique). */
+export interface MarketTrade {
   id: number;
   price: string;
   qty: string;
@@ -444,11 +445,6 @@ export interface IndexPriceReferences {
 }
 
 // ── Query parameters ────────────────────────────────────────────────────────
-
-export interface TradesQuery {
-  symbol: string;
-  limit?: number;
-}
 
 export interface HistoricalTradesQuery {
   symbol: string;
