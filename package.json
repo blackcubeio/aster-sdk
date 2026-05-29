@@ -1,0 +1,70 @@
+{
+  "name": "@blackcube/aster-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Aster exchange (perpetuals & spot DEX on Aster L1 / BNB Chain): REST futures & spot V3, WebSocket, EIP-712 agent signing",
+  "license": "BSD-3-Clause",
+  "author": "Blackcube (https://blackcube.io)",
+  "homepage": "https://github.com/blackcubeio/aster-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blackcubeio/aster-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/blackcubeio/aster-sdk/issues"
+  },
+  "keywords": [
+    "aster",
+    "asterdex",
+    "bnb",
+    "bsc",
+    "evm",
+    "perp",
+    "perpetuals",
+    "spot",
+    "dex",
+    "trading",
+    "exchange",
+    "sdk",
+    "eip712",
+    "websocket"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist", "doc", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "prepublishOnly": "pnpm run lint && pnpm run typecheck && pnpm run build"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.7.0",
+    "@noble/hashes": "^1.6.1",
+    "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
