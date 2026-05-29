@@ -367,6 +367,191 @@ export interface Order {
 /** Un ordre dans un batch peut renvoyer un succès (`Order`) ou une erreur par item. */
 export type BatchOrderResult = Order | CodeMsg;
 
+/** Ordre renvoyé par les lectures (queryOrder/openOrders/allOrders) : `Order` + `time`. */
+export interface OrderDetail extends Order {
+  time: number;
+}
+
+// ── USER_DATA reads ───────────────────────────────────────────────────────────
+
+export interface OrderQuery {
+  symbol: string;
+  orderId?: number;
+  origClientOrderId?: string;
+}
+
+export interface AllOrdersQuery {
+  symbol: string;
+  orderId?: number;
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+}
+
+export interface UserTradesQuery {
+  symbol: string;
+  startTime?: number;
+  endTime?: number;
+  fromId?: number;
+  limit?: number;
+}
+
+export interface IncomeQuery {
+  symbol?: string;
+  incomeType?: string;
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+}
+
+export interface ForceOrdersQuery {
+  symbol?: string;
+  autoCloseType?: 'LIQUIDATION' | 'ADL';
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+}
+
+export interface PositionMarginHistoryQuery {
+  symbol: string;
+  type?: 1 | 2;
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+}
+
+export interface PositionRisk {
+  symbol: string;
+  positionSide: PositionSide;
+  positionAmt: string;
+  entryPrice: string;
+  markPrice: string;
+  unRealizedProfit: string;
+  liquidationPrice: string;
+  leverage: string;
+  maxNotionalValue: string;
+  marginType: string;
+  isolatedMargin: string;
+  isAutoAddMargin: string;
+  updateTime: number;
+}
+
+export interface UserTrade {
+  id: number;
+  orderId: number;
+  symbol: string;
+  side: OrderSide;
+  positionSide: PositionSide;
+  price: string;
+  qty: string;
+  quoteQty: string;
+  realizedPnl: string;
+  commission: string;
+  commissionAsset: string;
+  buyer: boolean;
+  maker: boolean;
+  time: number;
+}
+
+export interface IncomeEntry {
+  symbol: string;
+  incomeType: string;
+  income: string;
+  asset: string;
+  info: string;
+  time: number;
+  tranId: string;
+  tradeId: string;
+}
+
+export interface LeverageBracketLevel {
+  bracket: number;
+  initialLeverage: number;
+  notionalCap: number;
+  notionalFloor: number;
+  maintMarginRatio: number;
+  cum: number;
+}
+
+export interface LeverageBracket {
+  symbol: string;
+  brackets: LeverageBracketLevel[];
+}
+
+export interface AdlQuantile {
+  symbol: string;
+  adlQuantile: Record<string, number>;
+}
+
+export interface CommissionRate {
+  symbol: string;
+  makerCommissionRate: string;
+  takerCommissionRate: string;
+}
+
+export interface PositionMarginHistoryEntry {
+  symbol: string;
+  asset: string;
+  amount: string;
+  type: number;
+  positionSide: PositionSide;
+  time: number;
+}
+
+export interface AccountAsset {
+  asset: string;
+  walletBalance: string;
+  unrealizedProfit: string;
+  marginBalance: string;
+  maintMargin: string;
+  initialMargin: string;
+  positionInitialMargin: string;
+  openOrderInitialMargin: string;
+  crossWalletBalance: string;
+  crossUnPnl: string;
+  availableBalance: string;
+  maxWithdrawAmount: string;
+  marginAvailable: boolean;
+  updateTime: number;
+}
+
+export interface AccountPosition {
+  symbol: string;
+  positionSide: PositionSide;
+  positionAmt: string;
+  initialMargin: string;
+  maintMargin: string;
+  unrealizedProfit: string;
+  positionInitialMargin: string;
+  openOrderInitialMargin: string;
+  leverage: string;
+  isolated: boolean;
+  entryPrice: string;
+  maxNotional: string;
+  updateTime: number;
+}
+
+export interface AccountInfo {
+  feeTier: number;
+  canTrade: boolean;
+  canDeposit: boolean;
+  canWithdraw: boolean;
+  updateTime: number;
+  totalInitialMargin: string;
+  totalMaintMargin: string;
+  totalWalletBalance: string;
+  totalUnrealizedProfit: string;
+  totalMarginBalance: string;
+  totalPositionInitialMargin: string;
+  totalOpenOrderInitialMargin: string;
+  totalCrossWalletBalance: string;
+  totalCrossUnPnl: string;
+  availableBalance: string;
+  maxWithdrawAmount: string;
+  assets: AccountAsset[];
+  positions: AccountPosition[];
+}
+
 export interface ModifyOrderParams {
   symbol: string;
   quantity: string;

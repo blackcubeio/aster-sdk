@@ -27,7 +27,20 @@ export * from './rest/futures/market/get-book-ticker';
 export * from './rest/futures/market/get-index-price-references';
 
 export * from './rest/futures/account/get-balance';
+export * from './rest/futures/account/get-account-info';
+export * from './rest/futures/account/get-position-risk';
 export * from './rest/futures/account/transfer-futures-spot';
+export * from './rest/futures/account/query-order';
+export * from './rest/futures/account/get-open-order';
+export * from './rest/futures/account/get-open-orders';
+export * from './rest/futures/account/get-all-orders';
+export * from './rest/futures/account/get-user-trades';
+export * from './rest/futures/account/get-income';
+export * from './rest/futures/account/get-leverage-bracket';
+export * from './rest/futures/account/get-adl-quantile';
+export * from './rest/futures/account/get-force-orders';
+export * from './rest/futures/account/get-commission-rate';
+export * from './rest/futures/account/get-position-margin-history';
 
 export * from './rest/futures/trade/new-order';
 export * from './rest/futures/trade/modify-order';

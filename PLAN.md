@@ -38,9 +38,11 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
   transferFuturesSpot, getBalance. Offline payload/signing tests green. **Strategy orders
   (place/update/query) deferred to Phase 2b.** Live order placement not yet run (mainnet keys with
   real funds — needs explicit go / testnet).
-- **Phase 3 — Futures account (USER_DATA reads).** balance, account info, position info, trades,
-  income, leverage brackets, ADL, force orders, commission, margin history, query/open/all orders,
-  MMP (×4). User-data WebSocket (`listenKey`).
+- **Phase 3 — Futures account (USER_DATA reads) — ✅ DONE.** getBalance, getAccountInfo,
+  getPositionRisk, queryOrder, getOpenOrder, getOpenOrders, getAllOrders, getUserTrades, getIncome,
+  getLeverageBracket, getAdlQuantile, getForceOrders, getCommissionRate, getPositionMarginHistory.
+  Real signed reads validated on mainnet (account info, positions, open orders, commission).
+  **MMP (×4) and user-data WebSocket (`listenKey`) deferred to Phase 3b.**
 - **Phase 4 — Account management (main-wallet signed).** ⚠️ blocked on empirically validating the
   main-wallet signing scheme (chainId 56 vs 1666, dynamic-typed vs `Message{msg}`). Covers
   registerAndApproveAgent, approve/update/del/get agent, builders, sub-accounts (×5), asset

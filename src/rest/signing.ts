@@ -8,7 +8,7 @@ import {
   EIP712_DOMAIN_VERSION,
   ZERO_ADDRESS,
 } from '../common/constants';
-import type { Hex, JsonObject, Network, Signature, Signer } from '../common/types';
+import type { Hex, JsonValue, Network, Signature, Signer } from '../common/types';
 import { microsecondNonce, serializeParams } from '../common/utils';
 
 interface Eip712Field {
@@ -206,9 +206,12 @@ export interface SignedForm {
  * puis y appose `&signature=…`. La chaîne renvoyée est transmise telle quelle (corps ou
  * query) pour que le serveur reconstruise un `msg` identique.
  */
-export function buildSignedRequest(params: JsonObject, label?: string): SignedForm {
+export function buildSignedRequest(
+  params: Record<string, JsonValue | undefined>,
+  label?: string,
+): SignedForm {
   const resolved = resolveSigner(label);
-  const signedParams: JsonObject = {
+  const signedParams: Record<string, JsonValue | undefined> = {
     ...params,
     nonce: microsecondNonce(),
     signer: resolved.signer,
