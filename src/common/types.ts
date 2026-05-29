@@ -12,6 +12,9 @@ export type Network = 'mainnet' | 'testnet';
 /** Aster expose deux produits sur des hôtes distincts. */
 export type Product = 'futures' | 'spot';
 
+/** Type de marché d'une paire : perpetual (futures) ou spot. */
+export type MarketKind = 'perp' | 'spot';
+
 /**
  * Identité de signature Aster. Le **type est auto-détecté** depuis `privateKey` :
  * préfixe `0x…` → **EVM** (secp256k1 / EIP-712), sinon → **Solana** (ed25519 / base58).

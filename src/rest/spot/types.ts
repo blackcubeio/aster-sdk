@@ -1,5 +1,6 @@
 import type {
   KlineInterval,
+  MarketKind,
   OrderSide,
   OrderStatus,
   OrderType,
@@ -33,6 +34,8 @@ export interface SpotSymbol {
   filters: SpotFilter[];
   orderTypes: string[];
   timeInForce: string[];
+  /** Toujours `'spot'` ici — distingue des perpetuals lors d'une fusion. */
+  kind: MarketKind;
 }
 
 export interface SpotExchangeInfo {
@@ -82,18 +85,36 @@ export interface SpotAggTrade {
   isBuyerMaker: boolean;
 }
 
+/** Bougie OHLCV au **format unifié Blackcube** (cf. `Kline` futures). Toujours `kind: 'spot'`. */
 export interface SpotKline {
-  openTime: number;
-  open: string;
-  high: string;
-  low: string;
-  close: string;
-  volume: string;
-  closeTime: number;
-  quoteVolume: string;
-  tradeCount: number;
-  takerBuyBaseVolume: string;
-  takerBuyQuoteVolume: string;
+  /** Open time — début de la bougie (timestamp ms). */
+  t: number;
+  /** Close time — fin de la bougie (timestamp ms). */
+  T: number;
+  /** Symbol — paire (ex. `ASTERUSDT`). */
+  s: string;
+  /** Interval — intervalle (ex. `1h`). */
+  i: string;
+  /** Open — prix d'ouverture. */
+  o: string;
+  /** Close — prix de clôture. */
+  c: string;
+  /** High — plus haut. */
+  h: string;
+  /** Low — plus bas. */
+  l: string;
+  /** Volume — volume en actif de base. */
+  v: string;
+  /** Number of trades — nombre de trades. */
+  n: number;
+  /** Type de marché — toujours `'spot'`. */
+  kind: MarketKind;
+  /** Quote volume — volume en actif de cotation. */
+  qv: string;
+  /** Taker buy base volume — volume acheteur (taker) en base. */
+  tbbv: string;
+  /** Taker buy quote volume — volume acheteur (taker) en cotation. */
+  tbqv: string;
 }
 
 export interface SpotTicker24hr {

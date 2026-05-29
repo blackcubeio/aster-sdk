@@ -3,6 +3,7 @@ import type {
   ContractType,
   Hex,
   KlineInterval,
+  MarketKind,
   NewOrderRespType,
   OrderSide,
   OrderStatus,
@@ -83,6 +84,8 @@ export interface FuturesSymbol {
   filters: SymbolFilter[];
   OrderType: string[];
   timeInForce: string[];
+  /** Toujours `'perp'` ici — distingue des paires spot lors d'une fusion. */
+  kind: MarketKind;
 }
 
 export interface ExchangeInfo {
@@ -386,18 +389,39 @@ export interface AggTrade {
   isBuyerMaker: boolean;
 }
 
+/**
+ * Bougie OHLCV au **format unifié Blackcube** (clés courtes, identiques entre les SDK
+ * hyperliquid/pacifica/aster). Prix et volumes sont des **chaînes décimales**.
+ */
 export interface Kline {
-  openTime: number;
-  open: string;
-  high: string;
-  low: string;
-  close: string;
-  volume: string;
-  closeTime: number;
-  quoteVolume: string;
-  tradeCount: number;
-  takerBuyBaseVolume: string;
-  takerBuyQuoteVolume: string;
+  /** Open time — début de la bougie (timestamp ms). */
+  t: number;
+  /** Close time — fin de la bougie (timestamp ms). */
+  T: number;
+  /** Symbol — symbole/paire (ex. `BTCUSDT`). */
+  s: string;
+  /** Interval — intervalle (ex. `1h`). */
+  i: string;
+  /** Open — prix d'ouverture. */
+  o: string;
+  /** Close — prix de clôture. */
+  c: string;
+  /** High — plus haut. */
+  h: string;
+  /** Low — plus bas. */
+  l: string;
+  /** Volume — volume en actif de base. */
+  v: string;
+  /** Number of trades — nombre de trades. */
+  n: number;
+  /** Type de marché — toujours `'perp'` (klines futures, y compris mark/index price). */
+  kind: MarketKind;
+  /** Quote volume — volume en actif de cotation. */
+  qv: string;
+  /** Taker buy base volume — volume acheteur (taker) en base. */
+  tbbv: string;
+  /** Taker buy quote volume — volume acheteur (taker) en cotation. */
+  tbqv: string;
 }
 
 export interface MarkPrice {

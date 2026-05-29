@@ -1,7 +1,16 @@
 import { httpGet } from '../../client';
-import type { ExchangeInfo } from '../types';
+import type { ExchangeInfo, FuturesSymbol } from '../types';
 
-/** Current exchange trading rules and symbol information. */
+type ExchangeInfoWire = Omit<ExchangeInfo, 'symbols'> & {
+  symbols: Omit<FuturesSymbol, 'kind'>[];
+};
+
+/** Current exchange trading rules and symbol information. Chaque symbole porte `kind: 'perp'`. */
 export function getExchangeInfo(label?: string): Promise<ExchangeInfo> {
-  return httpGet<ExchangeInfo>('futures', '/fapi/v3/exchangeInfo', undefined, label);
+  return httpGet<ExchangeInfoWire>('futures', '/fapi/v3/exchangeInfo', undefined, label).then(
+    (info) => ({
+      ...info,
+      symbols: info.symbols.map((symbol) => ({ ...symbol, kind: 'perp' as const })),
+    }),
+  );
 }

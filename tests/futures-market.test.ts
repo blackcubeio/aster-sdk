@@ -39,6 +39,7 @@ describe('futures market data (testnet réel)', () => {
     const info = await getExchangeInfo(TN);
     expect(info.timezone).toBe('UTC');
     expect(info.symbols.some((symbol) => symbol.symbol === 'BTCUSDT')).toBe(true);
+    expect(info.symbols[0]?.kind).toBe('perp');
   });
 
   it('getOrderBook renvoie des niveaux décodés {price, qty}', async () => {
@@ -55,8 +56,11 @@ describe('futures market data (testnet réel)', () => {
       TN,
     );
     expect(candles).toHaveLength(3);
-    expect(candles[0]?.openTime).toBeGreaterThan(0);
-    expect(Number(candles[0]?.close)).toBeGreaterThan(0);
+    expect(candles[0]?.t).toBeGreaterThan(0);
+    expect(Number(candles[0]?.c)).toBeGreaterThan(0);
+    expect(candles[0]?.s).toBe('BTCUSDT');
+    expect(candles[0]?.i).toBe('1h');
+    expect(candles[0]?.kind).toBe('perp');
   });
 
   it('getMarkPrice(symbol) renvoie un objet, sans symbole un tableau', async () => {

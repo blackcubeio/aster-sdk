@@ -20,5 +20,5 @@ export function getIndexPriceKlines(
       limit: query.limit,
     },
     label,
-  ).then((wire) => wire.map(decodeKline));
+  ).then((wire) => wire.map((row) => decodeKline(row, query.pair, query.interval)));
 }

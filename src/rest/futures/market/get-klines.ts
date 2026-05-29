@@ -29,22 +29,29 @@ export function getKlines(query: KlinesQuery, label?: string): Promise<Kline[]> 
       limit: query.limit,
     },
     label,
-  ).then((wire) => wire.map(decodeKline));
+  ).then((wire) => wire.map((row) => decodeKline(row, query.symbol, query.interval)));
 }
 
-/** Décode une bougie positionnelle Aster en objet. Partagé par les 3 variantes de klines. */
-export function decodeKline(row: KlineWire): Kline {
+/**
+ * Décode une bougie positionnelle Aster au format unifié. Partagé par les 3 variantes de
+ * klines (toujours `kind: 'perp'`). `s`/`i` (symbole/intervalle) viennent de la requête car
+ * le wire Aster ne les contient pas.
+ */
+export function decodeKline(row: KlineWire, s: string, i: string): Kline {
   return {
-    openTime: row[0],
-    open: row[1],
-    high: row[2],
-    low: row[3],
-    close: row[4],
-    volume: row[5],
-    closeTime: row[6],
-    quoteVolume: row[7],
-    tradeCount: row[8],
-    takerBuyBaseVolume: row[9],
-    takerBuyQuoteVolume: row[10],
+    t: row[0],
+    T: row[6],
+    s,
+    i,
+    o: row[1],
+    c: row[4],
+    h: row[2],
+    l: row[3],
+    v: row[5],
+    n: row[8],
+    kind: 'perp',
+    qv: row[7],
+    tbbv: row[9],
+    tbqv: row[10],
   };
 }

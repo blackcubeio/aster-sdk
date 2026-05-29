@@ -28,22 +28,28 @@ export function getKlinesSpot(query: SpotKlinesQuery, label?: string): Promise<S
       limit: query.limit,
     },
     label,
-  ).then((wire) => wire.map(decodeSpotKline));
+  ).then((wire) => wire.map((row) => decodeSpotKline(row, query.symbol, query.interval)));
 }
 
-/** Décode une bougie spot positionnelle (11 colonnes) en objet. */
-export function decodeSpotKline(row: KlineWire): SpotKline {
+/**
+ * Décode une bougie spot positionnelle (11 colonnes) au format unifié (toujours
+ * `kind: 'spot'`). `s`/`i` viennent de la requête (absents du wire).
+ */
+export function decodeSpotKline(row: KlineWire, s: string, i: string): SpotKline {
   return {
-    openTime: row[0],
-    open: row[1],
-    high: row[2],
-    low: row[3],
-    close: row[4],
-    volume: row[5],
-    closeTime: row[6],
-    quoteVolume: row[7],
-    tradeCount: row[8],
-    takerBuyBaseVolume: row[9],
-    takerBuyQuoteVolume: row[10],
+    t: row[0],
+    T: row[6],
+    s,
+    i,
+    o: row[1],
+    c: row[4],
+    h: row[2],
+    l: row[3],
+    v: row[5],
+    n: row[8],
+    kind: 'spot',
+    qv: row[7],
+    tbbv: row[9],
+    tbqv: row[10],
   };
 }

@@ -38,6 +38,7 @@ describe('spot market data (testnet réel)', () => {
     const info = await getExchangeInfoSpot(TN);
     expect(info.timezone).toBe('UTC');
     expect(info.symbols.length).toBeGreaterThan(0);
+    expect(info.symbols[0]?.kind).toBe('spot');
   });
 
   it('getOrderBookSpot décode les niveaux', async () => {
@@ -52,7 +53,10 @@ describe('spot market data (testnet réel)', () => {
       TN,
     );
     expect(candles).toHaveLength(3);
-    expect(Number(candles[0]?.close)).toBeGreaterThan(0);
+    expect(Number(candles[0]?.c)).toBeGreaterThan(0);
+    expect(candles[0]?.s).toBe(SYMBOL);
+    expect(candles[0]?.i).toBe('1h');
+    expect(candles[0]?.kind).toBe('spot');
   });
 
   it('getBookTickerSpot renvoie le meilleur bid/ask', async () => {

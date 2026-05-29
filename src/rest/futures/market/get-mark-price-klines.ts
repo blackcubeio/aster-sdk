@@ -17,5 +17,5 @@ export function getMarkPriceKlines(query: KlinesQuery, label?: string): Promise<
       limit: query.limit,
     },
     label,
-  ).then((wire) => wire.map(decodeKline));
+  ).then((wire) => wire.map((row) => decodeKline(row, query.symbol, query.interval)));
 }
