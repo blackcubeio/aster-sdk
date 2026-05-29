@@ -123,6 +123,39 @@ export interface OrderBook {
 }
 
 /**
+ * Exécution (fill) du compte au **format unifié Blackcube** (cœur identique entre SDK).
+ * `side` = sens du fill, `maker` = rôle. `xtras` porte le natif hors cœur, omis si vide.
+ */
+export interface UserTrade {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Type de marché (`perp`/`spot`). */
+  kind: MarketKind;
+  /** ID du fill/trade. */
+  id: string;
+  /** ID de l'ordre parent. */
+  orderId: string;
+  /** Sens. */
+  side: Side;
+  /** Prix d'exécution. */
+  price: string;
+  /** Taille exécutée. */
+  size: string;
+  /** Frais. */
+  fee: string;
+  /** Actif des frais ; `null` si non fourni. */
+  feeAsset: string | null;
+  /** PnL réalisé/clôturé ; `null` si non fourni. */
+  pnl: string | null;
+  /** Rôle maker ; `null` si non fourni. */
+  maker: boolean | null;
+  /** Timestamp (ms). */
+  time: number;
+  /** Champs natifs hors cœur (rien jeté), omis si vide. */
+  xtras?: Record<string, unknown>;
+}
+
+/**
  * Position ouverte au **format unifié Blackcube** (cœur identique entre SDK).
  * `side`/`size`/`leverage` sont dérivés (source native conservée dans `xtras`).
  * Champs nullables si non fournis. `xtras` = natif hors cœur, omis si vide.

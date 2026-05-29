@@ -638,7 +638,8 @@ export interface PositionRisk {
   updateTime: number;
 }
 
-export interface UserTrade {
+/** Fill natif Aster futures — renommé pour libérer `UserTrade` unifié. */
+export interface FuturesUserTrade {
   id: number;
   orderId: number;
   symbol: string;
