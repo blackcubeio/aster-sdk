@@ -57,8 +57,16 @@ export * from './rest/futures/trade/set-leverage';
 export * from './rest/futures/trade/set-margin-type';
 export * from './rest/futures/trade/modify-isolated-margin';
 
+export * from './rest/futures/agent/register-and-approve-agent';
+
 export * from './rest/futures/subaccount/get-sub-account-list';
 export * from './rest/futures/subaccount/update-sub-account';
+export * from './rest/futures/subaccount/create-sub-account';
+export * from './rest/futures/subaccount/bind-sub-account';
+export * from './rest/futures/subaccount/sub-account-transfer';
+
+export * from './rest/futures/asset/migrate-user';
+export * from './rest/futures/asset/get-migrate-history';
 
 export * from './rest/futures/user-stream/listen-key';
 

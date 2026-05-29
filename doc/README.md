@@ -13,6 +13,8 @@ Aster L1 / BNB Chain). Organised like the [Aster API docs](https://github.com/as
   chase), position & STP & multi-assets modes, leverage, margin, transfer, balance
 - [Account reads](./rest-api/futures-account.md) — signed `USER_DATA`: account info, positions,
   orders (query/open/all), trades, income, brackets, ADL, force orders, commission
+- [Account management](./rest-api/futures-account-management.md) — master-signed: agent approval,
+  sub-accounts (create/bind/update/list/transfer), asset migration
 
 ### REST API — spot (`/api/v3/*`)
 - *(roadmap — see [PLAN.md](../PLAN.md))*

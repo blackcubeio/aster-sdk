@@ -1,6 +1,7 @@
 import type {
   ContractStatus,
   ContractType,
+  Hex,
   KlineInterval,
   NewOrderRespType,
   OrderSide,
@@ -126,6 +127,70 @@ export interface UpdateSubAccountParams {
   subSourceAddr: string;
   subAccountName?: string;
   status?: SubAccountStatus;
+}
+
+// ── Account management (main-wallet signed) ───────────────────────────────────
+
+export interface RegisterAndApproveAgentParams {
+  agentName: string;
+  agentAddress: string;
+  /** Agent expiration timestamp, **milliseconds**. */
+  expired: number;
+  canSpotTrade: boolean;
+  canPerpTrade: boolean;
+  canWithdraw: boolean;
+  /** Espaces comme séparateur, CIDR supporté. Requis (non vide) si `canWithdraw`. */
+  ipWhitelist?: string;
+  agentCode?: string;
+  /** Type d'adresse : 56 (EVM) ou 101 (Solana). Défaut 56. */
+  signatureChainId?: number;
+}
+
+export enum SubAccountTransferKind {
+  FuturesToFutures = 'FUTURE_FUTURE',
+  FuturesToSpot = 'FUTURE_SPOT',
+  SpotToFutures = 'SPOT_FUTURE',
+  SpotToSpot = 'SPOT_SPOT',
+}
+
+export interface SubAccountTransferParams {
+  toAccountAddress: string;
+  asset: string;
+  amount: string;
+  kindType: SubAccountTransferKind;
+  /** Adresse source si différente de `user` (sub→sub, master→sub par un tiers). */
+  fromAccountAddress?: string;
+}
+
+export interface CreateSubAccountParams {
+  subSourceAddr: string;
+  subAccountName: string;
+  /** Clé privée du sous-compte (signe le `childSignature`). */
+  childPrivateKey: Hex;
+}
+
+export interface BindSubAccountParams {
+  childAddress: string;
+  name: string;
+  /** Clé privée du sous-compte (signe le `childSignature`). */
+  childPrivateKey: Hex;
+}
+
+export interface MigrateUserResult {
+  batchId: string;
+}
+
+export interface MigrateHistoryItem {
+  asset: string;
+  amount: string;
+}
+
+export interface MigrateHistory {
+  batchId: string;
+  fromUserId: number;
+  toUserId: number;
+  status: string;
+  items: MigrateHistoryItem[];
 }
 
 export interface PriceLevel {

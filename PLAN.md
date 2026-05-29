@@ -51,8 +51,11 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
   on a bogus sub-account → server returned a business error (`subaccount relation error`), not
   `-1022`. Primitives shipped: `resolveMainSigner`, `buildSignedForm`. Endpoints done:
   `getSubAccountList` (agent-signed, real-tested), `updateSubAccount` (main-signed). **Remaining
-  Phase 4 endpoints are now mechanical**: registerAndApproveAgent, approve/update/del/get agent,
-  builders, createSubAccount, subAccountTransfer, migrateUser (+history), withdraw.
+  Phase 4 endpoints are now mechanical**. ✅ Shipped: registerAndApproveAgent, getSubAccountList,
+  createSubAccount + bindSubAccount (dual signature), updateSubAccount, subAccountTransfer,
+  migrateUser, getMigrateHistory. Offline wire-order tests lock the field order + dual-signature.
+  State-changing ones not run live (real funds / address whitelisting). **Builders (approve/update/
+  del/get) deferred** — only present in the legacy demo, not the V3 spec markdown.
 - **Phase 5 — Spot.** market (13), trade (8: order, cancel, query, open/all orders, cancel-all,
   perp-spot transfer, withdraw + fee), account (info, trades), spot WS streams + user-data.
 
