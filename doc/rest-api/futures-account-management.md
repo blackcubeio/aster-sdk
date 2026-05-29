@@ -15,13 +15,26 @@ All signatures use the same EIP-712 `Message{msg}` envelope, **chainId 1666 (mai
 | Function | Endpoint | Auth | Returns |
 |---|---|---|---|
 | 🔑 `getSubAccountList(label)` | `GET /fapi/v3/getSubAccountList` | agent | `SubAccount[]` |
+| 🔑 `getAgents(label)` | `GET /fapi/v3/agent` | agent | `Agent[]` |
+| 🔑 `getBuilders(label)` | `GET /fapi/v3/builder` | agent | `Builder[]` |
 | 👤 `registerAndApproveAgent(params, label)` | `POST /fapi/v3/registerAndApproveAgent` | master | `CodeMsg` |
+| 👤 `approveAgent(params, label)` | `POST /fapi/v3/approveAgent` | master* | `CodeMsg` |
+| 👤 `updateAgent(params, label)` | `POST /fapi/v3/updateAgent` | master* | `CodeMsg` |
+| 👤 `deleteAgent(agentAddress, label)` | `DELETE /fapi/v3/agent` | master* | `CodeMsg` |
+| 👤 `approveBuilder(params, label)` | `POST /fapi/v3/approveBuilder` | master* | `CodeMsg` |
+| 👤 `updateBuilder(params, label)` | `POST /fapi/v3/updateBuilder` | master* | `CodeMsg` |
+| 👤 `deleteBuilder(builder, label)` | `DELETE /fapi/v3/builder` | master* | `CodeMsg` |
 | 👤 `updateSubAccount(params, label)` | `POST /fapi/v3/updateSubAccount` | master | `CodeMsg` |
 | ✍️ `createSubAccount(params, label)` | `POST /fapi/v3/createSubAccount` | sub + master | `CodeMsg` |
 | ✍️ `bindSubAccount(params, label)` | `POST /fapi/v3/sub-accounts/bind` | sub + master | `CodeMsg` |
 | 👤 `subAccountTransfer(params, label)` | `POST /fapi/v3/subAccountTransfer` | master | `CodeMsg` |
 | 👤 `migrateUser(label)` | `POST /fapi/v3/asset/migrateUser` | master | `MigrateUserResult` |
 | 🔑 `getMigrateHistory(batchId, label)` | `GET /fapi/v3/asset/migrateUser/history` | agent | `MigrateHistory` |
+
+**\* Agents & builders (`approve*`/`update*`/`delete*`)** use the **legacy dynamic-typed**
+signature scheme (EIP-712 typed data, `primaryType` = action name, `chainId = 56`, with an
+`asterChain` field and capitalised keys) — distinct from the `Message{msg}` envelope. The scheme is
+validated against the live API. `getAgents`/`getBuilders` are agent-signed reads.
 
 ## Signing notes
 

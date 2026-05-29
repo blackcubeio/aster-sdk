@@ -6,6 +6,7 @@ import {
   AGENT_CHAIN_ID,
   EIP712_DOMAIN_NAME,
   EIP712_DOMAIN_VERSION,
+  SIGNATURE_CHAIN_ID,
   ZERO_ADDRESS,
 } from '../common/constants';
 import type { Hex, JsonValue, Network, Signature, Signer } from '../common/types';
@@ -290,6 +291,43 @@ export function buildSignedRequest(
     resolved.privateKey,
     resolved.network,
   );
+}
+
+function capitalizeKeys(params: Record<string, JsonValue>): Record<string, JsonValue> {
+  const out: Record<string, JsonValue> = {};
+  for (const key of Object.keys(params)) {
+    out[`${key.charAt(0).toUpperCase()}${key.slice(1)}`] = params[key] as JsonValue;
+  }
+  return out;
+}
+
+/**
+ * Construit une requête de **gestion d'agent/builder legacy**, signée par le compte
+ * principal en EIP-712 **typé dynamique** (chainId 56). Ajoute `asterChain`, `user`,
+ * `nonce` aux paramètres métier (ordre conservé), signe le message à clés capitalisées
+ * (`primaryType` = nom de l'action), et transmet les paramètres en clés d'origine +
+ * `signatureChainId` + `signature`.
+ */
+export function buildMainTypedRequest(
+  primaryType: string,
+  params: Record<string, JsonValue>,
+  label?: string,
+): SignedForm {
+  const resolved = resolveMainSigner(label);
+  const full: Record<string, JsonValue> = {
+    ...params,
+    asterChain: resolved.network === 'mainnet' ? 'Mainnet' : 'Testnet',
+    user: resolved.user,
+    nonce: Number(microsecondNonce()),
+  };
+  const signature = signDynamicTypedData(
+    primaryType,
+    capitalizeKeys(full),
+    resolved.mainPrivateKey,
+    SIGNATURE_CHAIN_ID,
+  );
+  const body = serializeParams({ ...full, signatureChainId: SIGNATURE_CHAIN_ID, signature });
+  return { body, network: resolved.network };
 }
 
 /** Identifiant client d'ordre unique (respecte `^[\.A-Z\:/a-z0-9_-]{1,36}$`). */

@@ -21,6 +21,10 @@ request is agent-signed) and selects the network.
 | 🔑 `getForceOrders(query, label)` | `GET /fapi/v3/forceOrders` | `OrderDetail[]` |
 | 🔑 `getCommissionRate(symbol, label)` | `GET /fapi/v3/commissionRate` | `CommissionRate` |
 | 🔑 `getPositionMarginHistory(query, label)` | `GET /fapi/v3/positionMargin/history` | `PositionMarginHistoryEntry[]` |
+| 🔑 `updateMmp(params, label)` | `POST /fapi/v3/mmp` | `boolean` |
+| 🔑 `getMmp(symbol, label)` | `GET /fapi/v3/mmp` | `MmpConfig[]` |
+| 🔑 `deleteMmp(symbol, label)` | `DELETE /fapi/v3/mmp` | `boolean` |
+| 🔑 `resetMmp(symbol, label)` | `POST /fapi/v3/mmpReset` | `boolean` |
 
 For the symbol-or-all endpoints pass `undefined` as the symbol to query every symbol:
 `getPositionRisk(undefined, 'trader')`, `getOpenOrders(undefined, 'trader')`. `getLeverageBracket`
@@ -34,4 +38,5 @@ const positions = await getPositionRisk('BTCUSDT', 'trader');
 const open = await getOpenOrders('BTCUSDT', 'trader');
 ```
 
-> MMP (market-maker protection) endpoints are deferred — see [PLAN.md](../PLAN.md).
+MMP (market-maker protection) lets a market maker auto-freeze after hitting qty/value/delta limits
+within a rolling window. `updateMmp`/`getMmp`/`deleteMmp`/`resetMmp` all return `boolean`/config.

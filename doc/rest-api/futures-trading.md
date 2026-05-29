@@ -19,6 +19,11 @@ The `label` argument is **mandatory** and selects both the signing wallet and th
 | 🔑 `batchOrders(orders, label)` | `POST /fapi/v3/batchOrders` | `BatchOrderResult[]` |
 | 🔑 `countdownCancelAll(params, label)` | `POST /fapi/v3/countdownCancelAll` | `CountdownCancelAllResult` |
 | 🔑 `chaseOrder(params, label)` | `POST /fapi/v3/chase` | `ChaseOrder` |
+| 🔑 `noop(label)` | `POST /fapi/v3/noop` | `CodeMsg` |
+| 🔑 `placeStrategyOrder(params, label)` | `POST /fapi/v3/placeStrategyOrder` | `PlaceStrategyOrderResult` |
+| 🔑 `updateStrategyOrder(params, label)` | `POST /fapi/v3/updateStrategyOrder` | `UpdateStrategyOrderResult[]` |
+| 🔑 `getStrategyOpenOrder(query, label)` | `GET /fapi/v3/strategyOpenOrder` | `StrategyOrder` |
+| 🔑 `getStrategyHistoryOrder(query, label)` | `GET /fapi/v3/strategyHistoryOrder` | `StrategyOrder` |
 
 - `createOrder` / `batchOrders` generate a `newClientOrderId` when omitted. Batch is max 5 orders;
   each result entry is either an `Order` or a per-item `{ code, msg }`.

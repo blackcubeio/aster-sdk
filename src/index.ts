@@ -56,6 +56,13 @@ export * from './rest/futures/trade/multi-assets-mode';
 export * from './rest/futures/trade/update-leverage';
 export * from './rest/futures/trade/update-margin-mode';
 export * from './rest/futures/trade/update-isolated-margin';
+export * from './rest/futures/trade/noop';
+export * from './rest/futures/trade/strategy-order';
+
+export * from './rest/futures/account/mmp';
+
+export * from './rest/futures/agent/agents';
+export * from './rest/futures/agent/builders';
 
 export * from './rest/futures/agent/register-and-approve-agent';
 

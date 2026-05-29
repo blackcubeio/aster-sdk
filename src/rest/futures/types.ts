@@ -193,6 +193,165 @@ export interface MigrateHistory {
   items: MigrateHistoryItem[];
 }
 
+// ── MMP (market-maker protection) ─────────────────────────────────────────────
+
+export interface UpdateMmpParams {
+  symbol: string;
+  windowTimeInMilliseconds: number;
+  frozenTimeInMilliseconds: number;
+  qtyLimit?: number;
+  valueLimit?: number;
+  deltaLimit?: number;
+}
+
+export interface MmpConfig {
+  symbol: string;
+  windowTimeInMilliseconds: number;
+  frozenTimeInMilliseconds: number;
+  qtyLimit: number;
+  valueLimit: number;
+  deltaLimit: number;
+}
+
+// ── Strategy orders (OTO / OCO / OTOCO) ───────────────────────────────────────
+
+export enum StrategyType {
+  Oto = 'OTO',
+  Oco = 'OCO',
+  Otoco = 'OTOCO',
+}
+
+export interface StrategySubOrder {
+  strategySubId: string;
+  securityType: string;
+  symbol: string;
+  side: OrderSide;
+  type: OrderType;
+  positionSide?: PositionSide;
+  quantity?: string;
+  price?: string;
+  stopPrice?: string;
+  timeInForce?: TimeInForce;
+  workingType?: WorkingType;
+  reduceOnly?: boolean;
+  closePosition?: boolean;
+  priceProtect?: boolean;
+  clientOrderId?: string;
+  activationPrice?: string;
+  callbackRate?: string;
+  firstDrivenId?: string;
+  firstDrivenOn?: string;
+  firstTrigger?: string;
+  secondDrivenId?: string;
+  secondDrivenOn?: string;
+  secondTrigger?: string;
+}
+
+export interface PlaceStrategyOrderParams {
+  strategyType: StrategyType;
+  subOrderList: StrategySubOrder[];
+  clientStrategyId?: string;
+}
+
+export interface UpdateStrategyOrderParams {
+  strategyId: number;
+  strategyType: StrategyType;
+  subOrderList: StrategySubOrder[];
+}
+
+export interface StrategyOrderQuery {
+  strategyType: StrategyType;
+  strategyId?: number;
+  clientStrategyId?: string;
+}
+
+export interface StrategyHistoryQuery extends StrategyOrderQuery {
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+}
+
+export interface PlaceStrategyOrderResult {
+  strategyId: number;
+  clientStrategyId: string;
+  strategyType: StrategyType;
+  strategyStatus: string;
+  updateTime: number;
+  failureCode: number;
+  failureReason: string;
+}
+
+export interface UpdateStrategyOrderResult {
+  strategyId: number;
+  clientStrategyId: string;
+  strategyType: StrategyType;
+  strategyStatus: string;
+  updatedSubOrder: number;
+  updateStatus: string;
+  updateTime: number;
+  failureCode: number;
+  failureReason: string;
+}
+
+export interface StrategyOrder {
+  strategyId: number;
+  clientStrategyId: string;
+  strategyType: StrategyType;
+  strategyStatus: string;
+  bookTime: number;
+  updateTime: number;
+  subOrders: Record<string, unknown>[];
+}
+
+// ── Agents & builders (legacy, main-signed dynamic-typed) ─────────────────────
+
+export interface Agent {
+  agentAddress: string;
+  agentName: string;
+  ipWhitelist: string;
+  expired: number;
+  source: string;
+  canRead: boolean;
+  canSpotTrade: boolean;
+  canPerpTrade: boolean;
+  canWithdraw: boolean;
+}
+
+export interface ApproveAgentParams {
+  agentName: string;
+  agentAddress: string;
+  expired: number;
+  canSpotTrade: boolean;
+  canPerpTrade: boolean;
+  canWithdraw: boolean;
+  ipWhitelist?: string;
+}
+
+export interface UpdateAgentParams {
+  agentAddress: string;
+  canSpotTrade: boolean;
+  canPerpTrade: boolean;
+  canWithdraw: boolean;
+  ipWhitelist?: string;
+}
+
+export interface Builder {
+  builder: string;
+  builderName: string;
+  maxFeeRate: string;
+}
+
+export interface ApproveBuilderParams {
+  builder: string;
+  maxFeeRate: string;
+  builderName: string;
+}
+
+export interface UpdateBuilderParams {
+  builder: string;
+  maxFeeRate: string;
+}
+
 export interface PriceLevel {
   price: string;
   qty: string;

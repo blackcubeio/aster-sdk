@@ -54,8 +54,14 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
   Phase 4 endpoints are now mechanical**. ✅ Shipped: registerAndApproveAgent, getSubAccountList,
   createSubAccount + bindSubAccount (dual signature), updateSubAccount, subAccountTransfer,
   migrateUser, getMigrateHistory. Offline wire-order tests lock the field order + dual-signature.
-  State-changing ones not run live (real funds / address whitelisting). **Builders (approve/update/
-  del/get) deferred** — only present in the legacy demo, not the V3 spec markdown.
+  State-changing ones not run live (real funds / address whitelisting).
+- **Phase 4b — Futures niches — ✅ DONE.** noop ; MMP ×4 (updateMmp/getMmp/deleteMmp/resetMmp) ;
+  strategy orders ×4 (placeStrategyOrder/updateStrategyOrder/getStrategyOpenOrder/
+  getStrategyHistoryOrder, OTO/OCO/OTOCO) ; agents legacy (getAgents [testé réel], approveAgent,
+  updateAgent, deleteAgent) ; builders (getBuilders, approveBuilder, updateBuilder, deleteBuilder).
+  Les agents/builders `approve*`/`update*`/`delete*` utilisent le schéma **dynamic-typed chainId 56**
+  (`buildMainTypedRequest`), validé en réel. Tests offline verrouillant le wire (approveAgent/
+  deleteAgent). **Le produit futures est complet.**
 - **Phase 5 — Spot.** market (13), trade (8: order, cancel, query, open/all orders, cancel-all,
   perp-spot transfer, withdraw + fee), account (info, trades), spot WS streams + user-data.
 
