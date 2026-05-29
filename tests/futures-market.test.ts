@@ -5,9 +5,9 @@ import { getBookTicker } from '../src/rest/futures/market/get-book-ticker';
 import { getExchangeInfo } from '../src/rest/futures/market/get-exchange-info';
 import { getKlines } from '../src/rest/futures/market/get-klines';
 import { getMarkPrice } from '../src/rest/futures/market/get-mark-price';
-import { getOrderBook } from '../src/rest/futures/market/get-order-book';
 import { getServerTime } from '../src/rest/futures/market/get-server-time';
 import { ping } from '../src/rest/futures/market/ping';
+import { getOrderBook } from '../src/rest/get-order-book';
 import { getPairs } from '../src/rest/get-pairs';
 
 // Lectures market data réelles sur le **testnet** futures (fapi.asterdex-testnet.com),
@@ -43,12 +43,15 @@ describe('futures market data (testnet réel)', () => {
     expect(info.symbols[0]?.kind).toBe('perp');
   });
 
-  it('getOrderBook renvoie des niveaux décodés {price, qty}', async () => {
-    const book = await getOrderBook({ symbol: 'BTCUSDT', limit: 5 }, TN);
+  it('getOrderBook renvoie le carnet unifié {price, size, n}', async () => {
+    const book = await getOrderBook({ name: 'BTCUSDT', limit: 5 }, TN);
+    expect(book.name).toBe('BTCUSDT');
+    expect(book.kind).toBe('perp');
     expect(book.bids.length).toBeGreaterThan(0);
     expect(book.asks.length).toBeGreaterThan(0);
     expect(Number(book.bids[0]?.price)).toBeGreaterThan(0);
-    expect(Number(book.asks[0]?.qty)).toBeGreaterThanOrEqual(0);
+    expect(Number(book.asks[0]?.size)).toBeGreaterThanOrEqual(0);
+    expect(book.bids[0]?.n).toBeNull();
   });
 
   it('getPairs renvoie le format unifié (perp + spot)', async () => {

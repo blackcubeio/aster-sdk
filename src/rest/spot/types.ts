@@ -54,19 +54,6 @@ export interface SpotServerTime {
 
 // ── Market data ───────────────────────────────────────────────────────────────
 
-export interface SpotPriceLevel {
-  price: string;
-  qty: string;
-}
-
-export interface SpotOrderBook {
-  lastUpdateId: number;
-  eventTime: number;
-  transactionTime: number;
-  bids: SpotPriceLevel[];
-  asks: SpotPriceLevel[];
-}
-
 export interface SpotTrade {
   id: number;
   price: string;
@@ -137,11 +124,6 @@ export interface SpotCommissionRate {
   symbol: string;
   makerCommissionRate: string;
   takerCommissionRate: string;
-}
-
-export interface SpotDepthQuery {
-  symbol: string;
-  limit?: number;
 }
 
 export interface SpotTradesQuery {

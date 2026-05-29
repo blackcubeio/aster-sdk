@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { init } from '../src/common/config';
 import { type Hex, KlineInterval } from '../src/common/types';
+import { getOrderBook } from '../src/rest/get-order-book';
 import { getBookTickerSpot } from '../src/rest/spot/market/get-book-ticker';
 import { getExchangeInfoSpot } from '../src/rest/spot/market/get-exchange-info';
 import { getKlinesSpot } from '../src/rest/spot/market/get-klines';
-import { getOrderBookSpot } from '../src/rest/spot/market/get-order-book';
 import { getServerTimeSpot } from '../src/rest/spot/market/get-server-time';
 import { pingSpot } from '../src/rest/spot/market/ping';
 
@@ -41,10 +41,13 @@ describe('spot market data (testnet réel)', () => {
     expect(info.symbols[0]?.kind).toBe('spot');
   });
 
-  it('getOrderBookSpot décode les niveaux', async () => {
-    const book = await getOrderBookSpot({ symbol: SYMBOL, limit: 5 }, TN);
+  it('getOrderBook (spot) renvoie le carnet unifié', async () => {
+    const book = await getOrderBook({ name: SYMBOL, kind: 'spot', limit: 5 }, TN);
+    expect(book.name).toBe(SYMBOL);
+    expect(book.kind).toBe('spot');
     expect(book.bids.length).toBeGreaterThan(0);
     expect(Number(book.asks[0]?.price)).toBeGreaterThan(0);
+    expect(book.asks[0]?.n).toBeNull();
   });
 
   it('getKlinesSpot décode des bougies (11 colonnes)', async () => {

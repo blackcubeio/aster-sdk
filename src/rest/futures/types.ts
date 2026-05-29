@@ -356,21 +356,6 @@ export interface UpdateBuilderParams {
   maxFeeRate: string;
 }
 
-export interface PriceLevel {
-  price: string;
-  qty: string;
-}
-
-export interface OrderBook {
-  lastUpdateId: number;
-  /** Message output time (`E`). */
-  eventTime: number;
-  /** Transaction time (`T`). */
-  transactionTime: number;
-  bids: PriceLevel[];
-  asks: PriceLevel[];
-}
-
 export interface Trade {
   id: number;
   price: string;
@@ -470,11 +455,6 @@ export interface IndexPriceReferences {
 }
 
 // ── Query parameters ────────────────────────────────────────────────────────
-
-export interface DepthQuery {
-  symbol: string;
-  limit?: number;
-}
 
 export interface TradesQuery {
   symbol: string;
