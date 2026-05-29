@@ -3,12 +3,10 @@ import type { JsonObject, JsonValue, KlineInterval } from '../common/types';
 import { resolveReadNetwork } from '../rest/client';
 import type { StreamHandler, Unsubscribe } from './types';
 
-/** Vitesse de rafraîchissement optionnelle des flux de profondeur. */
-export type DepthSpeed = '100ms' | '500ms';
-/** Niveaux d'un flux de profondeur partielle. */
-export type DepthLevels = 5 | 10 | 20;
+/** Niveaux d'un flux de profondeur partielle spot. */
+export type SpotDepthLevels = 5 | 10 | 20;
 
-export interface FuturesWsOptions {
+export interface SpotWsOptions {
   url?: string;
   webSocket?: WebSocketFactory;
   /** Label du signer : choisit le réseau (défaut mainnet). */
@@ -16,11 +14,10 @@ export interface FuturesWsOptions {
 }
 
 /**
- * Client WebSocket des flux de marché futures (`fstream`). Connexion en mode **combined**
- * (`/stream`) : chaque message est dispatché par nom de flux. Les payloads sont délivrés
- * bruts (`JsonValue`), tels qu'Aster les émet. Re-souscription automatique au reconnect.
+ * Client WebSocket des flux de marché spot (`sstream`), mode **combined** (`/stream`).
+ * Dispatch par nom de flux ; payloads bruts (`JsonValue`). Re-souscription au reconnect.
  */
-export class FuturesWsClient {
+export class SpotWsClient {
   public onMessage: ((message: JsonValue) => void) | null = null;
   public onError: ((error: unknown) => void) | null = null;
   public onClose: (() => void) | null = null;
@@ -33,9 +30,9 @@ export class FuturesWsClient {
   private readonly handlers = new Map<string, Set<StreamHandler>>();
   private shouldReconnect = false;
 
-  constructor(options: FuturesWsOptions = {}) {
+  constructor(options: SpotWsOptions = {}) {
     const config = getConfig();
-    this.url = options.url ?? `${config.wsUrls.futures[resolveReadNetwork(options.label)]}/stream`;
+    this.url = options.url ?? `${config.wsUrls.spot[resolveReadNetwork(options.label)]}/stream`;
     this.createSocket = options.webSocket ?? config.webSocket;
   }
 
@@ -68,15 +65,8 @@ export class FuturesWsClient {
     return this.subscribeStream(`${stream(symbol)}@aggTrade`, handler);
   }
 
-  public subscribeMarkPrice(symbol: string, handler: StreamHandler, fast = false): Unsubscribe {
-    return this.subscribeStream(
-      `${stream(symbol)}@markPrice${fast === true ? '@1s' : ''}`,
-      handler,
-    );
-  }
-
-  public subscribeAllMarkPrices(handler: StreamHandler, fast = false): Unsubscribe {
-    return this.subscribeStream(`!markPrice@arr${fast === true ? '@1s' : ''}`, handler);
+  public subscribeTrade(symbol: string, handler: StreamHandler): Unsubscribe {
+    return this.subscribeStream(`${stream(symbol)}@trade`, handler);
   }
 
   public subscribeKline(
@@ -111,31 +101,20 @@ export class FuturesWsClient {
     return this.subscribeStream('!bookTicker', handler);
   }
 
-  public subscribeForceOrder(symbol: string, handler: StreamHandler): Unsubscribe {
-    return this.subscribeStream(`${stream(symbol)}@forceOrder`, handler);
-  }
-
-  public subscribeAllForceOrders(handler: StreamHandler): Unsubscribe {
-    return this.subscribeStream('!forceOrder@arr', handler);
-  }
-
   public subscribePartialDepth(
     symbol: string,
-    levels: DepthLevels,
+    levels: SpotDepthLevels,
     handler: StreamHandler,
-    speed?: DepthSpeed,
+    fast = false,
   ): Unsubscribe {
-    const suffix = speed === undefined ? '' : `@${speed}`;
-    return this.subscribeStream(`${stream(symbol)}@depth${levels}${suffix}`, handler);
+    return this.subscribeStream(
+      `${stream(symbol)}@depth${levels}${fast === true ? '@100ms' : ''}`,
+      handler,
+    );
   }
 
-  public subscribeDiffDepth(
-    symbol: string,
-    handler: StreamHandler,
-    speed?: DepthSpeed,
-  ): Unsubscribe {
-    const suffix = speed === undefined ? '' : `@${speed}`;
-    return this.subscribeStream(`${stream(symbol)}@depth${suffix}`, handler);
+  public subscribeDiffDepth(symbol: string, handler: StreamHandler, fast = false): Unsubscribe {
+    return this.subscribeStream(`${stream(symbol)}@depth${fast === true ? '@100ms' : ''}`, handler);
   }
 
   private subscribeStream(name: string, handler: StreamHandler): Unsubscribe {

@@ -3,7 +3,7 @@ import type { JsonValue } from '../common/types';
 import { resolveReadNetwork } from '../rest/client';
 import type { EventHandler, Unsubscribe } from './types';
 
-export interface FuturesUserDataOptions {
+export interface SpotUserDataOptions {
   url?: string;
   webSocket?: WebSocketFactory;
   /** Label du signer : choisit le réseau (défaut mainnet). */
@@ -11,12 +11,11 @@ export interface FuturesUserDataOptions {
 }
 
 /**
- * Flux user-data futures (`fstream/ws/<listenKey>`). Connexion brute liée à un `listenKey`
- * (cf. `createListenKey`) : chaque message porte un type d'événement `e`
- * (`ACCOUNT_UPDATE`, `ORDER_TRADE_UPDATE`, `listenKeyExpired`…) sur lequel on dispatche.
- * Pense à rafraîchir le `listenKey` (`keepAliveListenKey`) toutes les ~60 min.
+ * Flux user-data spot (`sstream/ws/<listenKey>`). Connexion brute liée à un `listenKey`
+ * (cf. `createListenKeySpot`) ; dispatch par type d'événement `e` (`ACCOUNT_UPDATE`,
+ * ordre…). Rafraîchir le `listenKey` (`keepAliveListenKeySpot`) toutes les ~60 min.
  */
-export class FuturesUserDataStream {
+export class SpotUserDataStream {
   public onMessage: ((event: JsonValue) => void) | null = null;
   public onError: ((error: unknown) => void) | null = null;
   public onClose: (() => void) | null = null;
@@ -28,9 +27,9 @@ export class FuturesUserDataStream {
   private readonly handlers = new Map<string, Set<EventHandler>>();
   private shouldReconnect = false;
 
-  constructor(listenKey: string, options: FuturesUserDataOptions = {}) {
+  constructor(listenKey: string, options: SpotUserDataOptions = {}) {
     const config = getConfig();
-    const base = config.wsUrls.futures[resolveReadNetwork(options.label)];
+    const base = config.wsUrls.spot[resolveReadNetwork(options.label)];
     this.url = options.url ?? `${base}/ws/${listenKey}`;
     this.createSocket = options.webSocket ?? config.webSocket;
   }

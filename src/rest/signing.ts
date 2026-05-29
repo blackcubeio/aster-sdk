@@ -132,6 +132,21 @@ export function hashMessage(msg: string, chainId: number): Uint8Array {
   );
 }
 
+/**
+ * Signe une charge EIP-712 **arbitraire** (domaine et types fournis explicitement). Bas
+ * niveau, pour les flux qui sortent du domaine `AsterSignTransaction` — ex. le retrait spot
+ * (domaine `Aster`, type `Action`, champs `address`/`uint256`).
+ */
+export function signEip712(
+  domain: { name: string; version: string; chainId: number; verifyingContract: Hex },
+  types: Record<string, { name: string; type: string }[]>,
+  primaryType: string,
+  message: Record<string, unknown>,
+  privateKey: Hex,
+): Signature {
+  return signDigest(hashTypedData(domain, types, primaryType, message), privateKey);
+}
+
 function inferEip712Type(value: JsonValue): string {
   if (typeof value === 'boolean') {
     return 'bool';

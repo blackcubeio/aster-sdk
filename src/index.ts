@@ -77,6 +77,41 @@ export * from './rest/futures/asset/get-migrate-history';
 
 export * from './rest/futures/user-stream/listen-key';
 
+export * from './rest/spot/types';
+
+export * from './rest/spot/market/ping';
+export * from './rest/spot/market/get-server-time';
+export * from './rest/spot/market/get-exchange-info';
+export * from './rest/spot/market/get-order-book';
+export * from './rest/spot/market/get-recent-trades';
+export * from './rest/spot/market/get-historical-trades';
+export * from './rest/spot/market/get-agg-trades';
+export * from './rest/spot/market/get-klines';
+export * from './rest/spot/market/get-ticker-24hr';
+export * from './rest/spot/market/get-price-ticker';
+export * from './rest/spot/market/get-book-ticker';
+export * from './rest/spot/market/get-commission-rate';
+
+export * from './rest/spot/trade/noop';
+export * from './rest/spot/trade/new-order';
+export * from './rest/spot/trade/cancel-order';
+export * from './rest/spot/trade/cancel-all-orders';
+export * from './rest/spot/trade/transfer';
+
+export * from './rest/spot/account/query-order';
+export * from './rest/spot/account/get-open-order';
+export * from './rest/spot/account/get-open-orders';
+export * from './rest/spot/account/get-all-orders';
+export * from './rest/spot/account/get-account-info';
+export * from './rest/spot/account/get-user-trades';
+export * from './rest/spot/account/get-transaction-history';
+
+export * from './rest/spot/withdraw/withdraw';
+
+export * from './rest/spot/user-stream/listen-key';
+
 export * from './ws/types';
 export * from './ws/futures-client';
 export * from './ws/futures-user-data';
+export * from './ws/spot-client';
+export * from './ws/spot-user-data';

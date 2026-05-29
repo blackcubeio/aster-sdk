@@ -17,10 +17,12 @@ Aster L1 / BNB Chain). Organised like the [Aster API docs](https://github.com/as
   sub-accounts (create/bind/update/list/transfer), asset migration
 
 ### REST API — spot (`/api/v3/*`)
-- *(roadmap — see [PLAN.md](../PLAN.md))*
+- [Spot](./rest-api/spot.md) — market data, trading, account reads, EVM-signed withdraw
+  (functions carry a `Spot` suffix)
 
 ### WebSocket
 - [Futures market streams](./websocket/futures-streams.md) — real-time `fstream` streams
+- [Spot streams](./websocket/spot-streams.md) — real-time `sstream` streams + user-data
 
 ### Signing
 - [Signing](./signing.md) — EIP-712 (secp256k1) agent signing, signer registry, nonce, and the

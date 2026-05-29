@@ -62,8 +62,14 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
   Les agents/builders `approve*`/`update*`/`delete*` utilisent le schéma **dynamic-typed chainId 56**
   (`buildMainTypedRequest`), validé en réel. Tests offline verrouillant le wire (approveAgent/
   deleteAgent). **Le produit futures est complet.**
-- **Phase 5 — Spot.** market (13), trade (8: order, cancel, query, open/all orders, cancel-all,
-  perp-spot transfer, withdraw + fee), account (info, trades), spot WS streams + user-data.
+- **Phase 5 — Spot — ✅ DONE.** market (12), trade (createOrder/limit/market, cancel, cancelAll,
+  noop, transfer), account reads (queryOrder, openOrder, openOrders, allOrders, accountInfo,
+  userTrades, transactionHistory), withdraw (fee + EVM-signed `withdrawSpot`), spot WS
+  (`SpotWsClient`) + user-data (`SpotUserDataStream`) + listenKey. **Fonctions suffixées `Spot`**
+  (collision de noms avec futures). Tests réels testnet : market public + lectures signées.
+- **Phase 6 — Solana (ed25519/base58).** Signature agent/main en ed25519 (clés Solana) au lieu de
+  secp256k1/EIP-712. ⚠️ **Pas de sous-comptes API en Solana.** Schéma de signature à valider
+  empiriquement (clés `SOLANA_*`) avant build.
 
 ## Endpoint inventory
 
