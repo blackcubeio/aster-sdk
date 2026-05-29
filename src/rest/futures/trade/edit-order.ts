@@ -1,10 +1,10 @@
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { ModifyOrderParams, Order } from '../types';
+import type { EditOrderParams, Order } from '../types';
 import { buildOrderRef } from './payloads';
 
 /** Modify an active `LIMIT` order's price/quantity (`TRADE`). */
-export function modifyOrder(params: ModifyOrderParams, label: string): Promise<Order> {
+export function editOrder(params: EditOrderParams, label: string): Promise<Order> {
   const payload = buildOrderRef(params.symbol, params.orderId, params.origClientOrderId);
   payload.quantity = params.quantity;
   payload.price = params.price;

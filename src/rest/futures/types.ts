@@ -646,7 +646,7 @@ export interface AccountInfo {
   positions: AccountPosition[];
 }
 
-export interface ModifyOrderParams {
+export interface EditOrderParams {
   symbol: string;
   quantity: string;
   price: string;
@@ -677,7 +677,7 @@ export interface CountdownCancelAllResult {
   countdownTime: string;
 }
 
-export interface SetLeverageParams {
+export interface UpdateLeverageParams {
   symbol: string;
   leverage: number;
 }
@@ -688,12 +688,12 @@ export interface LeverageResult {
   maxNotionalValue: string;
 }
 
-export interface SetMarginTypeParams {
+export interface UpdateMarginModeParams {
   symbol: string;
   marginType: MarginType;
 }
 
-export interface ModifyIsolatedMarginParams {
+export interface UpdateIsolatedMarginParams {
   symbol: string;
   amount: string;
   /** 1 : ajouter de la marge ; 2 : retirer de la marge. */
@@ -701,7 +701,7 @@ export interface ModifyIsolatedMarginParams {
   positionSide?: PositionSide;
 }
 
-export interface ModifyIsolatedMarginResult {
+export interface UpdateIsolatedMarginResult {
   amount: number;
   type: number;
   code: number;

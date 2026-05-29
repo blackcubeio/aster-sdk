@@ -9,10 +9,12 @@ The `label` argument is **mandatory** and selects both the signing wallet and th
 
 | Function | Endpoint | Returns |
 |---|---|---|
-| 🔑 `createOrder(params, label)` | `POST /fapi/v3/order` | `Order` |
-| 🔑 `modifyOrder(params, label)` | `PUT /fapi/v3/order` | `Order` |
+| 🔑 `createLimitOrder(params, label)` | `POST /fapi/v3/order` | `Order` |
+| 🔑 `createMarketOrder(params, label)` | `POST /fapi/v3/order` | `Order` |
+| 🔑 `createOrder(params, label)` | `POST /fapi/v3/order` | `Order` (tout `type`, dont conditionnels) |
+| 🔑 `editOrder(params, label)` | `PUT /fapi/v3/order` | `Order` |
 | 🔑 `cancelOrder(params, label)` | `DELETE /fapi/v3/order` | `Order` |
-| 🔑 `cancelAllOpenOrders(symbol, label)` | `DELETE /fapi/v3/allOpenOrders` | `CodeMsg` |
+| 🔑 `cancelAllOrders(symbol, label)` | `DELETE /fapi/v3/allOpenOrders` | `CodeMsg` |
 | 🔑 `cancelMultipleOrders(params, label)` | `DELETE /fapi/v3/batchOrders` | `BatchOrderResult[]` |
 | 🔑 `batchOrders(orders, label)` | `POST /fapi/v3/batchOrders` | `BatchOrderResult[]` |
 | 🔑 `countdownCancelAll(params, label)` | `POST /fapi/v3/countdownCancelAll` | `CountdownCancelAllResult` |
@@ -20,7 +22,7 @@ The `label` argument is **mandatory** and selects both the signing wallet and th
 
 - `createOrder` / `batchOrders` generate a `newClientOrderId` when omitted. Batch is max 5 orders;
   each result entry is either an `Order` or a per-item `{ code, msg }`.
-- `modifyOrder` and `cancelOrder` reference the order by `orderId` (preferred) or
+- `editOrder` and `cancelOrder` reference the order by `orderId` (preferred) or
   `origClientOrderId`.
 - `cancelMultipleOrders` takes `orderIdList` **or** `origClientOrderIdList` (max 10), JSON-encoded
   on the wire.
@@ -30,15 +32,15 @@ The `label` argument is **mandatory** and selects both the signing wallet and th
 
 | Function | Endpoint | Returns |
 |---|---|---|
-| 🔑 `setPositionMode(dualSidePosition, label)` | `POST /fapi/v3/positionSide/dual` | `CodeMsg` |
+| 🔑 `updatePositionMode(dualSidePosition, label)` | `POST /fapi/v3/positionSide/dual` | `CodeMsg` |
 | 🔑 `getPositionMode(label)` | `GET /fapi/v3/positionSide/dual` | `PositionModeResult` |
-| 🔑 `setStpMode(stpMode, label)` | `POST /fapi/v3/stpMode` | `CodeMsg` |
+| 🔑 `updateStpMode(stpMode, label)` | `POST /fapi/v3/stpMode` | `CodeMsg` |
 | 🔑 `getStpMode(label)` | `GET /fapi/v3/stpMode` | `StpModeResult` |
-| 🔑 `setMultiAssetsMode(multiAssetsMargin, label)` | `POST /fapi/v3/multiAssetsMargin` | `CodeMsg` |
+| 🔑 `updateMultiAssetsMode(multiAssetsMargin, label)` | `POST /fapi/v3/multiAssetsMargin` | `CodeMsg` |
 | 🔑 `getMultiAssetsMode(label)` | `GET /fapi/v3/multiAssetsMargin` | `MultiAssetsModeResult` |
-| 🔑 `setLeverage(params, label)` | `POST /fapi/v3/leverage` | `LeverageResult` |
-| 🔑 `setMarginType(params, label)` | `POST /fapi/v3/marginType` | `CodeMsg` |
-| 🔑 `modifyIsolatedMargin(params, label)` | `POST /fapi/v3/positionMargin` | `ModifyIsolatedMarginResult` |
+| 🔑 `updateLeverage(params, label)` | `POST /fapi/v3/leverage` | `LeverageResult` |
+| 🔑 `updateMarginMode(params, label)` | `POST /fapi/v3/marginType` | `CodeMsg` |
+| 🔑 `updateIsolatedMargin(params, label)` | `POST /fapi/v3/positionMargin` | `UpdateIsolatedMarginResult` |
 
 ## Funds
 
@@ -50,12 +52,12 @@ The `label` argument is **mandatory** and selects both the signing wallet and th
 ## Example
 
 ```ts
-import { init, createOrder, cancelOrder, OrderSide, OrderType, TimeInForce } from '@blackcube/aster-sdk';
+import { init, createLimitOrder, cancelOrder, OrderSide, TimeInForce } from '@blackcube/aster-sdk';
 
 init({ signers: { trader: { privateKey, user, network: 'mainnet' } } });
 
-const order = await createOrder(
-  { symbol: 'BTCUSDT', side: OrderSide.Buy, type: OrderType.Limit, timeInForce: TimeInForce.Gtc,
+const order = await createLimitOrder(
+  { symbol: 'BTCUSDT', side: OrderSide.Buy, timeInForce: TimeInForce.Gtc,
     quantity: '0.01', price: '50000' },
   'trader',
 );

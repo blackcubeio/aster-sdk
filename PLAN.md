@@ -32,9 +32,9 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
 - **Phase 1 — Foundation + futures market — ✅ DONE (this branch `feature/aster-sdk-init`)**
   Configs, `common`, `client`, `signing` (agent), futures market data (17 endpoints), futures WS
   market streams, witness `createOrder`, signing unit tests, docs.
-- **Phase 2 — Futures trading — ✅ DONE.** createOrder, modifyOrder, chaseOrder, batchOrders,
-  cancelOrder, cancelAllOpenOrders, cancelMultipleOrders, countdownCancelAll,
-  positionMode/STP/multiAssets (get+set), setLeverage, setMarginType, modifyIsolatedMargin,
+- **Phase 2 — Futures trading — ✅ DONE.** createOrder, editOrder, chaseOrder, batchOrders,
+  cancelOrder, cancelAllOrders, cancelMultipleOrders, countdownCancelAll,
+  positionMode/STP/multiAssets (get+set), updateLeverage, updateMarginMode, updateIsolatedMargin,
   transferFuturesSpot, getBalance. Offline payload/signing tests green. **Strategy orders
   (place/update/query) deferred to Phase 2b.** Live order placement not yet run (mainnet keys with
   real funds — needs explicit go / testnet).
@@ -68,7 +68,7 @@ ticker/24hr · ticker/price · ticker/bookTicker · indexreferences. *(Noop → 
 order placement.)*
 
 ### Futures — trade (Phase 2)
-order · modifyOrder · chaseOrder (`order/chase`) · batchOrders · cancelOrder · cancelAllOpenOrders ·
+order · editOrder · chaseOrder (`order/chase`) · batchOrders · cancelOrder · cancelAllOrders ·
 batch cancel · countdownCancelAll (auto-cancel) · positionSide/dual (get+set) · stpMode (get+set) ·
 multiAssetsMargin (get+set) · leverage · marginType · positionMargin (+history) · strategy order
 (place/update/query open/query history) · futures↔spot transfer · noop.
@@ -87,7 +87,7 @@ migrateUser (+history).
 ### Spot (Phase 5)
 market: ping · time · exchangeInfo · depth · trades · historicalTrades · aggTrades · klines ·
 ticker/24hr · ticker/price · ticker/bookTicker · commissionRate · noop.
-trade: order · cancelOrder · queryOrder · openOrder · openOrders · cancelAllOpenOrders · allOrders
+trade: order · cancelOrder · queryOrder · openOrder · openOrders · cancelAllOrders · allOrders
 · perp-spot transfer · withdraw (+ fee).
 account: account · userTrades. WS: streams + listenKey user-data.
 

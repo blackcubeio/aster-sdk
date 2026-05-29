@@ -3,7 +3,7 @@ import { buildSignedRequest } from '../../signing';
 import type { CodeMsg, MultiAssetsModeResult } from '../types';
 
 /** Set multi-assets margin mode for every symbol (`TRADE`). */
-export function setMultiAssetsMode(multiAssetsMargin: boolean, label: string): Promise<CodeMsg> {
+export function updateMultiAssetsMode(multiAssetsMargin: boolean, label: string): Promise<CodeMsg> {
   const { body, network } = buildSignedRequest({ multiAssetsMargin }, label);
   return httpPostForm<CodeMsg>('futures', '/fapi/v3/multiAssetsMargin', body, network);
 }

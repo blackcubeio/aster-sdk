@@ -4,7 +4,7 @@ import { buildSignedRequest } from '../../signing';
 import type { CodeMsg, StpModeResult } from '../types';
 
 /** Set the account-wide Self-Trade Prevention mode (`TRADE`). */
-export function setStpMode(stpMode: StpMode, label: string): Promise<CodeMsg> {
+export function updateStpMode(stpMode: StpMode, label: string): Promise<CodeMsg> {
   const { body, network } = buildSignedRequest({ stpMode }, label);
   return httpPostForm<CodeMsg>('futures', '/fapi/v3/stpMode', body, network);
 }

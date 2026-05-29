@@ -43,9 +43,9 @@ export * from './rest/futures/account/get-commission-rate';
 export * from './rest/futures/account/get-position-margin-history';
 
 export * from './rest/futures/trade/new-order';
-export * from './rest/futures/trade/modify-order';
+export * from './rest/futures/trade/edit-order';
 export * from './rest/futures/trade/cancel-order';
-export * from './rest/futures/trade/cancel-all-open-orders';
+export * from './rest/futures/trade/cancel-all-orders';
 export * from './rest/futures/trade/cancel-multiple-orders';
 export * from './rest/futures/trade/batch-orders';
 export * from './rest/futures/trade/countdown-cancel-all';
@@ -53,9 +53,9 @@ export * from './rest/futures/trade/chase-order';
 export * from './rest/futures/trade/position-mode';
 export * from './rest/futures/trade/stp-mode';
 export * from './rest/futures/trade/multi-assets-mode';
-export * from './rest/futures/trade/set-leverage';
-export * from './rest/futures/trade/set-margin-type';
-export * from './rest/futures/trade/modify-isolated-margin';
+export * from './rest/futures/trade/update-leverage';
+export * from './rest/futures/trade/update-margin-mode';
+export * from './rest/futures/trade/update-isolated-margin';
 
 export * from './rest/futures/agent/register-and-approve-agent';
 
