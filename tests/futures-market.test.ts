@@ -59,7 +59,7 @@ describe('futures market data (testnet réel)', () => {
     expect(btc?.quote).toBe('USDT');
     expect(typeof btc?.szDecimals).toBe('number');
     expect(typeof btc?.tickSize).toBe('string');
-    expect(typeof btc?.raw).toBe('object');
+    expect(typeof btc?.xtras).toBe('object');
     expect(pairs.some((p) => p.kind === 'spot')).toBe(true);
   });
 

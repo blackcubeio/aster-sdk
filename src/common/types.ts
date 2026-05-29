@@ -41,8 +41,11 @@ export interface Pair {
   minNotional?: string;
   /** État du marché (ex. `TRADING`), si fourni. */
   status?: string;
-  /** Objet d'origine **complet** renvoyé par l'exchange (aucune donnée jetée). */
-  raw: Record<string, unknown>;
+  /**
+   * Champs natifs **hors cœur unifié** (rien n'est jeté). **Optionnel** : omis si tout le natif
+   * mappe le cœur. Aster : `filters`, `pricePrecision`, `orderTypes`, `timeInForce`…
+   */
+  xtras?: Record<string, unknown>;
 }
 
 /**
