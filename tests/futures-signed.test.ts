@@ -4,10 +4,10 @@ import type { Hex, Network } from '../src/common/types';
 import { getAccountInfo } from '../src/rest/futures/account/get-account-info';
 import { getCommissionRate } from '../src/rest/futures/account/get-commission-rate';
 import { getOpenOrders } from '../src/rest/futures/account/get-open-orders';
-import { getPositionRisk } from '../src/rest/futures/account/get-position-risk';
 import { getAgents } from '../src/rest/futures/agent/agents';
 import { closeListenKey, createListenKey } from '../src/rest/futures/user-stream/listen-key';
 import { getBalances } from '../src/rest/get-balances';
+import { getPositions } from '../src/rest/get-positions';
 import { privateKeyToAddress } from '../src/rest/signing';
 import { readEnv } from './_env';
 
@@ -57,9 +57,13 @@ describe.skipIf(ready === false)('futures signé — agent (réel)', () => {
     expect(Array.isArray(account.positions)).toBe(true);
   });
 
-  it('getPositionRisk renvoie un tableau de positions', async () => {
-    const positions = await getPositionRisk(undefined, 'trader');
+  it('getPositions renvoie un tableau de positions unifiées', async () => {
+    const positions = await getPositions({}, 'trader');
     expect(Array.isArray(positions)).toBe(true);
+    for (const p of positions) {
+      expect(typeof p.name).toBe('string');
+      expect(typeof p.size).toBe('string');
+    }
   });
 
   it('getOpenOrders(BTCUSDT) renvoie un tableau', async () => {

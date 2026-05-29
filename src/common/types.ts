@@ -123,6 +123,34 @@ export interface OrderBook {
 }
 
 /**
+ * Position ouverte au **format unifié Blackcube** (cœur identique entre SDK).
+ * `side`/`size`/`leverage` sont dérivés (source native conservée dans `xtras`).
+ * Champs nullables si non fournis. `xtras` = natif hors cœur, omis si vide.
+ */
+export interface Position {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Sens : `long`/`short` (`null` si plate). */
+  side: 'long' | 'short' | null;
+  /** Taille absolue (chaîne décimale, sans signe). */
+  size: string;
+  /** Prix d'entrée ; `null` si non fourni. */
+  entryPrice: string | null;
+  /** Mark price ; `null` si non fourni. */
+  markPrice: string | null;
+  /** PnL non réalisé ; `null` si non fourni. */
+  unrealizedPnl: string | null;
+  /** Levier ; `null` si non fourni. */
+  leverage: number | null;
+  /** Prix de liquidation ; `null` si non fourni. */
+  liquidationPrice: string | null;
+  /** Marge engagée ; `null` si non fournie. */
+  margin: string | null;
+  /** Champs natifs hors cœur (rien jeté), omis si vide. */
+  xtras?: Record<string, unknown>;
+}
+
+/**
  * Snapshot de prix d'un marché au **format unifié Blackcube** (cœur identique entre les SDK).
  * Chaque exchange remplit ce qu'il fournit ; le reste est `null`. `xtras` porte le hors-cœur.
  */
