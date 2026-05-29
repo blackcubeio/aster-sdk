@@ -3,10 +3,10 @@ import { init } from '../src/common/config';
 import type { Hex, Network } from '../src/common/types';
 import { getAccountInfo } from '../src/rest/futures/account/get-account-info';
 import { getCommissionRate } from '../src/rest/futures/account/get-commission-rate';
-import { getOpenOrders } from '../src/rest/futures/account/get-open-orders';
 import { getAgents } from '../src/rest/futures/agent/agents';
 import { closeListenKey, createListenKey } from '../src/rest/futures/user-stream/listen-key';
 import { getBalances } from '../src/rest/get-balances';
+import { getOpenOrders } from '../src/rest/get-open-orders';
 import { getPositions } from '../src/rest/get-positions';
 import { privateKeyToAddress } from '../src/rest/signing';
 import { readEnv } from './_env';
@@ -66,9 +66,13 @@ describe.skipIf(ready === false)('futures signé — agent (réel)', () => {
     }
   });
 
-  it('getOpenOrders(BTCUSDT) renvoie un tableau', async () => {
-    const orders = await getOpenOrders('BTCUSDT', 'trader');
+  it('getOpenOrders renvoie un tableau d’ordres unifiés', async () => {
+    const orders = await getOpenOrders({ name: 'BTCUSDT' }, 'trader');
     expect(Array.isArray(orders)).toBe(true);
+    for (const o of orders) {
+      expect(['buy', 'sell']).toContain(o.side);
+      expect(typeof o.size).toBe('string');
+    }
   });
 
   it('getCommissionRate renvoie les taux maker/taker', async () => {

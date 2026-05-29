@@ -1,7 +1,7 @@
 import { OrderType } from '../../../common/types';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { NewOrderParams, Order } from '../types';
+import type { FuturesOrder, NewOrderParams } from '../types';
 import { buildOrderPayload } from './payloads';
 
 /**
@@ -10,16 +10,16 @@ import { buildOrderPayload } from './payloads';
  * voir {@link createLimitOrder} / {@link createMarketOrder}. Un `newClientOrderId` est
  * généré si absent.
  */
-export function createOrder(params: NewOrderParams, label: string): Promise<Order> {
+export function createOrder(params: NewOrderParams, label: string): Promise<FuturesOrder> {
   const { body, network } = buildSignedRequest(buildOrderPayload(params), label);
-  return httpPostForm<Order>('futures', '/fapi/v3/order', body, network);
+  return httpPostForm<FuturesOrder>('futures', '/fapi/v3/order', body, network);
 }
 
 /** Place a `LIMIT` order. Raccourci de {@link createOrder} avec `type: LIMIT`. */
 export function createLimitOrder(
   params: Omit<NewOrderParams, 'type'>,
   label: string,
-): Promise<Order> {
+): Promise<FuturesOrder> {
   return createOrder({ ...params, type: OrderType.Limit }, label);
 }
 
@@ -27,6 +27,6 @@ export function createLimitOrder(
 export function createMarketOrder(
   params: Omit<NewOrderParams, 'type'>,
   label: string,
-): Promise<Order> {
+): Promise<FuturesOrder> {
   return createOrder({ ...params, type: OrderType.Market }, label);
 }

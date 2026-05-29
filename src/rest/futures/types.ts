@@ -539,7 +539,8 @@ export interface FuturesBalance {
   updateTime: number;
 }
 
-export interface Order {
+/** Ordre natif Aster futures (réponse new/edit/cancel) — renommé pour libérer `Order` unifié. */
+export interface FuturesOrder {
   orderId: number;
   clientOrderId: string;
   symbol: string;
@@ -566,10 +567,10 @@ export interface Order {
 }
 
 /** Un ordre dans un batch peut renvoyer un succès (`Order`) ou une erreur par item. */
-export type BatchOrderResult = Order | CodeMsg;
+export type BatchOrderResult = FuturesOrder | CodeMsg;
 
-/** Ordre renvoyé par les lectures (queryOrder/openOrders/allOrders) : `Order` + `time`. */
-export interface OrderDetail extends Order {
+/** Ordre renvoyé par les lectures (queryOrder/openOrders/allOrders) : `FuturesOrder` + `time`. */
+export interface OrderDetail extends FuturesOrder {
   time: number;
 }
 

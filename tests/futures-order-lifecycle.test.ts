@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { init, resetConfig } from '../src/common/config';
 import { type Hex, type Network, OrderSide, OrderType, TimeInForce } from '../src/common/types';
-import { getOpenOrders } from '../src/rest/futures/account/get-open-orders';
 import { cancelOrder } from '../src/rest/futures/trade/cancel-order';
 import { createOrder } from '../src/rest/futures/trade/new-order';
+import { getOpenOrders } from '../src/rest/get-open-orders';
 import { newClientOrderId } from '../src/rest/signing';
 import { readEnv } from './_env';
 
@@ -52,14 +52,14 @@ describe.skipIf(ready === false)(
       expect(created.status).toBe('NEW');
       expect(created.orderId).toBeGreaterThan(0);
 
-      const open = await getOpenOrders('BTCUSDT', 'trader');
-      expect(open.some((order) => order.orderId === created.orderId)).toBe(true);
+      const open = await getOpenOrders({ name: 'BTCUSDT' }, 'trader');
+      expect(open.some((order) => order.id === String(created.orderId))).toBe(true);
 
       const canceled = await cancelOrder({ symbol: 'BTCUSDT', orderId: created.orderId }, 'trader');
       expect(canceled.status).toBe('CANCELED');
 
-      const after = await getOpenOrders('BTCUSDT', 'trader');
-      expect(after.some((order) => order.orderId === created.orderId)).toBe(false);
+      const after = await getOpenOrders({ name: 'BTCUSDT' }, 'trader');
+      expect(after.some((order) => order.id === String(created.orderId))).toBe(false);
     }, 30_000);
   },
 );

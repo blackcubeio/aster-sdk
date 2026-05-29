@@ -13,6 +13,7 @@ export * from './rest/get-trades';
 export * from './rest/get-funding-history';
 export * from './rest/get-balances';
 export * from './rest/get-positions';
+export * from './rest/get-open-orders';
 
 export * from './rest/futures/types';
 
@@ -34,7 +35,6 @@ export * from './rest/futures/account/get-account-info';
 export * from './rest/futures/account/transfer-futures-spot';
 export * from './rest/futures/account/query-order';
 export * from './rest/futures/account/get-open-order';
-export * from './rest/futures/account/get-open-orders';
 export * from './rest/futures/account/get-all-orders';
 export * from './rest/futures/account/get-user-trades';
 export * from './rest/futures/account/get-income';
