@@ -104,8 +104,9 @@ function parseResponse<TData>(response: Response): Promise<TData> {
   return response.text().then((body) => {
     const parsed = tryParseJson(body);
     if (response.ok === false) {
-      const error = parsed as { code?: number; msg?: string } | null;
-      const message = error?.msg ?? (body === '' ? `HTTP ${response.status}` : body);
+      const error = parsed as { code?: number; msg?: string; error?: string } | null;
+      const message =
+        error?.msg ?? error?.error ?? (body === '' ? `HTTP ${response.status}` : body);
       throw new AsterApiError(response.status, error?.code ?? null, message);
     }
     if (parsed === null) {

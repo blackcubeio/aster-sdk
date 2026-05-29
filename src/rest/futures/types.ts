@@ -103,6 +103,31 @@ export interface ListenKey {
   listenKey: string;
 }
 
+export interface SubAccountBalance {
+  asset: string;
+  balance: string;
+}
+
+/** Forme réelle (vérifiée sur mainnet) ; diffère de la doc (`subAccountName` parfois absent). */
+export interface SubAccount {
+  address: string;
+  accountId: number;
+  parentAccount: boolean;
+  subAccountName?: string;
+  futureBalanceList?: SubAccountBalance[];
+}
+
+export enum SubAccountStatus {
+  Normal = 'NORMAL',
+  Frozen = 'FROZEN',
+}
+
+export interface UpdateSubAccountParams {
+  subSourceAddr: string;
+  subAccountName?: string;
+  status?: SubAccountStatus;
+}
+
 export interface PriceLevel {
   price: string;
   qty: string;

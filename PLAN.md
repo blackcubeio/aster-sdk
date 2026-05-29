@@ -45,10 +45,14 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
 - **Phase 3b — Futures user-data stream — ✅ DONE.** createListenKey / keepAliveListenKey /
   closeListenKey (USER_STREAM) + `FuturesUserDataStream` (raw `/ws/<listenKey>`, dispatch by event
   `e`). listenKey create+close validated on mainnet. **MMP (×4) still deferred.**
-- **Phase 4 — Account management (main-wallet signed).** ⚠️ blocked on empirically validating the
-  main-wallet signing scheme (chainId 56 vs 1666, dynamic-typed vs `Message{msg}`). Covers
-  registerAndApproveAgent, approve/update/del/get agent, builders, sub-accounts (×5), asset
-  migrate (×2), withdraw.
+- **Phase 4 — Account management (main-wallet signed).** ✅ **Signing scheme VALIDATED on mainnet**:
+  same `Message{msg}` EIP-712, **chainId 1666/714** (not 56), signed with the main wallet key,
+  endpoint-specific ordered msg incl. `user`. Proven via a non-destructive `updateSubAccount` probe
+  on a bogus sub-account → server returned a business error (`subaccount relation error`), not
+  `-1022`. Primitives shipped: `resolveMainSigner`, `buildSignedForm`. Endpoints done:
+  `getSubAccountList` (agent-signed, real-tested), `updateSubAccount` (main-signed). **Remaining
+  Phase 4 endpoints are now mechanical**: registerAndApproveAgent, approve/update/del/get agent,
+  builders, createSubAccount, subAccountTransfer, migrateUser (+history), withdraw.
 - **Phase 5 — Spot.** market (13), trade (8: order, cancel, query, open/all orders, cancel-all,
   perp-spot transfer, withdraw + fee), account (info, trades), spot WS streams + user-data.
 

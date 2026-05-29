@@ -194,6 +194,21 @@ export function signerAddress(signer: Signer): Hex {
   return signer.signer ?? privateKeyToAddress(signer.privateKey);
 }
 
+/**
+ * Résout le **main wallet** d'une action de gestion de compte (approveAgent, sous-comptes,
+ * withdraw, migrate…). `mainPrivateKey` est obligatoire pour ces actions signées par le
+ * compte principal ; lève s'il est absent.
+ */
+export function resolveMainSigner(label?: string): ResolvedSigner & { mainPrivateKey: Hex } {
+  const resolved = resolveSigner(label);
+  if (resolved.mainPrivateKey === undefined) {
+    throw new Error(
+      `Le signer "${resolved.label}" n'a pas de mainPrivateKey ; requis pour les actions signées par le compte principal`,
+    );
+  }
+  return { ...resolved, mainPrivateKey: resolved.mainPrivateKey };
+}
+
 export interface SignedForm {
   /** Corps `application/x-www-form-urlencoded` complet, signature incluse. */
   body: string;
@@ -201,24 +216,35 @@ export interface SignedForm {
 }
 
 /**
+ * Cœur générique : sérialise des paramètres **déjà ordonnés** en querystring, signe cette
+ * chaîne exacte (EIP-712 Message{msg}, chainId du réseau), et appose `&signature=…`. La
+ * chaîne est transmise telle quelle pour que le serveur reconstruise un `msg` identique.
+ * L'ordre des champs fait partie du message : l'appelant le maîtrise.
+ */
+export function buildSignedForm(
+  orderedParams: Record<string, JsonValue | undefined>,
+  privateKey: Hex,
+  network: Network,
+): SignedForm {
+  const msg = serializeParams(orderedParams);
+  const signature = signMessage(msg, privateKey, AGENT_CHAIN_ID[network]);
+  return { body: `${msg}&signature=${signature}`, network };
+}
+
+/**
  * Construit une requête signée **agent** (TRADE / USER_DATA) : ajoute `nonce` (µs) et
- * `signer` aux paramètres métier, sérialise en querystring, signe cette chaîne exacte,
- * puis y appose `&signature=…`. La chaîne renvoyée est transmise telle quelle (corps ou
- * query) pour que le serveur reconstruise un `msg` identique.
+ * `signer` aux paramètres métier, puis signe avec la clé de l'API wallet.
  */
 export function buildSignedRequest(
   params: Record<string, JsonValue | undefined>,
   label?: string,
 ): SignedForm {
   const resolved = resolveSigner(label);
-  const signedParams: Record<string, JsonValue | undefined> = {
-    ...params,
-    nonce: microsecondNonce(),
-    signer: resolved.signer,
-  };
-  const msg = serializeParams(signedParams);
-  const signature = signMessage(msg, resolved.privateKey, AGENT_CHAIN_ID[resolved.network]);
-  return { body: `${msg}&signature=${signature}`, network: resolved.network };
+  return buildSignedForm(
+    { ...params, nonce: microsecondNonce(), signer: resolved.signer },
+    resolved.privateKey,
+    resolved.network,
+  );
 }
 
 /** Identifiant client d'ordre unique (respecte `^[\.A-Z\:/a-z0-9_-]{1,36}$`). */
