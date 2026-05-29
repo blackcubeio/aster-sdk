@@ -3,9 +3,9 @@ import { init } from '../src/common/config';
 import { type Hex, KlineInterval } from '../src/common/types';
 import { getBookTicker } from '../src/rest/futures/market/get-book-ticker';
 import { getExchangeInfo } from '../src/rest/futures/market/get-exchange-info';
-import { getKlines } from '../src/rest/futures/market/get-klines';
 import { getServerTime } from '../src/rest/futures/market/get-server-time';
 import { ping } from '../src/rest/futures/market/ping';
+import { getCandles } from '../src/rest/get-candles';
 import { getOrderBook } from '../src/rest/get-order-book';
 import { getPairs } from '../src/rest/get-pairs';
 import { getPrices } from '../src/rest/get-prices';
@@ -67,9 +67,9 @@ describe('futures market data (testnet réel)', () => {
     expect(pairs.some((p) => p.kind === 'spot')).toBe(true);
   });
 
-  it('getKlines décode des bougies positionnelles', async () => {
-    const candles = await getKlines(
-      { symbol: 'BTCUSDT', interval: KlineInterval.OneHour, limit: 3 },
+  it('getCandles décode des bougies positionnelles', async () => {
+    const candles = await getCandles(
+      { name: 'BTCUSDT', interval: KlineInterval.OneHour, limit: 3 },
       TN,
     );
     expect(candles).toHaveLength(3);

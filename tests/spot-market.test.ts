@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { init } from '../src/common/config';
 import { type Hex, KlineInterval } from '../src/common/types';
+import { getCandles } from '../src/rest/get-candles';
 import { getOrderBook } from '../src/rest/get-order-book';
 import { getBookTickerSpot } from '../src/rest/spot/market/get-book-ticker';
 import { getExchangeInfoSpot } from '../src/rest/spot/market/get-exchange-info';
-import { getKlinesSpot } from '../src/rest/spot/market/get-klines';
 import { getServerTimeSpot } from '../src/rest/spot/market/get-server-time';
 import { pingSpot } from '../src/rest/spot/market/ping';
 
@@ -50,9 +50,9 @@ describe('spot market data (testnet réel)', () => {
     expect(book.asks[0]?.n).toBeNull();
   });
 
-  it('getKlinesSpot décode des bougies (11 colonnes)', async () => {
-    const candles = await getKlinesSpot(
-      { symbol: SYMBOL, interval: KlineInterval.OneHour, limit: 3 },
+  it('getCandles (spot) décode des bougies', async () => {
+    const candles = await getCandles(
+      { name: SYMBOL, interval: KlineInterval.OneHour, kind: 'spot', limit: 3 },
       TN,
     );
     expect(candles).toHaveLength(3);

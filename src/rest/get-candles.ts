@@ -1,7 +1,6 @@
-import type { KlineInterval, MarketKind } from '../common/types';
-import { getKlines } from './futures/market/get-klines';
-import type { Kline } from './futures/types';
-import { getKlinesSpot } from './spot/market/get-klines';
+import type { Candle, KlineInterval, MarketKind } from '../common/types';
+import { httpGet } from './client';
+import { CandleConverter, type CandleNative } from './converters/candle';
 
 /** Paramètres unifiés (mêmes champs sur les 3 SDK). */
 export interface GetCandlesParams {
@@ -20,18 +19,26 @@ export interface GetCandlesParams {
 }
 
 /**
- * Bougies au **format unifié** (`getCandles`, même API sur les 3 SDK). `kind` route vers le
- * produit futures (`perp`) ou spot d'Aster. Retour `Kline[]` (shape identique au spot).
+ * Bougies au **format unifié** `Candle` (`getCandles`, même API sur les 3 SDK).
+ * `kind` route vers le produit futures (`perp`) ou spot d'Aster (fetch direct + converter).
  */
-export function getCandles(params: GetCandlesParams, label?: string): Promise<Kline[]> {
-  const query = {
-    symbol: params.name,
-    interval: params.interval as KlineInterval,
-    startTime: params.startTime,
-    endTime: params.endTime,
-    limit: params.limit,
-  };
-  return params.kind === 'spot'
-    ? (getKlinesSpot(query, label) as unknown as Promise<Kline[]>)
-    : getKlines(query, label);
+export function getCandles(params: GetCandlesParams, label?: string): Promise<Candle[]> {
+  const kind = params.kind ?? 'perp';
+  const converter = new CandleConverter(params.name, params.interval, kind);
+  const [product, path] =
+    kind === 'spot'
+      ? (['spot', '/api/v3/klines'] as const)
+      : (['futures', '/fapi/v3/klines'] as const);
+  return httpGet<CandleNative[]>(
+    product,
+    path,
+    {
+      symbol: params.name,
+      interval: params.interval as KlineInterval,
+      startTime: params.startTime,
+      endTime: params.endTime,
+      limit: params.limit,
+    },
+    label,
+  ).then((wire) => wire.map((row) => converter.toCommon(row)));
 }

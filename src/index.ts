@@ -86,7 +86,6 @@ export * from './rest/spot/market/get-server-time';
 export * from './rest/spot/market/get-exchange-info';
 export * from './rest/spot/market/get-historical-trades';
 export * from './rest/spot/market/get-agg-trades';
-export * from './rest/spot/market/get-klines';
 export * from './rest/spot/market/get-ticker-24hr';
 export * from './rest/spot/market/get-price-ticker';
 export * from './rest/spot/market/get-book-ticker';
