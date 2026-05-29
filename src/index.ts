@@ -5,6 +5,7 @@ export * from './common/utils';
 
 export * from './rest/client';
 export * from './rest/signing';
+export * from './rest/get-pairs';
 
 export * from './rest/futures/types';
 

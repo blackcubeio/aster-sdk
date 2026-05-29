@@ -8,6 +8,7 @@ import { getMarkPrice } from '../src/rest/futures/market/get-mark-price';
 import { getOrderBook } from '../src/rest/futures/market/get-order-book';
 import { getServerTime } from '../src/rest/futures/market/get-server-time';
 import { ping } from '../src/rest/futures/market/ping';
+import { getPairs } from '../src/rest/get-pairs';
 
 // Lectures market data réelles sur le **testnet** futures (fapi.asterdex-testnet.com),
 // non signées. Le label `tn` ne sert qu'à sélectionner le réseau (aucune signature).
@@ -48,6 +49,18 @@ describe('futures market data (testnet réel)', () => {
     expect(book.asks.length).toBeGreaterThan(0);
     expect(Number(book.bids[0]?.price)).toBeGreaterThan(0);
     expect(Number(book.asks[0]?.qty)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('getPairs renvoie le format unifié (perp + spot)', async () => {
+    const pairs = await getPairs(TN);
+    expect(pairs.length).toBeGreaterThan(0);
+    const btc = pairs.find((p) => p.base === 'BTC' && p.kind === 'perp');
+    expect(btc?.name).toBe('BTCUSDT');
+    expect(btc?.quote).toBe('USDT');
+    expect(typeof btc?.szDecimals).toBe('number');
+    expect(typeof btc?.tickSize).toBe('string');
+    expect(typeof btc?.raw).toBe('object');
+    expect(pairs.some((p) => p.kind === 'spot')).toBe(true);
   });
 
   it('getKlines décode des bougies positionnelles', async () => {
