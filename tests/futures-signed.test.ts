@@ -2,12 +2,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { init } from '../src/common/config';
 import type { Hex, Network } from '../src/common/types';
 import { getAccountInfo } from '../src/rest/futures/account/get-account-info';
-import { getBalance } from '../src/rest/futures/account/get-balance';
 import { getCommissionRate } from '../src/rest/futures/account/get-commission-rate';
 import { getOpenOrders } from '../src/rest/futures/account/get-open-orders';
 import { getPositionRisk } from '../src/rest/futures/account/get-position-risk';
 import { getAgents } from '../src/rest/futures/agent/agents';
 import { closeListenKey, createListenKey } from '../src/rest/futures/user-stream/listen-key';
+import { getBalances } from '../src/rest/get-balances';
 import { privateKeyToAddress } from '../src/rest/signing';
 import { readEnv } from './_env';
 
@@ -40,12 +40,13 @@ describe.skipIf(ready === false)('futures signé — agent (réel)', () => {
     }
   });
 
-  it('getBalance renvoie les soldes du compte (signature agent acceptée)', async () => {
-    const balances = await getBalance('trader');
+  it('getBalances renvoie les soldes unifiés (signature agent acceptée)', async () => {
+    const balances = await getBalances({}, 'trader');
     expect(Array.isArray(balances)).toBe(true);
     for (const entry of balances) {
       expect(typeof entry.asset).toBe('string');
-      expect(typeof entry.balance).toBe('string');
+      expect(typeof entry.total).toBe('string');
+      expect(entry.usdValue).toBeNull();
     }
   });
 
