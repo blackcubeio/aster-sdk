@@ -65,7 +65,7 @@ export class CandleConverter {
       candle.n,
       candle.tbbv as string,
       candle.tbqv as string,
-      candle.xtras.ignore as string,
+      candle.xtras?.ignore as string,
     ];
   }
 }

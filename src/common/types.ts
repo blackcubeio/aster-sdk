@@ -84,9 +84,9 @@ export interface Candle {
   tbqv: string | null;
   /**
    * Reste des champs **non standard / non modélisés**, propres à l'exchange (rien n'est jeté).
-   * Aster : `{ ignore }` (12ᵉ colonne wire). HL/Pacifica : `{}` si le wire n'a pas d'extra.
+   * **Optionnel** : omis quand il n'y a rien à y mettre. Aster : `{ ignore }` (12ᵉ colonne wire).
    */
-  xtras: Record<string, unknown>;
+  xtras?: Record<string, unknown>;
 }
 
 /**
