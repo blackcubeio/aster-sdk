@@ -9,7 +9,9 @@ Aster L1 / BNB Chain). Organised like the [Aster API docs](https://github.com/as
 ### REST API — futures (`/fapi/v3/*`)
 - [Market data](./rest-api/futures-market.md) — public reads: exchange info, depth, trades, klines,
   mark price, funding, tickers, index references
-- Trading & account *(roadmap — see [PLAN.md](../PLAN.md))*
+- [Trading & config](./rest-api/futures-trading.md) — signed: orders (create/modify/cancel/batch/
+  chase), position & STP & multi-assets modes, leverage, margin, transfer, balance
+- Account reads (positions, trades, income…) *(roadmap — see [PLAN.md](../PLAN.md))*
 
 ### REST API — spot (`/api/v3/*`)
 - *(roadmap — see [PLAN.md](../PLAN.md))*

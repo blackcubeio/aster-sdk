@@ -300,6 +300,32 @@ export interface NewOrderParams {
   stpMode?: StpMode;
 }
 
+/** Réponse générique `{ code, msg }` des actions de configuration. */
+export interface CodeMsg {
+  code: number;
+  msg: string;
+}
+
+export enum MarginType {
+  Isolated = 'ISOLATED',
+  Crossed = 'CROSSED',
+}
+
+export enum TransferKind {
+  FuturesToSpot = 'FUTURE_SPOT',
+  SpotToFutures = 'SPOT_FUTURE',
+}
+
+export enum QuantityUnit {
+  Base = 'BASE',
+  Quote = 'QUOTE',
+}
+
+export enum ChaseOffsetType {
+  Absolute = 'ABSOLUTE',
+  Percentage = 'PERCENTAGE',
+}
+
 export interface FuturesBalance {
   accountAlias: string;
   asset: string;
@@ -335,5 +361,130 @@ export interface Order {
   priceProtect: boolean;
   activatePrice?: string;
   priceRate?: string;
+  updateTime: number;
+}
+
+/** Un ordre dans un batch peut renvoyer un succès (`Order`) ou une erreur par item. */
+export type BatchOrderResult = Order | CodeMsg;
+
+export interface ModifyOrderParams {
+  symbol: string;
+  quantity: string;
+  price: string;
+  orderId?: number;
+  origClientOrderId?: string;
+}
+
+export interface CancelOrderParams {
+  symbol: string;
+  orderId?: number;
+  origClientOrderId?: string;
+}
+
+export interface CancelMultipleOrdersParams {
+  symbol: string;
+  orderIdList?: number[];
+  origClientOrderIdList?: string[];
+}
+
+export interface CountdownCancelAllParams {
+  symbol: string;
+  /** 1000 = 1 s ; 0 annule le minuteur. */
+  countdownTime: number;
+}
+
+export interface CountdownCancelAllResult {
+  symbol: string;
+  countdownTime: string;
+}
+
+export interface SetLeverageParams {
+  symbol: string;
+  leverage: number;
+}
+
+export interface LeverageResult {
+  symbol: string;
+  leverage: number;
+  maxNotionalValue: string;
+}
+
+export interface SetMarginTypeParams {
+  symbol: string;
+  marginType: MarginType;
+}
+
+export interface ModifyIsolatedMarginParams {
+  symbol: string;
+  amount: string;
+  /** 1 : ajouter de la marge ; 2 : retirer de la marge. */
+  type: 1 | 2;
+  positionSide?: PositionSide;
+}
+
+export interface ModifyIsolatedMarginResult {
+  amount: number;
+  type: number;
+  code: number;
+  msg: string;
+}
+
+export interface TransferParams {
+  asset: string;
+  amount: string;
+  clientTranId: string;
+  kindType: TransferKind;
+}
+
+export interface TransferResult {
+  tranId: number;
+  status: string;
+}
+
+export interface PositionModeResult {
+  dualSidePosition: boolean;
+}
+
+export interface StpModeResult {
+  stpMode: StpMode;
+}
+
+export interface MultiAssetsModeResult {
+  multiAssetsMargin: boolean;
+}
+
+export interface ChaseOrderParams {
+  symbol: string;
+  side: OrderSide;
+  quantityUnit: QuantityUnit;
+  quantity: string;
+  positionSide?: PositionSide;
+  reduceOnly?: boolean;
+  chaseOffset?: string;
+  chaseOffsetType?: ChaseOffsetType;
+  maxChaseOffset?: string;
+  maxChaseOffsetType?: ChaseOffsetType;
+  priceLimit?: string;
+  timeInForce?: TimeInForce;
+  clientStrategyId?: string;
+}
+
+export interface ChaseOrder {
+  strategyId: number;
+  clientStrategyId: string;
+  symbol: string;
+  side: OrderSide;
+  positionSide: PositionSide;
+  quantity: string;
+  quantityUnit: QuantityUnit;
+  reduceOnly: boolean;
+  chaseOffset: string;
+  chaseOffsetType: ChaseOffsetType;
+  maxChaseOffset: string;
+  maxChaseOffsetType: ChaseOffsetType;
+  priceLimit: string;
+  timeInForce: TimeInForce;
+  strategyStatus: string;
+  bookTime: number;
   updateTime: number;
 }

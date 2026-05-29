@@ -27,7 +27,21 @@ export * from './rest/futures/market/get-book-ticker';
 export * from './rest/futures/market/get-index-price-references';
 
 export * from './rest/futures/account/get-balance';
+export * from './rest/futures/account/transfer-futures-spot';
 
 export * from './rest/futures/trade/new-order';
+export * from './rest/futures/trade/modify-order';
+export * from './rest/futures/trade/cancel-order';
+export * from './rest/futures/trade/cancel-all-open-orders';
+export * from './rest/futures/trade/cancel-multiple-orders';
+export * from './rest/futures/trade/batch-orders';
+export * from './rest/futures/trade/countdown-cancel-all';
+export * from './rest/futures/trade/chase-order';
+export * from './rest/futures/trade/position-mode';
+export * from './rest/futures/trade/stp-mode';
+export * from './rest/futures/trade/multi-assets-mode';
+export * from './rest/futures/trade/set-leverage';
+export * from './rest/futures/trade/set-margin-type';
+export * from './rest/futures/trade/modify-isolated-margin';
 
 export * from './ws/futures-client';

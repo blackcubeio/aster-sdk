@@ -32,9 +32,12 @@ One file per endpoint, wire→camelCase mapping, signer registry by **label** (n
 - **Phase 1 — Foundation + futures market — ✅ DONE (this branch `feature/aster-sdk-init`)**
   Configs, `common`, `client`, `signing` (agent), futures market data (17 endpoints), futures WS
   market streams, witness `createOrder`, signing unit tests, docs.
-- **Phase 2 — Futures trading.** newOrder (full), modify, chase, batch, cancel (×4), countdown,
-  positionMode/STP/multiAssets get+set, leverage, marginType, isolated margin, strategy orders,
-  futures↔spot transfer. → exercises agent signing end-to-end on testnet.
+- **Phase 2 — Futures trading — ✅ DONE.** createOrder, modifyOrder, chaseOrder, batchOrders,
+  cancelOrder, cancelAllOpenOrders, cancelMultipleOrders, countdownCancelAll,
+  positionMode/STP/multiAssets (get+set), setLeverage, setMarginType, modifyIsolatedMargin,
+  transferFuturesSpot, getBalance. Offline payload/signing tests green. **Strategy orders
+  (place/update/query) deferred to Phase 2b.** Live order placement not yet run (mainnet keys with
+  real funds — needs explicit go / testnet).
 - **Phase 3 — Futures account (USER_DATA reads).** balance, account info, position info, trades,
   income, leverage brackets, ADL, force orders, commission, margin history, query/open/all orders,
   MMP (×4). User-data WebSocket (`listenKey`).
