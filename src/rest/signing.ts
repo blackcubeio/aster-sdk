@@ -131,6 +131,49 @@ export function hashMessage(msg: string, chainId: number): Uint8Array {
   );
 }
 
+function inferEip712Type(value: JsonValue): string {
+  if (typeof value === 'boolean') {
+    return 'bool';
+  }
+  if (typeof value === 'number') {
+    return 'uint256';
+  }
+  return 'string';
+}
+
+/**
+ * Signe une charge **EIP-712 typée dynamiquement** (domaine `AsterSignTransaction`,
+ * `chainId` = 56 BNB), utilisée par la gestion d'agents/builders legacy (approveAgent,
+ * updateAgent, delAgent…). Le `primaryType` nomme l'action ; les champs (ordre conservé)
+ * sont typés par inférence (`bool`/`uint256`/`string`). L'appelant fournit les clés
+ * **déjà capitalisées** attendues par le backend.
+ */
+export function signDynamicTypedData(
+  primaryType: string,
+  message: Record<string, JsonValue>,
+  privateKey: Hex,
+  chainId: number,
+): Signature {
+  const types: Eip712Types = {
+    [primaryType]: Object.keys(message).map((name) => ({
+      name,
+      type: inferEip712Type(message[name] as JsonValue),
+    })),
+  };
+  const digest = hashTypedData(
+    {
+      name: EIP712_DOMAIN_NAME,
+      version: EIP712_DOMAIN_VERSION,
+      chainId,
+      verifyingContract: ZERO_ADDRESS,
+    },
+    types,
+    primaryType,
+    message,
+  );
+  return signDigest(digest, privateKey);
+}
+
 /**
  * Signe le message `msg` avec l'EIP-712 agent (cf. {@link hashMessage}). Renvoie la
  * signature ECDSA secp256k1 sérialisée `r ‖ s ‖ v` (65 octets, préfixée `0x`).
@@ -232,8 +275,10 @@ export function buildSignedForm(
 }
 
 /**
- * Construit une requête signée **agent** (TRADE / USER_DATA) : ajoute `nonce` (µs) et
- * `signer` aux paramètres métier, puis signe avec la clé de l'API wallet.
+ * Construit une requête signée **agent** (TRADE / USER_DATA) : ajoute `nonce` (µs), `user`
+ * (compte principal) et `signer` (API wallet) aux paramètres métier, puis signe avec la clé
+ * de l'API wallet. `user` est requis par le backend (vérifié sur testnet) pour résoudre le
+ * compte associé à l'agent.
  */
 export function buildSignedRequest(
   params: Record<string, JsonValue | undefined>,
@@ -241,7 +286,7 @@ export function buildSignedRequest(
 ): SignedForm {
   const resolved = resolveSigner(label);
   return buildSignedForm(
-    { ...params, nonce: microsecondNonce(), signer: resolved.signer },
+    { ...params, nonce: microsecondNonce(), user: resolved.user, signer: resolved.signer },
     resolved.privateKey,
     resolved.network,
   );

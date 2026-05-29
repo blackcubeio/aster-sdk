@@ -68,7 +68,7 @@ describe('buildSignedRequest', () => {
     expect(network).toBe('mainnet');
     expect(body).toMatch(
       new RegExp(
-        `^symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.01&nonce=\\d+&signer=${DOC_SIGNER}&signature=0x[0-9a-f]{130}$`,
+        `^symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.01&nonce=\\d+&user=0x63DD5aCC6b1aa0f563956C0e534DD30B6dcF7C4e&signer=${DOC_SIGNER}&signature=0x[0-9a-f]{130}$`,
       ),
     );
   });

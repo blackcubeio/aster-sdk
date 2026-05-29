@@ -10,12 +10,13 @@ import { closeListenKey, createListenKey } from '../src/rest/futures/user-stream
 import { privateKeyToAddress } from '../src/rest/signing';
 import { readEnv } from './_env';
 
-// Signature agent réelle : lecture USER_DATA non destructive (GET /fapi/v3/balance).
-// Nécessite un .env avec le main wallet (EVM_*) et l'API wallet (WALLET_ASTER_API1_*).
+// Signature agent réelle : lectures USER_DATA non destructives. On cible un agent
+// **stable** : API2 = « PGA Bot 2 » sur testnet (lié au compte, vérifié). `user` est
+// l'adresse publique du compte principal. La clé EVM n'est pas requise pour ces lectures.
 const USER = readEnv('EVM_PUBLIC_KEY') as Hex | undefined;
-const AGENT_KEY = readEnv('WALLET_ASTER_API1_PRIVATE_KEY') as Hex | undefined;
-const AGENT_ADDR = readEnv('WALLET_ASTER_API1_PUBLIC_KEY') as Hex | undefined;
-const NETWORK = (readEnv('ASTER_NETWORK') as Network | undefined) ?? 'mainnet';
+const AGENT_KEY = readEnv('WALLET_ASTER_API2_PRIVATE_KEY') as Hex | undefined;
+const AGENT_ADDR = readEnv('WALLET_ASTER_API2_PUBLIC_KEY') as Hex | undefined;
+const NETWORK = (readEnv('ASTER_NETWORK') as Network | undefined) ?? 'testnet';
 const ready = USER !== undefined && AGENT_KEY !== undefined;
 
 describe.skipIf(ready === false)('futures signé — agent (réel)', () => {
