@@ -381,17 +381,6 @@ export interface AggTrade {
  */
 export type Kline = Candle;
 
-export interface MarkPrice {
-  symbol: string;
-  markPrice: string;
-  indexPrice: string;
-  estimatedSettlePrice: string;
-  lastFundingRate: string;
-  nextFundingTime: number;
-  interestRate: string;
-  time: number;
-}
-
 export interface FundingRateEntry {
   symbol: string;
   fundingRate: string;

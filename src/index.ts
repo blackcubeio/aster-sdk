@@ -8,6 +8,7 @@ export * from './rest/signing';
 export * from './rest/get-pairs';
 export * from './rest/get-candles';
 export * from './rest/get-order-book';
+export * from './rest/get-prices';
 
 export * from './rest/futures/types';
 
@@ -20,7 +21,6 @@ export * from './rest/futures/market/get-agg-trades';
 export * from './rest/futures/market/get-klines';
 export * from './rest/futures/market/get-index-price-klines';
 export * from './rest/futures/market/get-mark-price-klines';
-export * from './rest/futures/market/get-mark-price';
 export * from './rest/futures/market/get-funding-rate-history';
 export * from './rest/futures/market/get-funding-info';
 export * from './rest/futures/market/get-ticker-24hr';

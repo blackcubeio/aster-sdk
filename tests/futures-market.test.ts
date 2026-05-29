@@ -4,11 +4,11 @@ import { type Hex, KlineInterval } from '../src/common/types';
 import { getBookTicker } from '../src/rest/futures/market/get-book-ticker';
 import { getExchangeInfo } from '../src/rest/futures/market/get-exchange-info';
 import { getKlines } from '../src/rest/futures/market/get-klines';
-import { getMarkPrice } from '../src/rest/futures/market/get-mark-price';
 import { getServerTime } from '../src/rest/futures/market/get-server-time';
 import { ping } from '../src/rest/futures/market/ping';
 import { getOrderBook } from '../src/rest/get-order-book';
 import { getPairs } from '../src/rest/get-pairs';
+import { getPrices } from '../src/rest/get-prices';
 
 // Lectures market data réelles sur le **testnet** futures (fapi.asterdex-testnet.com),
 // non signées. Le label `tn` ne sert qu'à sélectionner le réseau (aucune signature).
@@ -79,14 +79,15 @@ describe('futures market data (testnet réel)', () => {
     expect(candles[0]?.kind).toBe('perp');
   });
 
-  it('getMarkPrice(symbol) renvoie un objet, sans symbole un tableau', async () => {
-    const one = await getMarkPrice('BTCUSDT', TN);
-    expect(one.symbol).toBe('BTCUSDT');
-    expect(Number(one.markPrice)).toBeGreaterThan(0);
-
-    const all = await getMarkPrice(undefined, TN);
-    expect(Array.isArray(all)).toBe(true);
-    expect(all.length).toBeGreaterThan(1);
+  it('getPrices renvoie les prix unifiés (mark/oracle/funding)', async () => {
+    const prices = await getPrices(TN);
+    expect(prices.length).toBeGreaterThan(1);
+    const btc = prices.find((p) => p.name === 'BTCUSDT');
+    expect(btc?.kind).toBe('perp');
+    expect(Number(btc?.mark)).toBeGreaterThan(0);
+    expect(Number(btc?.oracle)).toBeGreaterThan(0);
+    expect(btc?.mid).toBeNull();
+    expect(typeof btc?.xtras?.interestRate).toBe('string');
   });
 
   it('getBookTicker renvoie le meilleur bid/ask', async () => {
