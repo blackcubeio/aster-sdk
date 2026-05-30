@@ -76,4 +76,31 @@ describe('UnifiedWsClient Aster (futures mainnet réel, public)', () => {
     },
     30_000,
   );
+
+  it(
+    'subscribeBbo délivre un OrderBook (1 niveau par côté)',
+    async () => {
+      const client = new UnifiedWsClient({ label: MN });
+      await client.connect();
+      try {
+        const book = await new Promise<Record<string, unknown>>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('timeout bbo')), 25_000);
+          client.subscribeBbo({ name: 'BTCUSDT', kind: 'perp' }, (received) => {
+            clearTimeout(timer);
+            resolve(received as unknown as Record<string, unknown>);
+          });
+        });
+        expect(book.name).toBe('BTCUSDT');
+        expect(book.kind).toBe('perp');
+        const bids = book.bids as Array<{ price: string; n: number | null }>;
+        const asks = book.asks as Array<{ price: string }>;
+        expect(typeof bids[0].price).toBe('string');
+        expect(typeof asks[0].price).toBe('string');
+        expect(bids[0].n).toBeNull();
+      } finally {
+        client.disconnect();
+      }
+    },
+    30_000,
+  );
 });

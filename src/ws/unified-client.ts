@@ -1,5 +1,6 @@
 import type { WebSocketFactory } from '../common/config';
-import type { Candle, KlineInterval, MarketKind, Trade } from '../common/types';
+import type { Candle, KlineInterval, MarketKind, OrderBook, Trade } from '../common/types';
+import { type BookTickerWsNative, BboWsConverter } from './converters/bbo';
 import { CandleWsConverter, type KlineWsNative } from './converters/candle';
 import { type AggTradeWsNative, TradeWsConverter } from './converters/trade';
 import { FuturesWsClient } from './futures-client';
@@ -61,6 +62,19 @@ export class UnifiedWsClient {
     const client = (params.kind ?? 'perp') === 'spot' ? this.spot : this.futures;
     return client.subscribeAggTrade(params.name, (raw) => {
       handler(converter.toCommon(raw as unknown as AggTradeWsNative));
+    });
+  }
+
+  /** Meilleure limite (BBO) temps réel → {@link OrderBook} (1 niveau par côté). */
+  public subscribeBbo(
+    params: { name: string; kind?: MarketKind },
+    handler: (book: OrderBook) => void,
+  ): Unsubscribe {
+    const kind = params.kind ?? 'perp';
+    const converter = new BboWsConverter(kind);
+    const client = kind === 'spot' ? this.spot : this.futures;
+    return client.subscribeBookTicker(params.name, (raw) => {
+      handler(converter.toCommon(raw as unknown as BookTickerWsNative));
     });
   }
 }
