@@ -3,7 +3,7 @@ import type { Trade } from '../../src/common/types';
 import { TradeConverter, type TradeNative } from '../../src/converters/trade';
 
 /** Clés du cœur unifié (hors xtras) — DOIVENT être identiques sur les 3 SDK. */
-export const TRADE_CORE_KEYS = ['id', 'maker', 'price', 'side', 'size', 'time'];
+const TRADE_CORE_KEYS = ['id', 'maker', 'price', 'side', 'size', 'time'];
 
 const FUTURES: TradeNative = {
   id: 42,
