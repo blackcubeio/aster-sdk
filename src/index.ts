@@ -19,6 +19,7 @@ export * from './rest/get-order-history';
 export * from './rest/update-leverage';
 export * from './rest/place-order';
 export * from './rest/cancel-order';
+export * from './rest/cancel-all-orders';
 
 export * from './rest/futures/types';
 
@@ -43,7 +44,6 @@ export * from './rest/futures/account/get-commission-rate';
 export * from './rest/futures/account/get-position-margin-history';
 
 export * from './rest/futures/trade/edit-order';
-export * from './rest/futures/trade/cancel-all-orders';
 export * from './rest/futures/trade/cancel-multiple-orders';
 export * from './rest/futures/trade/batch-orders';
 export * from './rest/futures/trade/countdown-cancel-all';
