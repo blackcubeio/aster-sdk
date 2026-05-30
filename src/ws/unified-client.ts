@@ -2,6 +2,7 @@ import type { WebSocketFactory } from '../common/config';
 import type { Candle, KlineInterval, MarketKind, OrderBook, Trade } from '../common/types';
 import { type BookTickerWsNative, BboWsConverter } from './converters/bbo';
 import { CandleWsConverter, type KlineWsNative } from './converters/candle';
+import { type DepthWsNative, OrderBookWsConverter } from './converters/order-book';
 import { type AggTradeWsNative, TradeWsConverter } from './converters/trade';
 import { FuturesWsClient } from './futures-client';
 import { SpotWsClient } from './spot-client';
@@ -75,6 +76,23 @@ export class UnifiedWsClient {
     const client = kind === 'spot' ? this.spot : this.futures;
     return client.subscribeBookTicker(params.name, (raw) => {
       handler(converter.toCommon(raw as unknown as BookTickerWsNative));
+    });
+  }
+
+  /** Carnet d'ordres (L2) temps réel → {@link OrderBook} (snapshot partiel 20 niveaux). */
+  public subscribeOrderBook(
+    params: { name: string; kind?: MarketKind },
+    handler: (book: OrderBook) => void,
+  ): Unsubscribe {
+    const kind = params.kind ?? 'perp';
+    const converter = new OrderBookWsConverter(kind);
+    if (kind === 'spot') {
+      return this.spot.subscribePartialDepth(params.name, 20, (raw) => {
+        handler(converter.toCommon(raw as unknown as DepthWsNative));
+      });
+    }
+    return this.futures.subscribePartialDepth(params.name, 20, (raw) => {
+      handler(converter.toCommon(raw as unknown as DepthWsNative));
     });
   }
 }
