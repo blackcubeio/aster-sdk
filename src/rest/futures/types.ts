@@ -773,10 +773,6 @@ export interface CountdownCancelAllResult {
   countdownTime: string;
 }
 
-export interface UpdateMarginModeParams {
-  symbol: string;
-  marginType: MarginType;
-}
 
 export interface UpdateIsolatedMarginParams {
   symbol: string;

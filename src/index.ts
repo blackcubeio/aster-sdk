@@ -21,6 +21,7 @@ export * from './rest/place-order';
 export * from './rest/cancel-order';
 export * from './rest/cancel-all-orders';
 export * from './rest/edit-order';
+export * from './rest/update-margin-mode';
 
 export * from './rest/futures/types';
 
@@ -51,7 +52,6 @@ export * from './rest/futures/trade/chase-order';
 export * from './rest/futures/trade/position-mode';
 export * from './rest/futures/trade/stp-mode';
 export * from './rest/futures/trade/multi-assets-mode';
-export * from './rest/futures/trade/update-margin-mode';
 export * from './rest/futures/trade/update-isolated-margin';
 export * from './rest/futures/trade/noop';
 export * from './rest/futures/trade/strategy-order';
