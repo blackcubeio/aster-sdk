@@ -1,9 +1,10 @@
 import type { AsterClient } from '../common/config';
 import type { WebSocketFactory, WebSocketLike } from '../common/config';
-import type { JsonObject, JsonValue, KlineInterval } from '../common/types';
+import type { JsonValue, KlineInterval } from '../common/types';
 import type { DepthLevels, DepthSpeed, FuturesWsOptions } from '../common/ws';
 import type { StreamHandler, Unsubscribe } from '../common/ws';
 import { resolveReadNetwork } from '../rest/client';
+import { SubscriptionBatcher } from './subscription-batcher';
 
 /**
  * Client WebSocket des flux de marché futures (`fstream`). Connexion en mode **combined**
@@ -19,12 +20,12 @@ export class FuturesWsClient {
   private readonly url: string;
   private readonly createSocket: WebSocketFactory;
   private socket: WebSocketLike | null = null;
-  private nextId = 1;
   private readonly handlers = new Map<string, Set<StreamHandler>>();
   private shouldReconnect = false;
-  /** Messages émis avant l'ouverture du socket, rejoués à `onopen`. */
-  private pending: string[] = [];
-  private open = false;
+  /** Coalesce + throttle les SUBSCRIBE/UNSUBSCRIBE (limite Aster : 10 messages/s par connexion). */
+  private readonly batcher = new SubscriptionBatcher((frame) => {
+    this.socket?.send(frame);
+  });
 
   constructor(client: AsterClient, options: FuturesWsOptions = {}) {
     this.url =
@@ -38,11 +39,7 @@ export class FuturesWsClient {
       const socket = this.createSocket(this.url);
       this.socket = socket;
       socket.onopen = () => {
-        this.open = true;
-        for (const payload of this.pending) {
-          socket.send(payload);
-        }
-        this.pending = [];
+        this.batcher.setOpen(true);
         resolve();
       };
       socket.onmessage = (event) => this.handleMessage(event.data);
@@ -58,8 +55,8 @@ export class FuturesWsClient {
 
   public disconnect(): void {
     this.shouldReconnect = false;
-    this.open = false;
-    this.pending = [];
+    this.batcher.setOpen(false);
+    this.batcher.reset();
     if (this.socket !== null) {
       this.socket.close();
       this.socket = null;
@@ -145,7 +142,7 @@ export class FuturesWsClient {
     if (handlerSet === undefined) {
       handlerSet = new Set();
       this.handlers.set(name, handlerSet);
-      this.send({ method: 'SUBSCRIBE', params: [name], id: this.nextId++ });
+      this.batcher.subscribe(name);
     }
     handlerSet.add(handler);
     return () => {
@@ -156,19 +153,9 @@ export class FuturesWsClient {
       set.delete(handler);
       if (set.size === 0) {
         this.handlers.delete(name);
-        this.send({ method: 'UNSUBSCRIBE', params: [name], id: this.nextId++ });
+        this.batcher.unsubscribe(name);
       }
     };
-  }
-
-  private send(payload: JsonObject): void {
-    const serialized = JSON.stringify(payload);
-    // Connexion paresseuse : tant que le socket n'est pas ouvert, on met en file (rejoué à onopen).
-    if (this.socket === null || this.open === false) {
-      this.pending.push(serialized);
-      return;
-    }
-    this.socket.send(serialized);
   }
 
   private handleMessage(raw: unknown): void {
@@ -196,7 +183,8 @@ export class FuturesWsClient {
 
   private handleClose(): void {
     this.socket = null;
-    this.open = false;
+    this.batcher.setOpen(false);
+    this.batcher.reset();
     if (this.onClose !== null) {
       this.onClose();
     }
@@ -208,9 +196,7 @@ export class FuturesWsClient {
   private reconnect(): void {
     this.connect()
       .then(() => {
-        for (const name of this.handlers.keys()) {
-          this.send({ method: 'SUBSCRIBE', params: [name], id: this.nextId++ });
-        }
+        this.batcher.resubscribe(this.handlers.keys());
         if (this.onReconnect !== null) {
           this.onReconnect();
         }
