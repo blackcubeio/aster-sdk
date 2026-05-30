@@ -16,6 +16,7 @@ export * from './rest/get-positions';
 export * from './rest/get-open-orders';
 export * from './rest/get-user-trades';
 export * from './rest/get-order-history';
+export * from './rest/update-leverage';
 
 export * from './rest/futures/types';
 
@@ -50,7 +51,6 @@ export * from './rest/futures/trade/chase-order';
 export * from './rest/futures/trade/position-mode';
 export * from './rest/futures/trade/stp-mode';
 export * from './rest/futures/trade/multi-assets-mode';
-export * from './rest/futures/trade/update-leverage';
 export * from './rest/futures/trade/update-margin-mode';
 export * from './rest/futures/trade/update-isolated-margin';
 export * from './rest/futures/trade/noop';
