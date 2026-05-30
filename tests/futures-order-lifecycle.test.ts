@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { init, resetConfig } from '../src/common/config';
-import { type Hex, type Network, OrderSide, OrderType, TimeInForce } from '../src/common/types';
+import type { Hex, Network } from '../src/common/types';
 import { cancelOrder } from '../src/rest/futures/trade/cancel-order';
-import { createOrder } from '../src/rest/futures/trade/new-order';
 import { getOpenOrders } from '../src/rest/get-open-orders';
+import { placeOrder } from '../src/rest/place-order';
 import { newClientOrderId } from '../src/rest/signing';
 import { readEnv } from './_env';
 
@@ -37,29 +37,32 @@ describe.skipIf(ready === false)(
 
     it('place un LIMIT loin du marché, le voit, l’annule, puis il a disparu', async () => {
       const clientOrderId = newClientOrderId();
-      const created = await createOrder(
+      const created = await placeOrder(
         {
-          symbol: 'BTCUSDT',
-          side: OrderSide.Buy,
-          type: OrderType.Limit,
-          timeInForce: TimeInForce.Gtc,
-          quantity: '0.001',
+          name: 'BTCUSDT',
+          side: 'buy',
+          type: 'limit',
+          tif: 'gtc',
+          size: '0.001',
           price: '20000',
-          newClientOrderId: clientOrderId,
+          clientId: clientOrderId,
         },
         'trader',
       );
-      expect(created.status).toBe('NEW');
-      expect(created.orderId).toBeGreaterThan(0);
+      expect(created.status).toBe('open');
+      expect(Number(created.id)).toBeGreaterThan(0);
 
       const open = await getOpenOrders({ name: 'BTCUSDT' }, 'trader');
-      expect(open.some((order) => order.id === String(created.orderId))).toBe(true);
+      expect(open.some((order) => order.id === created.id)).toBe(true);
 
-      const canceled = await cancelOrder({ symbol: 'BTCUSDT', orderId: created.orderId }, 'trader');
+      const canceled = await cancelOrder(
+        { symbol: 'BTCUSDT', orderId: Number(created.id) },
+        'trader',
+      );
       expect(canceled.status).toBe('CANCELED');
 
       const after = await getOpenOrders({ name: 'BTCUSDT' }, 'trader');
-      expect(after.some((order) => order.id === String(created.orderId))).toBe(false);
+      expect(after.some((order) => order.id === created.id)).toBe(false);
     }, 30_000);
   },
 );
