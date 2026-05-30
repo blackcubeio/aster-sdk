@@ -1,10 +1,13 @@
 import type { WebSocketFactory } from '../common/config';
-import type { Candle, KlineInterval, MarketKind, OrderBook, Price, Trade } from '../common/types';
+import type { Candle, KlineInterval, MarketKind, Order, OrderBook, Price, Trade } from '../common/types';
+import { createListenKey } from '../rest/futures/user-stream/listen-key';
 import { type BookTickerWsNative, BboWsConverter } from './converters/bbo';
 import { CandleWsConverter, type KlineWsNative } from './converters/candle';
+import { type OrderTradeUpdateWsNative, OrderWsConverter } from './converters/order';
 import { type DepthWsNative, OrderBookWsConverter } from './converters/order-book';
 import { type MarkPriceWsNative, PricesWsConverter } from './converters/prices';
 import { type AggTradeWsNative, TradeWsConverter } from './converters/trade';
+import { FuturesUserDataStream } from './futures-user-data';
 import { FuturesWsClient } from './futures-client';
 import { SpotWsClient } from './spot-client';
 import type { Unsubscribe } from './types';
@@ -27,10 +30,15 @@ export interface UnifiedWsOptions {
 export class UnifiedWsClient {
   private readonly futures: FuturesWsClient;
   private readonly spot: SpotWsClient;
+  private readonly label: string | undefined;
+  /** Stream user-data (1 socket multiplexé), connecté paresseusement à la 1re souscription compte. */
+  private userData: FuturesUserDataStream | null = null;
+  private userDataPromise: Promise<FuturesUserDataStream> | null = null;
 
   constructor(options: UnifiedWsOptions = {}) {
     this.futures = new FuturesWsClient(options);
     this.spot = new SpotWsClient(options);
+    this.label = options.label;
   }
 
   public async connect(): Promise<void> {
@@ -40,6 +48,44 @@ export class UnifiedWsClient {
   public disconnect(): void {
     this.futures.disconnect();
     this.spot.disconnect();
+    if (this.userData !== null) {
+      this.userData.disconnect();
+      this.userData = null;
+      this.userDataPromise = null;
+    }
+  }
+
+  /** Ouvre (une seule fois) le stream user-data futures : crée le listenKey puis connecte. */
+  private ensureUserData(): Promise<FuturesUserDataStream> {
+    if (this.label === undefined) {
+      return Promise.reject(new Error('user-data: un `label` (signer) est requis'));
+    }
+    if (this.userDataPromise === null) {
+      const label = this.label;
+      this.userDataPromise = createListenKey(label).then(({ listenKey }) => {
+        const stream = new FuturesUserDataStream(listenKey, { label });
+        this.userData = stream;
+        return stream.connect().then(() => stream);
+      });
+    }
+    return this.userDataPromise;
+  }
+
+  /** Branche un handler d'event user-data dès que le stream est prêt (désabonnement sync). */
+  private onUserData(eventType: string, handler: (msg: unknown) => void): Unsubscribe {
+    let off: Unsubscribe = () => {};
+    let cancelled = false;
+    this.ensureUserData()
+      .then((stream) => {
+        if (cancelled === false) {
+          off = stream.on(eventType, (event) => handler(event));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      off();
+    };
   }
 
   /** Bougies temps réel. `kind` (défaut `perp`) route futures/spot et annote la bougie. */
@@ -105,6 +151,21 @@ export class UnifiedWsClient {
     const converter = new PricesWsConverter('perp');
     return this.futures.subscribeAllMarkPrices((raw) => {
       handler(converter.toCommon(raw as unknown as MarkPriceWsNative[]));
+    });
+  }
+
+  /**
+   * Mises à jour d'ordres du compte (user-data) : le handler est appelé **une fois par ordre**.
+   * Démux de `ORDER_TRADE_UPDATE` sur le stream futures (listenKey du signer `label`).
+   * `user` est ignoré (Aster lie le stream au `label`).
+   */
+  public subscribeOrders(
+    _params: { user?: string },
+    handler: (order: Order) => void,
+  ): Unsubscribe {
+    const converter = new OrderWsConverter();
+    return this.onUserData('ORDER_TRADE_UPDATE', (msg) => {
+      handler(converter.toCommon(msg as OrderTradeUpdateWsNative));
     });
   }
 }
