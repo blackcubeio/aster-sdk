@@ -786,17 +786,6 @@ export interface CountdownCancelAllResult {
   countdownTime: string;
 }
 
-export interface UpdateLeverageParams {
-  symbol: string;
-  leverage: number;
-}
-
-export interface LeverageResult {
-  symbol: string;
-  leverage: number;
-  maxNotionalValue: string;
-}
-
 export interface UpdateMarginModeParams {
   symbol: string;
   marginType: MarginType;
