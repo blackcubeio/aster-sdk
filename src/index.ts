@@ -3,6 +3,10 @@ export * from './common/config';
 export * from './common/types';
 export * from './common/utils';
 
+// Façade orientée objet (point d'entrée recommandé).
+export { Aster, type AsterDexOptions } from './dex/aster';
+export type * from './dex/contract';
+
 export * from './rest/client';
 export * from './rest/signing';
 export * from './rest/get-pairs';

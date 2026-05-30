@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type { SpotAggTrade, SpotAggTradesQuery } from '../../../common/spot';
 import { httpGet } from '../../client';
 
@@ -13,10 +14,12 @@ interface AggTradeWire {
 
 /** Compressed/aggregate spot trades. */
 export function getAggTradesSpot(
+  client: AsterClient,
   query: SpotAggTradesQuery,
   label?: string,
 ): Promise<SpotAggTrade[]> {
   return httpGet<AggTradeWire[]>(
+    client,
     'spot',
     '/api/v3/aggTrades',
     {

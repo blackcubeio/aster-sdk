@@ -3,7 +3,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
 import bs58 from 'bs58';
-import { getConfig } from '../common/config';
+import type { AsterClient } from '../common/config';
 import {
   AGENT_CHAIN_ID,
   EIP712_DOMAIN_NAME,
@@ -263,11 +263,11 @@ function addressFromKey(privateKey: string): string {
  * absent ou inconnu. Le `keyType` est déduit de `privateKey` (`0x…` → EVM, sinon Solana) ;
  * `signer` est dérivé de `privateKey` s'il n'est pas fourni explicitement.
  */
-export function resolveSigner(label?: string): ResolvedSigner {
+export function resolveSigner(client: AsterClient, label?: string): ResolvedSigner {
   if (label === undefined) {
     throw new Error('Un signer (label) est obligatoire pour cette action signée');
   }
-  const signer = getConfig().signers[label];
+  const signer = client.signers[label];
   if (signer === undefined) {
     throw new Error(`Aucun signer enregistré sous "${label}"; ajoute-le dans init({ signers })`);
   }
@@ -292,8 +292,11 @@ export function signerAddress(signer: Signer): string {
  * En **Solana**, la même clé fait tout : `mainPrivateKey` retombe sur `privateKey`. En EVM,
  * `mainPrivateKey` est obligatoire et lève s'il est absent.
  */
-export function resolveMainSigner(label?: string): ResolvedSigner & { mainPrivateKey: string } {
-  const resolved = resolveSigner(label);
+export function resolveMainSigner(
+  client: AsterClient,
+  label?: string,
+): ResolvedSigner & { mainPrivateKey: string } {
+  const resolved = resolveSigner(client, label);
   const mainPrivateKey =
     resolved.mainPrivateKey ?? (resolved.keyType === 'solana' ? resolved.privateKey : undefined);
   if (mainPrivateKey === undefined) {
@@ -305,8 +308,12 @@ export function resolveMainSigner(label?: string): ResolvedSigner & { mainPrivat
 }
 
 /** Lève si le signer est un compte Solana, pour les fonctionnalités EVM-only (sous-comptes). */
-export function assertEvmSigner(label: string | undefined, feature: string): void {
-  if (resolveSigner(label).keyType === 'solana') {
+export function assertEvmSigner(
+  client: AsterClient,
+  label: string | undefined,
+  feature: string,
+): void {
+  if (resolveSigner(client, label).keyType === 'solana') {
     throw new Error(`${feature} : non supporté pour un compte Solana (agent EVM requis).`);
   }
 }
@@ -334,10 +341,11 @@ export function buildSignedForm(
  * compte associé à l'agent.
  */
 export function buildSignedRequest(
+  client: AsterClient,
   params: Record<string, JsonValue | undefined>,
   label?: string,
 ): SignedForm {
-  const resolved = resolveSigner(label);
+  const resolved = resolveSigner(client, label);
   return buildSignedForm(
     { ...params, nonce: microsecondNonce(), user: resolved.user, signer: resolved.signer },
     resolved.privateKey,
@@ -361,11 +369,12 @@ function capitalizeKeys(params: Record<string, JsonValue>): Record<string, JsonV
  * `signatureChainId` + `signature`.
  */
 export function buildMainTypedRequest(
+  client: AsterClient,
   primaryType: string,
   params: Record<string, JsonValue>,
   label?: string,
 ): SignedForm {
-  const resolved = resolveMainSigner(label);
+  const resolved = resolveMainSigner(client, label);
   // Solana : ed25519 sur la querystring brute `{…params, nonce, user}` (cf. sol_agent.py),
   // sans `asterChain`/`signatureChainId` ni typage dynamique (réservé à l'EVM).
   if (resolved.keyType === 'solana') {

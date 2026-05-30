@@ -1,3 +1,4 @@
+import type { AsterClient } from '../common/config';
 import type { CandlePriceType, GetCandlesParams } from '../common/types';
 import type { Candle, KlineInterval, MarketKind } from '../common/types';
 import { CandleConverter, type CandleNative } from '../converters/candle';
@@ -25,12 +26,17 @@ function endpoint(
  * `kind` route futures/spot ; `priceType` (perp) choisit last / mark price / index price.
  * Fetch direct + converter.
  */
-export function getCandles(params: GetCandlesParams, label?: string): Promise<Candle[]> {
+export function getCandles(
+  client: AsterClient,
+  params: GetCandlesParams,
+  label?: string,
+): Promise<Candle[]> {
   const kind = params.kind ?? 'perp';
   const priceType = params.priceType ?? 'last';
   const converter = new CandleConverter(params.name, params.interval, kind);
   const [product, path, paramKey] = endpoint(kind, priceType);
   return httpGet<CandleNative[]>(
+    client,
     product,
     path,
     {

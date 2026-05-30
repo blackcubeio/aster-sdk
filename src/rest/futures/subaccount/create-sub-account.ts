@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import { AGENT_CHAIN_ID } from '../../../common/constants';
 import type { CodeMsg, CreateSubAccountParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
@@ -10,9 +11,13 @@ import { assertEvmSigner, buildSignedForm, resolveMainSigner, signMessage } from
  * (`childSignature`), puis le compte principal signe le même message **augmenté de
  * `childSignature`**. Les deux en EIP-712 chainId 1666/714.
  */
-export function createSubAccount(params: CreateSubAccountParams, label: string): Promise<CodeMsg> {
-  assertEvmSigner(label, 'createSubAccount');
-  const resolved = resolveMainSigner(label);
+export function createSubAccount(
+  client: AsterClient,
+  params: CreateSubAccountParams,
+  label: string,
+): Promise<CodeMsg> {
+  assertEvmSigner(client, label, 'createSubAccount');
+  const resolved = resolveMainSigner(client, label);
   const chainId = AGENT_CHAIN_ID[resolved.network];
   const nonce = microsecondNonce();
 
@@ -36,5 +41,5 @@ export function createSubAccount(params: CreateSubAccountParams, label: string):
     resolved.mainPrivateKey,
     resolved.network,
   );
-  return httpPostForm<CodeMsg>('futures', '/fapi/v3/createSubAccount', body, network);
+  return httpPostForm<CodeMsg>(client, 'futures', '/fapi/v3/createSubAccount', body, network);
 }

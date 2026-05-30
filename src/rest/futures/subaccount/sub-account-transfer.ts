@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type { CodeMsg, SubAccountTransferParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce } from '../../../common/utils';
@@ -9,11 +10,12 @@ import { assertEvmSigner, buildSignedForm, resolveMainSigner } from '../../signi
  * msg ordonné : `toAccountAddress&asset&amount&kindType&nonce&user&signer[&fromAccountAddress]`.
  */
 export function subAccountTransfer(
+  client: AsterClient,
   params: SubAccountTransferParams,
   label: string,
 ): Promise<CodeMsg> {
-  assertEvmSigner(label, 'subAccountTransfer');
-  const resolved = resolveMainSigner(label);
+  assertEvmSigner(client, label, 'subAccountTransfer');
+  const resolved = resolveMainSigner(client, label);
   const ordered: Record<string, JsonValue | undefined> = {
     toAccountAddress: params.toAccountAddress,
     asset: params.asset,
@@ -27,5 +29,5 @@ export function subAccountTransfer(
     ordered.fromAccountAddress = params.fromAccountAddress;
   }
   const { body, network } = buildSignedForm(ordered, resolved.mainPrivateKey, resolved.network);
-  return httpPostForm<CodeMsg>('futures', '/fapi/v3/subAccountTransfer', body, network);
+  return httpPostForm<CodeMsg>(client, 'futures', '/fapi/v3/subAccountTransfer', body, network);
 }

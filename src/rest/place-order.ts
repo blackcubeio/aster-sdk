@@ -1,3 +1,4 @@
+import type { AsterClient } from '../common/config';
 import type { PlaceOrderParams, PlaceOrderTif, PlaceOrderType } from '../common/types';
 import type { MarketKind, Order, Side } from '../common/types';
 import { OrderSide, OrderType, TimeInForce } from '../common/types';
@@ -24,9 +25,14 @@ const TIF: Record<PlaceOrderTif, TimeInForce> = {
  * Passe un ordre au **format unifié** (**écriture signée**, Aster futures `/fapi/v3/order`).
  * Mappe les params unifiés vers l'ordre natif, puis convertit la réponse en `Order` unifié.
  */
-export function placeOrder(params: PlaceOrderParams, label: string): Promise<Order> {
+export function placeOrder(
+  client: AsterClient,
+  params: PlaceOrderParams,
+  label: string,
+): Promise<Order> {
   const converter = new OrderConverter();
   return createOrder(
+    client,
     {
       symbol: params.name,
       side: SIDE[params.side],

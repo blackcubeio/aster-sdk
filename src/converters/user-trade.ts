@@ -1,4 +1,5 @@
 import type { FuturesUserTrade } from '../common/futures';
+import type { SpotUserTrade } from '../common/spot';
 import type { UserTrade } from '../common/types';
 
 /** Fill natif Aster (futures `FuturesUserTrade`). */
@@ -54,6 +55,32 @@ export class UserTradeConverter {
       time: trade.time,
       ...trade.xtras,
     } as unknown as UserTradeNative;
+  }
+}
+
+/**
+ * Convertisseur **unidirectionnel** fill **spot** Aster → `UserTrade` (`kind: 'spot'`).
+ * Le spot n'a pas de PnL réalisé (→ `pnl: null`). `quoteQty`/`buyer`/`counterpartyId`… → `xtras`.
+ */
+export class SpotUserTradeConverter {
+  toCommon(wire: SpotUserTrade): UserTrade {
+    const { id, orderId, symbol, price, qty, commission, commissionAsset, maker, time, ...rest } =
+      wire;
+    return {
+      name: symbol,
+      kind: 'spot',
+      id: String(id),
+      orderId: String(orderId),
+      side: (rest.side as string) === 'SELL' ? 'sell' : 'buy',
+      price,
+      size: qty,
+      fee: commission,
+      feeAsset: commissionAsset,
+      pnl: null,
+      maker,
+      time,
+      xtras: rest as Record<string, unknown>,
+    };
   }
 }
 

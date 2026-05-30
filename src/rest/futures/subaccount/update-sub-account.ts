@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type { CodeMsg, UpdateSubAccountParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce } from '../../../common/utils';
@@ -9,9 +10,13 @@ import { assertEvmSigner, buildSignedForm, resolveMainSigner } from '../../signi
  * (`mainPrivateKey`). msg ordonné :
  * `subSourceAddr&nonce&user&signer[&subAccountName][&status]`.
  */
-export function updateSubAccount(params: UpdateSubAccountParams, label: string): Promise<CodeMsg> {
-  assertEvmSigner(label, 'updateSubAccount');
-  const resolved = resolveMainSigner(label);
+export function updateSubAccount(
+  client: AsterClient,
+  params: UpdateSubAccountParams,
+  label: string,
+): Promise<CodeMsg> {
+  assertEvmSigner(client, label, 'updateSubAccount');
+  const resolved = resolveMainSigner(client, label);
   const ordered: Record<string, JsonValue | undefined> = {
     subSourceAddr: params.subSourceAddr,
     nonce: microsecondNonce(),
@@ -25,5 +30,5 @@ export function updateSubAccount(params: UpdateSubAccountParams, label: string):
     ordered.status = params.status;
   }
   const { body, network } = buildSignedForm(ordered, resolved.mainPrivateKey, resolved.network);
-  return httpPostForm<CodeMsg>('futures', '/fapi/v3/updateSubAccount', body, network);
+  return httpPostForm<CodeMsg>(client, 'futures', '/fapi/v3/updateSubAccount', body, network);
 }

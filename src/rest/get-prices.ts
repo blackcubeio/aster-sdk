@@ -1,3 +1,4 @@
+import type { AsterClient } from '../common/config';
 import type { Price } from '../common/types';
 import { PriceConverter, type PriceNative } from '../converters/price';
 import { httpGet } from './client';
@@ -17,12 +18,12 @@ interface PriceTickerWire {
  * (mark/oracle/funding), `ticker/bookTicker` (bid/ask) et `ticker/price` (last).
  * `mid`/`openInterest`/`volume24h`/`prevDayPrice` non fournis (`null`).
  */
-export function getPrices(label?: string): Promise<Price[]> {
+export function getPrices(client: AsterClient, label?: string): Promise<Price[]> {
   const converter = new PriceConverter();
   return Promise.all([
-    httpGet<PriceNative[]>('futures', '/fapi/v3/premiumIndex', {}, label),
-    httpGet<BookTickerWire[]>('futures', '/fapi/v3/ticker/bookTicker', {}, label),
-    httpGet<PriceTickerWire[]>('futures', '/fapi/v3/ticker/price', {}, label),
+    httpGet<PriceNative[]>(client, 'futures', '/fapi/v3/premiumIndex', {}, label),
+    httpGet<BookTickerWire[]>(client, 'futures', '/fapi/v3/ticker/bookTicker', {}, label),
+    httpGet<PriceTickerWire[]>(client, 'futures', '/fapi/v3/ticker/price', {}, label),
   ]).then(([premium, books, lasts]) => {
     const bid = new Map(books.map((b) => [b.symbol, b.bidPrice] as const));
     const ask = new Map(books.map((b) => [b.symbol, b.askPrice] as const));
