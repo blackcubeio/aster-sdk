@@ -1,12 +1,10 @@
 # @blackcube/aster-sdk
 
-TypeScript SDK for the [Aster](https://www.asterdex.com) exchange — perpetuals & spot DEX on
-Aster L1 / BNB Chain. REST (futures & spot **V3**), WebSocket market streams, and EIP-712 agent
-signing. Same shape as [`@blackcube/hyperliquid-sdk`](https://github.com/blackcubeio/hyperliquid-sdk)
-and [`@blackcube/pacifica-sdk`](https://github.com/blackcubeio/pacifica-sdk).
+TypeScript SDK pour l'exchange [Aster](https://www.asterdex.com) — DEX perpetuals & spot sur
+Aster L1 / BNB Chain. Même surface que `@blackcube/hyperliquid-sdk` et `@blackcube/pacifica-sdk`.
 
-> **V3 only.** Aster V1 (API key + HMAC) no longer accepts new API keys since 2026-03-25. This SDK
-> targets the V3 API wallet / agent model exclusively.
+> **V3 uniquement.** Aster V1 (API key + HMAC) n'accepte plus de nouvelles clés depuis le
+> 2026-03-25. Ce SDK cible exclusivement le modèle V3 (API wallet / agent).
 
 ## Installation
 
@@ -14,77 +12,131 @@ and [`@blackcube/pacifica-sdk`](https://github.com/blackcubeio/pacifica-sdk).
 pnpm add @blackcube/aster-sdk
 ```
 
-Works in Node.js (≥ 22) and the browser (crypto via `@noble`).
+Node.js (≥ 22) et navigateur (crypto via `@noble`).
 
-## Initialisation
+## Tout passe par la classe `Aster`
 
-The SDK is initialised **once**; the whole API inherits the configuration.
+Tu n'appelles jamais un endpoint REST ni un client WebSocket directement. Une seule classe
+gère la connexion, la signature, le réseau (mainnet/testnet) et la conversion vers les types
+unifiés Blackcube.
 
 ```ts
-import { init } from '@blackcube/aster-sdk';
+import { Aster } from '@blackcube/aster-sdk';
 
-init();                                                          // reads only, mainnet fallback
-init({
-  signers: {
-    trader: { privateKey, user, network: 'mainnet' },            // a mainnet signer
-    tester: { privateKey, user, network: 'testnet' },            // a testnet signer
-  },
+const dex = new Aster(
+  { deskA: { privateKey: '0x…', user: '0x…', network: 'testnet' } },
+  { default: 'deskA' },
+);
+
+// REST : requête → réponse
+const candles = await dex.perp().getCandles({ name: 'BTCUSDT', interval: '1m', limit: 100 });
+const order = await dex.perp().placeOrder({
+  name: 'BTCUSDT', side: 'buy', type: 'limit', size: '0.001', price: '20000',
 });
+
+// WebSocket : abonnement → flux
+const off = dex.ws().subscribeCandles({ name: 'BTCUSDT', interval: '1m' }, (candle) => {
+  console.log(candle.c);
+});
+off(); // se désabonne (ferme le socket s'il n'y a plus d'abonné)
 ```
 
-| Option | Type | Default |
-|---|---|---|
-| `signers` | `Record<label, Signer>` | — (required for writes) |
-| `fetch` | `FetchLike` | `globalThis.fetch` |
-| `webSocket` | `WebSocketFactory` | `globalThis.WebSocket` |
-| `restUrls` / `wsUrls` | `Record<Product, Record<Network, string>>` | per product & network |
+## REST vs WebSocket — la seule distinction à connaître
 
-Each `Signer` carries its own `network`, so mainnet and testnet coexist in one process. Calling
-the API before `init()` throws `Aster SDK not initialized`. `resetConfig()` resets it.
+- **REST** (`perp()`, `spot()`, `account()`, `system()`) : **requête → réponse**. Tu `await`
+  un appel, tu reçois une valeur, terminé.
+- **WebSocket** (`ws()`, `wsSpot()`) : **abonnement → flux**. Tu passes un *handler* rappelé
+  **à chaque** mise à jour, tant que tu n'as pas appelé la fonction de désabonnement renvoyée.
+  Pas de `connect()`/`disconnect()` : le socket s'ouvre au premier `subscribe` et se ferme
+  seul quand le dernier abonnement est retiré.
 
-## Two products
+Tous les retours (REST comme WS) sont au **format unifié** (`Candle`, `Order`, `OrderBook`,
+`Position`, `Trade`, `UserTrade`, `Price`, `Balance`…), identique entre les SDK Blackcube.
 
-Aster exposes two products on distinct hosts; every REST/WS call targets one of them:
+## Construction
 
-- **futures** — `fapi.asterdex.com` / `fstream.asterdex.com`, paths under `/fapi/v3/*`
-- **spot** — `sapi.asterdex.com` / `sstream.asterdex.com`, paths under `/api/v3/*`
+```ts
+new Aster(signers?, options?)
+```
 
-## The signer model (EVM & Solana)
+- **`signers`** : `Record<label, Signer>`. Un `Signer` = `{ privateKey, user, signer?, network }`.
+  Le type de clé est auto-détecté (`0x…` → EVM secp256k1/EIP-712, sinon → Solana ed25519).
+  Sans signer, seules les lectures publiques fonctionnent.
+- **`options.default`** : label utilisé quand tu n'en précises pas (sinon le premier signer).
+- Autres `options` (rarement utiles) : `fetch`, `webSocket`, `restUrls`, `wsUrls`.
 
-A `Signer` ties an account to its signing key. The **key type is auto-detected** from
-`privateKey`: `0x…` → **EVM** (secp256k1 / EIP-712), otherwise → **Solana** (ed25519 / base58).
+Chaque scope accepte un `label` optionnel pour choisir le compte : `dex.perp('deskB')`,
+`dex.account('deskB')`… Sans argument → signer par défaut. **Plusieurs instances `Aster`
+(comptes/réseaux différents) coexistent** sans interférence — chacune a sa propre config.
 
-- `privateKey` — the key that signs TRADE / USER_DATA actions (EVM API wallet, or Solana wallet).
-- `user` — the account address (EVM `0x…` or Solana base58). Used for reads and identity.
-- `signer` — the signing-wallet address (derived from `privateKey` if omitted).
-- `mainPrivateKey` — EVM only: the **main wallet** key for account-management endpoints
-  (agent approval, migrate). In Solana the same key does everything.
+## Deux produits, un `kind` porté par le scope
 
-> **Solana caveat:** API **sub-accounts are not supported** for Solana accounts — those endpoints
-> throw. See [signing](./doc/signing.md).
+Aster a deux produits (perp `fapi`/`fstream`, spot `sapi`/`sstream`). Le produit est choisi
+par le **scope** (`perp()` vs `spot()`), pas par un paramètre `kind`.
 
-## Labels, networks & read/write rules
+### `dex.perp(label?)` / `dex.spot(label?)` — marché + trading + compte du produit
 
-Register one signer per **label** in `init({ signers })`. Every call takes the label as a trailing
-argument:
+| Catégorie | Méthodes |
+|---|---|
+| Marché (public) | `getPairs()`, `getCandles(q)`, `getOrderBook(q)`, `getPrices()`, `getFundingHistory(q)`, `getTrades(q)`, `getExchangeInfo()` |
+| Compte du produit (signé) | `getPositions(q?)`, `getOpenOrders(q?)`, `getUserTrades(q?)`, `getOrderHistory(q?)`, `getAccountInfo()` |
+| Trading (signé) | `placeOrder(i)`, `cancelOrder(i)`, `cancelAllOrders(i)`, `editOrder(i)`, `updateLeverage(i)`, `setMarginMode(i)`, `addIsolatedMargin(i)`, `removeIsolatedMargin(i)` |
 
-- **Reads** (`getKlines`, `getMarkPrice`, market streams…) — label is **optional**. No label →
-  **mainnet**; a label → that signer's network. `getMarkPrice('BTCUSDT', 'tester')`.
-- **Writes** (`createOrder`…) — label is **mandatory** and throws if omitted. It selects both the
-  wallet and the network: `createOrder(params, 'tester')`.
+> Le spot Aster n'a pas de positions ; `spot().getPositions()` vise le compte perp.
 
-## Conventions
+### `dex.account(label?)` — compte transverse (sans produit)
 
-- **Public API in camelCase.** Aster's V3 wire is already camelCase; array-shaped responses
-  (depth, klines, aggregate trades) are decoded into objects.
-- **Amounts/prices are decimal strings** on the wire.
-- Errors throw `AsterApiError` (`status`, `code`, `message`) — `code`/`msg` come from Aster's
-  `{ "code": -1121, "msg": "…" }` envelope.
-- Writes reference a registered signer by [label](./doc/signing.md).
+`getBalances()`, `getSubAccounts()`, `withdraw(i)`.
+
+### `dex.system()` — connectivité
+
+`ping()`, `getServerTime()`.
+
+### `dex.helpers()` — crypto (EVM + Solana)
+
+`keyTypeOf(pk)`, `privateKeyToAddress(pk)`, `toChecksumAddress(addr)`, `solanaAddress(pk)`,
+`signEd25519(msg, pk)`.
+
+### `dex.ws(label?)` (perp) / `dex.wsSpot(label?)` (spot) — temps réel
+
+Chaque `subscribeX` renvoie une fonction de désabonnement (`Unsubscribe`).
+
+| Catégorie | Méthodes |
+|---|---|
+| Public | `subscribeCandles(q, cb)`, `subscribeOrderBook(q, cb)`, `subscribeTrades(q, cb)`, `subscribeBbo(q, cb)` (→ `OrderBook` 1 niveau), `subscribePrices(cb)` (→ `Price[]`) |
+| Compte (signé) | `subscribeOrders(cb)`, `subscribeUserTrades(cb)`, `subscribePositions(cb)` |
+
+## Exemples
+
+```ts
+// Lecture publique sans signer
+const pub = new Aster();
+const book = await pub.perp().getOrderBook({ name: 'BTCUSDT', limit: 5 });
+
+// Cycle d'ordre (testnet)
+const created = await dex.perp().placeOrder({
+  name: 'BTCUSDT', side: 'buy', type: 'limit', tif: 'gtc', size: '0.001', price: '20000',
+});
+await dex.perp().cancelOrder({ name: 'BTCUSDT', id: created.id });
+
+// Spot — mêmes méthodes, retours unifiés (kind: 'spot')
+const spotOrders = await dex.spot().getOpenOrders({ name: 'ASTERUSDT' });
+
+// Compte transverse
+const balances = await dex.account().getBalances();
+
+// Temps réel : suivre ses propres fills
+const off = dex.ws().subscribeUserTrades((fill) => console.log(fill.price, fill.size));
+```
+
+## Erreurs
+
+Les appels rejettent un `AsterApiError` (`status`, `code`, `message`) — `code`/`msg` viennent
+de l'enveloppe `{ "code": -1121, "msg": "…" }` d'Aster.
 
 ## Documentation
 
-See [`doc/`](./doc/README.md). Roadmap and endpoint inventory in [`PLAN.md`](./PLAN.md).
+Détail des signatures (EVM EIP-712 / Solana ed25519) : [`doc/signing.md`](doc/signing.md).
 
 ## License
 
