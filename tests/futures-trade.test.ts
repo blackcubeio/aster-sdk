@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { init, resetConfig } from '../src/common/config';
+import { type AsterClient, init } from '../src/common/config';
 import { type Hex, OrderSide, OrderType, TimeInForce } from '../src/common/types';
 import { buildOrderPayload, buildOrderRef } from '../src/rest/futures/trade/payloads';
 import { buildSignedRequest } from '../src/rest/signing';
@@ -45,10 +45,10 @@ describe('buildOrderRef', () => {
   });
 });
 
-describe('buildSignedRequest', () => {
+describe('buildSignedRequest (interne ; client ctx-aware)', () => {
+  let client: AsterClient;
   beforeAll(() => {
-    resetConfig();
-    init({
+    client = init({
       signers: {
         trader: {
           privateKey: DOC_PRIVATE_KEY,
@@ -62,6 +62,7 @@ describe('buildSignedRequest', () => {
 
   it('appose nonce, signer puis signature dans l’ordre, en gardant les params métier', () => {
     const { body, network } = buildSignedRequest(
+      client,
       { symbol: 'BTCUSDT', side: 'BUY', type: 'MARKET', quantity: '0.01' },
       'trader',
     );
@@ -74,6 +75,6 @@ describe('buildSignedRequest', () => {
   });
 
   it('lève si le label est inconnu', () => {
-    expect(() => buildSignedRequest({ symbol: 'BTCUSDT' }, 'ghost')).toThrow(/signer/);
+    expect(() => buildSignedRequest(client, { symbol: 'BTCUSDT' }, 'ghost')).toThrow(/signer/);
   });
 });

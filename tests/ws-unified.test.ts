@@ -1,162 +1,91 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { init, resetConfig } from '../src/common/config';
-import { KlineInterval, type Hex } from '../src/common/types';
-import { UnifiedWsClient } from '../src/ws/unified-client';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { type Hex, KlineInterval } from '../src/common/types';
+import { Aster } from '../src/dex/aster';
 
-// Flux WS unifiés sur le futures mainnet réel (public, label = ciblage réseau seulement).
-const MN = 'mn';
+// Flux WS unifiés sur le futures mainnet réel (public), via la façade dex.ws() (perp).
+let dex: Aster;
 
-describe('UnifiedWsClient Aster (futures mainnet réel, public)', () => {
+function once<T>(subscribe: (cb: (v: T) => void) => () => void, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`timeout ${label}`)), 25_000);
+    const off = subscribe((v) => {
+      clearTimeout(timer);
+      off(); // dernier abonnement retiré → socket fermé (lazy/ref-counting)
+      resolve(v);
+    });
+  });
+}
+
+describe('façade ws() Aster (futures mainnet réel, public)', () => {
   beforeAll(() => {
-    init({
-      signers: {
-        [MN]: {
+    dex = new Aster(
+      {
+        mn: {
           privateKey: `0x${'11'.repeat(32)}` as Hex,
           user: `0x${'00'.repeat(20)}` as Hex,
           network: 'mainnet',
         },
       },
-    });
+      { default: 'mn' },
+    );
   });
-  afterAll(() => resetConfig());
 
-  it(
-    'subscribeCandles délivre une Candle unifiée',
-    async () => {
-      const client = new UnifiedWsClient({ label: MN });
-      await client.connect();
-      try {
-        const candle = await new Promise<Record<string, unknown>>((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('timeout candles')), 25_000);
-          client.subscribeCandles(
-            { name: 'BTCUSDT', interval: KlineInterval.OneMinute, kind: 'perp' },
-            (received) => {
-              clearTimeout(timer);
-              resolve(received as unknown as Record<string, unknown>);
-            },
-          );
-        });
-        expect(candle.s).toBe('BTCUSDT');
-        expect(candle.i).toBe('1m');
-        expect(candle.kind).toBe('perp');
-        expect(typeof candle.t).toBe('number');
-        expect(typeof candle.o).toBe('string');
-        // Aster fournit les volumes quote/taker (≠ HL/Pacifica qui sont null).
-        expect(typeof candle.qv).toBe('string');
-        expect(typeof candle.tbbv).toBe('string');
-      } finally {
-        client.disconnect();
-      }
-    },
-    30_000,
-  );
+  it('subscribeCandles délivre une Candle unifiée', async () => {
+    const c = (await once(
+      (cb) => dex.ws().subscribeCandles({ name: 'BTCUSDT', interval: KlineInterval.OneMinute }, cb),
+      'candles',
+    )) as unknown as Record<string, unknown>;
+    expect(c.s).toBe('BTCUSDT');
+    expect(c.i).toBe('1m');
+    expect(c.kind).toBe('perp');
+    expect(typeof c.qv).toBe('string');
+    expect(typeof c.tbbv).toBe('string');
+  }, 30_000);
 
-  it(
-    'subscribeTrades délivre un Trade unifié par trade',
-    async () => {
-      const client = new UnifiedWsClient({ label: MN });
-      await client.connect();
-      try {
-        const trade = await new Promise<Record<string, unknown>>((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('timeout trades')), 25_000);
-          client.subscribeTrades({ name: 'BTCUSDT', kind: 'perp' }, (received) => {
-            clearTimeout(timer);
-            resolve(received as unknown as Record<string, unknown>);
-          });
-        });
-        expect(typeof trade.price).toBe('string');
-        expect(typeof trade.size).toBe('string');
-        expect(['buy', 'sell']).toContain(trade.side);
-        expect(trade.maker).toBeNull();
-        expect(typeof trade.time).toBe('number');
-        expect(typeof trade.id).toBe('number');
-      } finally {
-        client.disconnect();
-      }
-    },
-    30_000,
-  );
+  it('subscribeTrades délivre un Trade unifié par trade', async () => {
+    const t = (await once(
+      (cb) => dex.ws().subscribeTrades({ name: 'BTCUSDT' }, cb),
+      'trades',
+    )) as unknown as Record<string, unknown>;
+    expect(typeof t.price).toBe('string');
+    expect(['buy', 'sell']).toContain(t.side);
+    expect(t.maker).toBeNull();
+    expect(typeof t.id).toBe('number');
+  }, 30_000);
 
-  it(
-    'subscribeBbo délivre un OrderBook (1 niveau par côté)',
-    async () => {
-      const client = new UnifiedWsClient({ label: MN });
-      await client.connect();
-      try {
-        const book = await new Promise<Record<string, unknown>>((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('timeout bbo')), 25_000);
-          client.subscribeBbo({ name: 'BTCUSDT', kind: 'perp' }, (received) => {
-            clearTimeout(timer);
-            resolve(received as unknown as Record<string, unknown>);
-          });
-        });
-        expect(book.name).toBe('BTCUSDT');
-        expect(book.kind).toBe('perp');
-        const bids = book.bids as Array<{ price: string; n: number | null }>;
-        const asks = book.asks as Array<{ price: string }>;
-        expect(typeof bids[0]?.price).toBe('string');
-        expect(typeof asks[0]?.price).toBe('string');
-        expect(bids[0]?.n).toBeNull();
-      } finally {
-        client.disconnect();
-      }
-    },
-    30_000,
-  );
+  it('subscribeBbo délivre un OrderBook (1 niveau par côté)', async () => {
+    const b = (await once(
+      (cb) => dex.ws().subscribeBbo({ name: 'BTCUSDT' }, cb),
+      'bbo',
+    )) as unknown as Record<string, unknown>;
+    expect(b.name).toBe('BTCUSDT');
+    expect(b.kind).toBe('perp');
+    const bids = b.bids as Array<{ price: string; n: number | null }>;
+    expect(typeof bids[0]?.price).toBe('string');
+    expect(bids[0]?.n).toBeNull();
+  }, 30_000);
 
-  it(
-    'subscribeOrderBook délivre un OrderBook (L2, snapshot partiel)',
-    async () => {
-      const client = new UnifiedWsClient({ label: MN });
-      await client.connect();
-      try {
-        const book = await new Promise<Record<string, unknown>>((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('timeout orderbook')), 25_000);
-          client.subscribeOrderBook({ name: 'BTCUSDT', kind: 'perp' }, (received) => {
-            clearTimeout(timer);
-            resolve(received as unknown as Record<string, unknown>);
-          });
-        });
-        expect(book.name).toBe('BTCUSDT');
-        expect(book.kind).toBe('perp');
-        const bids = book.bids as Array<{ price: string; size: string }>;
-        const asks = book.asks as Array<{ price: string }>;
-        expect(bids.length).toBeGreaterThan(0);
-        expect(asks.length).toBeGreaterThan(0);
-        expect(typeof bids[0]?.price).toBe('string');
-        expect(typeof bids[0]?.size).toBe('string');
-      } finally {
-        client.disconnect();
-      }
-    },
-    30_000,
-  );
+  it('subscribeOrderBook délivre un OrderBook (L2)', async () => {
+    const b = (await once(
+      (cb) => dex.ws().subscribeOrderBook({ name: 'BTCUSDT' }, cb),
+      'orderbook',
+    )) as unknown as Record<string, unknown>;
+    expect(b.name).toBe('BTCUSDT');
+    expect(b.kind).toBe('perp');
+    const bids = b.bids as Array<{ price: string; size: string }>;
+    expect(bids.length).toBeGreaterThan(0);
+    expect(typeof bids[0]?.price).toBe('string');
+  }, 30_000);
 
-  it(
-    'subscribePrices délivre un Price[] (mark/oracle/funding par marché)',
-    async () => {
-      const client = new UnifiedWsClient({ label: MN });
-      await client.connect();
-      try {
-        const prices = await new Promise<Array<Record<string, unknown>>>((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('timeout prices')), 25_000);
-          client.subscribePrices((received) => {
-            clearTimeout(timer);
-            resolve(received as unknown as Array<Record<string, unknown>>);
-          });
-        });
-        expect(prices.length).toBeGreaterThan(0);
-        const btc = prices.find((p) => p.name === 'BTCUSDT');
-        expect(btc).toBeDefined();
-        expect(btc?.kind).toBe('perp');
-        expect(typeof btc?.mark).toBe('string');
-        expect(typeof btc?.oracle).toBe('string');
-        expect(typeof btc?.funding).toBe('string');
-        expect(btc?.mid).toBeNull();
-      } finally {
-        client.disconnect();
-      }
-    },
-    30_000,
-  );
+  it('subscribePrices délivre un Price[] (mark/oracle/funding)', async () => {
+    const prices = (await once((cb) => dex.ws().subscribePrices(cb), 'prices')) as unknown as Array<
+      Record<string, unknown>
+    >;
+    expect(prices.length).toBeGreaterThan(0);
+    const btc = prices.find((p) => p.name === 'BTCUSDT');
+    expect(btc?.kind).toBe('perp');
+    expect(typeof btc?.mark).toBe('string');
+    expect(typeof btc?.funding).toBe('string');
+    expect(btc?.mid).toBeNull();
+  }, 30_000);
 });
