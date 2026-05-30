@@ -1,6 +1,5 @@
-import type { MarketKind, Order } from '../common/types';
+import type { MarketKind } from '../common/types';
 import { httpPostForm } from './client';
-import { OrderConverter } from './converters/order';
 import { buildOrderRef } from './futures/trade/payloads';
 import type { FuturesOrder } from './futures/types';
 import { buildSignedRequest } from './signing';
@@ -21,8 +20,18 @@ export interface EditOrderParams {
   kind?: MarketKind;
 }
 
+/** Résultat unifié d'une modification d'ordre (référence du nouvel ordre). */
+export interface EditOrderResult {
+  /** Paire/symbole. */
+  name: string;
+  /** ID du nouvel ordre. */
+  id: string;
+  /** Détails natifs hors cœur (rien jeté), omis si vide. */
+  xtras?: Record<string, unknown>;
+}
+
 /** Modifie le prix/quantité d'un ordre actif (**écriture signée**, Aster `/fapi/v3/order` PUT). */
-export function editOrder(params: EditOrderParams, label: string): Promise<Order> {
+export function editOrder(params: EditOrderParams, label: string): Promise<EditOrderResult> {
   const payload = buildOrderRef(
     params.name,
     params.id === undefined ? undefined : Number(params.id),
@@ -32,6 +41,10 @@ export function editOrder(params: EditOrderParams, label: string): Promise<Order
   payload.price = params.price;
   const { body, network } = buildSignedRequest(payload, label);
   return httpPostForm<FuturesOrder>('futures', '/fapi/v3/order', body, network, 'PUT').then(
-    (order) => new OrderConverter().toCommon(order),
+    (order) => ({
+      name: params.name,
+      id: String(order.orderId),
+      xtras: order as unknown as Record<string, unknown>,
+    }),
   );
 }
