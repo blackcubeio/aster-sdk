@@ -1,6 +1,7 @@
 import type { WebSocketFactory } from '../common/config';
-import type { Candle, KlineInterval, MarketKind } from '../common/types';
+import type { Candle, KlineInterval, MarketKind, Trade } from '../common/types';
 import { CandleWsConverter, type KlineWsNative } from './converters/candle';
+import { type AggTradeWsNative, TradeWsConverter } from './converters/trade';
 import { FuturesWsClient } from './futures-client';
 import { SpotWsClient } from './spot-client';
 import type { Unsubscribe } from './types';
@@ -48,6 +49,18 @@ export class UnifiedWsClient {
     const client = kind === 'spot' ? this.spot : this.futures;
     return client.subscribeKline(params.name, params.interval as KlineInterval, (raw) => {
       handler(converter.toCommon(raw as unknown as KlineWsNative));
+    });
+  }
+
+  /** Trades publics temps réel (agrégés). `kind` (défaut `perp`) route futures/spot. */
+  public subscribeTrades(
+    params: { name: string; kind?: MarketKind },
+    handler: (trade: Trade) => void,
+  ): Unsubscribe {
+    const converter = new TradeWsConverter();
+    const client = (params.kind ?? 'perp') === 'spot' ? this.spot : this.futures;
+    return client.subscribeAggTrade(params.name, (raw) => {
+      handler(converter.toCommon(raw as unknown as AggTradeWsNative));
     });
   }
 }
