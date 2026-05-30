@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { init, resetConfig } from '../src/common/config';
-import type { Hex, Network, Order } from '../src/common/types';
+import type { Hex, Network, Order, Position, UserTrade } from '../src/common/types';
 import { cancelOrder } from '../src/rest/cancel-order';
 import { placeOrder } from '../src/rest/place-order';
 import { newClientOrderId } from '../src/rest/signing';
@@ -51,6 +51,43 @@ describe.skipIf(ready === false)('UnifiedWsClient Aster user-data (testnet réel
       }
     },
     40_000,
+  );
+
+  it(
+    'subscribeUserTrades + subscribePositions sur une position mini ouverte puis refermée',
+    async () => {
+      const fills: UserTrade[] = [];
+      const positions: Position[] = [];
+      const client = new UnifiedWsClient({ label: 'trader' });
+      await client.connect();
+      try {
+        client.subscribeUserTrades({ user: USER }, (t) => fills.push(t));
+        client.subscribePositions({ user: USER }, (p) => positions.push(p));
+        await new Promise((r) => setTimeout(r, 1500));
+        await placeOrder({ name: 'BTCUSDT', side: 'buy', type: 'market', size: '0.001' }, 'trader');
+        const fill = await waitFor(fills, (t) => t.name === 'BTCUSDT', 20_000);
+        expect(fill.kind).toBe('perp');
+        expect(typeof fill.id).toBe('string');
+        expect(typeof fill.orderId).toBe('string');
+        expect(['buy', 'sell']).toContain(fill.side);
+        expect(typeof fill.price).toBe('string');
+        expect(typeof fill.fee).toBe('string');
+        expect(typeof fill.maker).toBe('boolean');
+
+        const pos = await waitFor(positions, (p) => p.name === 'BTCUSDT', 20_000);
+        expect(['long', 'short', null]).toContain(pos.side);
+        expect(typeof pos.size).toBe('string');
+        expect(typeof pos.entryPrice).toBe('string');
+        expect(typeof pos.unrealizedPnl).toBe('string');
+      } finally {
+        await placeOrder(
+          { name: 'BTCUSDT', side: 'sell', type: 'market', size: '0.001', reduceOnly: true },
+          'trader',
+        ).catch(() => {});
+        client.disconnect();
+      }
+    },
+    50_000,
   );
 });
 

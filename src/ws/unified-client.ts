@@ -1,12 +1,27 @@
 import type { WebSocketFactory } from '../common/config';
-import type { Candle, KlineInterval, MarketKind, Order, OrderBook, Price, Trade } from '../common/types';
+import type {
+  Candle,
+  KlineInterval,
+  MarketKind,
+  Order,
+  OrderBook,
+  Position,
+  Price,
+  Trade,
+  UserTrade,
+} from '../common/types';
 import { createListenKey } from '../rest/futures/user-stream/listen-key';
 import { type BookTickerWsNative, BboWsConverter } from './converters/bbo';
 import { CandleWsConverter, type KlineWsNative } from './converters/candle';
 import { type OrderTradeUpdateWsNative, OrderWsConverter } from './converters/order';
 import { type DepthWsNative, OrderBookWsConverter } from './converters/order-book';
+import {
+  type AccountPositionWsNative,
+  PositionWsConverter,
+} from './converters/position';
 import { type MarkPriceWsNative, PricesWsConverter } from './converters/prices';
 import { type AggTradeWsNative, TradeWsConverter } from './converters/trade';
+import { type OrderTradeFillWsNative, UserTradeWsConverter } from './converters/user-trade';
 import { FuturesUserDataStream } from './futures-user-data';
 import { FuturesWsClient } from './futures-client';
 import { SpotWsClient } from './spot-client';
@@ -166,6 +181,40 @@ export class UnifiedWsClient {
     const converter = new OrderWsConverter();
     return this.onUserData('ORDER_TRADE_UPDATE', (msg) => {
       handler(converter.toCommon(msg as OrderTradeUpdateWsNative));
+    });
+  }
+
+  /**
+   * Fills du compte (user-data) : le handler est appelé **une fois par fill**. Démux des
+   * `ORDER_TRADE_UPDATE` de type `TRADE` (les `NEW`/`CANCELED` sont ignorés). `user` ignoré.
+   */
+  public subscribeUserTrades(
+    _params: { user?: string },
+    handler: (trade: UserTrade) => void,
+  ): Unsubscribe {
+    const converter = new UserTradeWsConverter();
+    return this.onUserData('ORDER_TRADE_UPDATE', (msg) => {
+      const event = msg as OrderTradeFillWsNative;
+      if (event.o?.x === 'TRADE') {
+        handler(converter.toCommon(event));
+      }
+    });
+  }
+
+  /**
+   * Positions du compte (user-data) : le handler est appelé **une fois par position** modifiée.
+   * Démux de `ACCOUNT_UPDATE.a.P`. `user` ignoré (stream lié au `label`).
+   */
+  public subscribePositions(
+    _params: { user?: string },
+    handler: (position: Position) => void,
+  ): Unsubscribe {
+    const converter = new PositionWsConverter();
+    return this.onUserData('ACCOUNT_UPDATE', (msg) => {
+      const positions = (msg as { a?: { P?: AccountPositionWsNative[] } }).a?.P ?? [];
+      for (const native of positions) {
+        handler(converter.toCommon(native));
+      }
     });
   }
 }
