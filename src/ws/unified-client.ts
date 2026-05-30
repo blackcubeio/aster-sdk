@@ -1,8 +1,9 @@
 import type { WebSocketFactory } from '../common/config';
-import type { Candle, KlineInterval, MarketKind, OrderBook, Trade } from '../common/types';
+import type { Candle, KlineInterval, MarketKind, OrderBook, Price, Trade } from '../common/types';
 import { type BookTickerWsNative, BboWsConverter } from './converters/bbo';
 import { CandleWsConverter, type KlineWsNative } from './converters/candle';
 import { type DepthWsNative, OrderBookWsConverter } from './converters/order-book';
+import { type MarkPriceWsNative, PricesWsConverter } from './converters/prices';
 import { type AggTradeWsNative, TradeWsConverter } from './converters/trade';
 import { FuturesWsClient } from './futures-client';
 import { SpotWsClient } from './spot-client';
@@ -93,6 +94,17 @@ export class UnifiedWsClient {
     }
     return this.futures.subscribePartialDepth(params.name, 20, (raw) => {
       handler(converter.toCommon(raw as unknown as DepthWsNative));
+    });
+  }
+
+  /**
+   * Prix de tous les marchés (snapshot) : le handler reçoit un `Price[]` à chaque message.
+   * Source = `allMarkPrices` (mark/oracle/funding) ; perps uniquement.
+   */
+  public subscribePrices(handler: (prices: Price[]) => void): Unsubscribe {
+    const converter = new PricesWsConverter('perp');
+    return this.futures.subscribeAllMarkPrices((raw) => {
+      handler(converter.toCommon(raw as unknown as MarkPriceWsNative[]));
     });
   }
 }
