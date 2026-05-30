@@ -1,5 +1,5 @@
-import type { Balance } from '../../common/types';
-import type { FuturesBalance } from '../futures/types';
+import type { Balance } from '../common/types';
+import type { FuturesBalance } from '../rest/futures/types';
 
 /** Solde natif Aster (`/fapi/v3/balance`). */
 export type BalanceNative = FuturesBalance;

@@ -1,4 +1,4 @@
-import type { FundingRate } from '../../common/types';
+import type { FundingRate } from '../common/types';
 
 /** Point de funding natif Aster (`/fapi/v3/fundingRate`). */
 export interface FundingRateNative {

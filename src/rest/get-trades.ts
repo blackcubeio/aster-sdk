@@ -1,6 +1,6 @@
 import type { MarketKind, Trade } from '../common/types';
 import { httpGet } from './client';
-import { TradeConverter, type TradeNative } from './converters/trade';
+import { TradeConverter, type TradeNative } from '../converters/trade';
 
 /** Paramètres unifiés (mêmes champs sur les SDK qui exposent les trades publics). */
 export interface GetTradesParams {

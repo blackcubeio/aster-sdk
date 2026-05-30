@@ -1,6 +1,6 @@
 import type { UserTrade } from '../common/types';
 import { httpGetSigned } from './client';
-import { UserTradeConverter, type UserTradeNative } from './converters/user-trade';
+import { UserTradeConverter, type UserTradeNative } from '../converters/user-trade';
 import { buildSignedRequest } from './signing';
 
 /** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */

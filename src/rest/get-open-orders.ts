@@ -1,6 +1,6 @@
 import type { MarketKind, Order } from '../common/types';
 import { httpGetSigned } from './client';
-import { OrderConverter, type OrderNative } from './converters/order';
+import { OrderConverter, type OrderNative } from '../converters/order';
 import { buildSignedRequest } from './signing';
 
 /** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */

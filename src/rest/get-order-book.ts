@@ -1,6 +1,6 @@
 import type { MarketKind, OrderBook } from '../common/types';
 import { httpGet } from './client';
-import { OrderBookConverter, type OrderBookNative } from './converters/order-book';
+import { OrderBookConverter, type OrderBookNative } from '../converters/order-book';
 
 /** Paramètres unifiés (mêmes champs sur les 3 SDK). */
 export interface GetOrderBookParams {

@@ -1,4 +1,4 @@
-import type { MarketKind, OrderBook } from '../../common/types';
+import type { MarketKind, OrderBook } from '../common/types';
 
 /**
  * Payload WS `bookTicker` Aster (format Binance) — `{e, u, E, T, s, b, B, a, A}`

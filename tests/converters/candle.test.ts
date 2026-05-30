@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Candle } from '../../src/common/types';
-import { CandleConverter, type CandleNative } from '../../src/rest/converters/candle';
+import { CandleConverter, type CandleNative } from '../../src/converters/candle';
 
 // Ligne wire Aster réaliste — 12 colonnes (wire complet, la 12e incluse : rien n'est jeté).
 const WIRE: CandleNative = [

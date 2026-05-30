@@ -1,5 +1,5 @@
 import type { Pair } from '../common/types';
-import { PairConverter } from './converters/pair';
+import { PairConverter } from '../converters/pair';
 import { getExchangeInfo } from './futures/market/get-exchange-info';
 import { getExchangeInfoSpot } from './spot/market/get-exchange-info';
 

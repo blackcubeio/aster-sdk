@@ -1,6 +1,6 @@
 import type { Balance } from '../common/types';
 import { httpGetSigned } from './client';
-import { BalanceConverter, type BalanceNative } from './converters/balance';
+import { BalanceConverter, type BalanceNative } from '../converters/balance';
 import { buildSignedRequest } from './signing';
 
 /** Paramètres unifiés (mêmes champs sur les 3 SDK). `user` ignoré côté Aster (compte = signataire). */

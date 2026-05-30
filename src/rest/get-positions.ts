@@ -1,6 +1,6 @@
 import type { Position } from '../common/types';
 import { httpGetSigned } from './client';
-import { PositionConverter, type PositionNative } from './converters/position';
+import { PositionConverter, type PositionNative } from '../converters/position';
 import { buildSignedRequest } from './signing';
 
 /** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */

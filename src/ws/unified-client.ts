@@ -11,17 +11,17 @@ import type {
   UserTrade,
 } from '../common/types';
 import { createListenKey } from '../rest/futures/user-stream/listen-key';
-import { type BookTickerWsNative, BboWsConverter } from './converters/bbo';
-import { CandleWsConverter, type KlineWsNative } from './converters/candle';
-import { type OrderTradeUpdateWsNative, OrderWsConverter } from './converters/order';
-import { type DepthWsNative, OrderBookWsConverter } from './converters/order-book';
+import { type BookTickerWsNative, BboWsConverter } from '../converters/bbo';
+import { CandleWsConverter, type KlineWsNative } from '../converters/candle';
+import { type OrderTradeUpdateWsNative, OrderWsConverter } from '../converters/order';
+import { type DepthWsNative, OrderBookWsConverter } from '../converters/order-book';
 import {
   type AccountPositionWsNative,
   PositionWsConverter,
-} from './converters/position';
-import { type MarkPriceWsNative, PricesWsConverter } from './converters/prices';
-import { type AggTradeWsNative, TradeWsConverter } from './converters/trade';
-import { type OrderTradeFillWsNative, UserTradeWsConverter } from './converters/user-trade';
+} from '../converters/position';
+import { type MarkPriceWsNative, PricesWsConverter } from '../converters/price';
+import { type AggTradeWsNative, TradeWsConverter } from '../converters/trade';
+import { type OrderTradeFillWsNative, UserTradeWsConverter } from '../converters/user-trade';
 import { FuturesUserDataStream } from './futures-user-data';
 import { FuturesWsClient } from './futures-client';
 import { SpotWsClient } from './spot-client';

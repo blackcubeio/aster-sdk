@@ -1,6 +1,6 @@
 import type { MarketKind, Order, Side } from '../common/types';
 import { OrderSide, OrderType, TimeInForce } from '../common/types';
-import { OrderConverter } from './converters/order';
+import { OrderConverter } from '../converters/order';
 import { createOrder } from './futures/trade/new-order';
 
 /** Type d'ordre unifié accepté par `placeOrder`. */

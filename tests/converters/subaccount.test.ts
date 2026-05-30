@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SubAccount } from '../../src/common/types';
-import { SubAccountConverter, type SubAccountNative } from '../../src/rest/converters/subaccount';
+import { SubAccountConverter, type SubAccountNative } from '../../src/converters/subaccount';
 
 const SUBACCOUNT_CORE_KEYS = ['address'];
 

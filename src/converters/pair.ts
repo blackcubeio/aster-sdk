@@ -1,6 +1,6 @@
-import type { MarketKind, Pair } from '../../common/types';
-import type { FuturesSymbol } from '../futures/types';
-import type { SpotSymbol } from '../spot/types';
+import type { MarketKind, Pair } from '../common/types';
+import type { FuturesSymbol } from '../rest/futures/types';
+import type { SpotSymbol } from '../rest/spot/types';
 
 type AsterSymbol = FuturesSymbol | SpotSymbol;
 

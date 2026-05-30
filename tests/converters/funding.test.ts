@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FundingRate } from '../../src/common/types';
-import { FundingConverter, type FundingRateNative } from '../../src/rest/converters/funding';
+import { FundingConverter, type FundingRateNative } from '../../src/converters/funding';
 
 /** Clés du cœur unifié (hors xtras) — identiques sur les 3 SDK. */
 const FUNDING_CORE_KEYS = ['fundingRate', 'name', 'time'];

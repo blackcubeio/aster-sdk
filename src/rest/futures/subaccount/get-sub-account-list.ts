@@ -1,7 +1,7 @@
 import type { SubAccount } from '../../../common/types';
 import { microsecondNonce } from '../../../common/utils';
 import { httpGetSigned } from '../../client';
-import { SubAccountConverter } from '../../converters/subaccount';
+import { SubAccountConverter } from '../../../converters/subaccount';
 import { assertEvmSigner, buildSignedForm, resolveSigner } from '../../signing';
 import type { FuturesSubAccount } from '../types';
 

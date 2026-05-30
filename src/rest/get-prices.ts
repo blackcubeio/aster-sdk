@@ -1,6 +1,6 @@
 import type { Price } from '../common/types';
 import { httpGet } from './client';
-import { PriceConverter, type PriceNative } from './converters/price';
+import { PriceConverter, type PriceNative } from '../converters/price';
 
 interface BookTickerWire {
   symbol: string;

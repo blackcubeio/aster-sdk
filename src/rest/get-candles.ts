@@ -1,6 +1,6 @@
 import type { Candle, KlineInterval, MarketKind } from '../common/types';
 import { httpGet } from './client';
-import { CandleConverter, type CandleNative } from './converters/candle';
+import { CandleConverter, type CandleNative } from '../converters/candle';
 
 /** Prix sous-jacent des bougies (perp Aster) : dernier prix, mark price ou index price. */
 export type CandlePriceType = 'last' | 'mark' | 'index';
