@@ -1,7 +1,7 @@
+import type { OrderDetail, OrderQuery } from '../../../common/futures';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
 import { buildOrderRef } from '../trade/payloads';
-import type { OrderDetail, OrderQuery } from '../types';
 
 /** Check an order's status (`USER_DATA`). `orderId` or `origClientOrderId` required. */
 export function queryOrder(params: OrderQuery, label: string): Promise<OrderDetail> {

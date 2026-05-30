@@ -1,8 +1,8 @@
+import type { CodeMsg, RegisterAndApproveAgentParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { encodeFormComponent, microsecondNonce } from '../../../common/utils';
 import { httpPostForm } from '../../client';
 import { buildSignedForm, resolveMainSigner } from '../../signing';
-import type { CodeMsg, RegisterAndApproveAgentParams } from '../types';
 
 /**
  * Register an API agent and grant it permissions in one call (`PUBLIC`, signé par le

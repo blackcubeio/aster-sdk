@@ -1,6 +1,6 @@
+import type { CodeMsg, MultiAssetsModeResult } from '../../../common/futures';
 import { httpGetSigned, httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { CodeMsg, MultiAssetsModeResult } from '../types';
 
 /** Set multi-assets margin mode for every symbol (`TRADE`). */
 export function updateMultiAssetsMode(multiAssetsMargin: boolean, label: string): Promise<CodeMsg> {

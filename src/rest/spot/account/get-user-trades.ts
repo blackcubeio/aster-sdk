@@ -1,6 +1,6 @@
+import type { SpotUserTrade, SpotUserTradesQuery } from '../../../common/spot';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { SpotUserTrade, SpotUserTradesQuery } from '../types';
 
 /** Spot trade history for a symbol/account (`USER_DATA`). */
 export function getUserTradesSpot(

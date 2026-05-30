@@ -1,5 +1,5 @@
+import type { SpotHistoricalTradesQuery, SpotTrade } from '../../../common/spot';
 import { httpGet } from '../../client';
-import type { SpotHistoricalTradesQuery, SpotTrade } from '../types';
 
 /** Older spot historical trades (`MARKET_DATA`). */
 export function getHistoricalTradesSpot(

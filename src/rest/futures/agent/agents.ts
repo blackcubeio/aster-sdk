@@ -1,6 +1,11 @@
+import type {
+  Agent,
+  ApproveAgentParams,
+  CodeMsg,
+  UpdateAgentParams,
+} from '../../../common/futures';
 import { httpGetSigned, httpPostForm } from '../../client';
 import { buildMainTypedRequest, buildSignedRequest } from '../../signing';
-import type { Agent, ApproveAgentParams, CodeMsg, UpdateAgentParams } from '../types';
 
 /** List the account's API agents (`USER_DATA`, agent-signed). */
 export function getAgents(label: string): Promise<Agent[]> {

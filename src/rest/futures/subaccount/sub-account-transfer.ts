@@ -1,8 +1,8 @@
+import type { CodeMsg, SubAccountTransferParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce } from '../../../common/utils';
 import { httpPostForm } from '../../client';
 import { assertEvmSigner, buildSignedForm, resolveMainSigner } from '../../signing';
-import type { CodeMsg, SubAccountTransferParams } from '../types';
 
 /**
  * Transfer between master and sub-accounts (`TRADE`), signé par le **compte principal**.

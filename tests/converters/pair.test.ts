@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Pair } from '../../src/common/types';
 import { PairConverter } from '../../src/converters/pair';
-import type { FuturesSymbol } from '../../src/rest/futures/types';
+import type { FuturesSymbol } from '../../src/common/futures';
 
 // Symbole futures Aster réaliste (cœur + champs hors cœur : pricePrecision, filters, orderTypes…).
 const FUTURES = {

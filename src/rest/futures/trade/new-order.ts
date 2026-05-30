@@ -1,7 +1,7 @@
+import type { FuturesOrder, NewOrderParams } from '../../../common/futures';
 import { OrderType } from '../../../common/types';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { FuturesOrder, NewOrderParams } from '../types';
 import { buildOrderPayload } from './payloads';
 
 /**

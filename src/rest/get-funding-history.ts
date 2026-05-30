@@ -1,18 +1,7 @@
+import type { GetFundingHistoryParams } from '../common/types';
 import type { FundingRate } from '../common/types';
-import { httpGet } from './client';
 import { FundingConverter, type FundingRateNative } from '../converters/funding';
-
-/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
-export interface GetFundingHistoryParams {
-  /** Paire/symbole (= `Pair.name`). */
-  name: string;
-  /** Début (ms). */
-  startTime?: number;
-  /** Fin (ms). */
-  endTime?: number;
-  /** Nombre de points. */
-  limit?: number;
-}
+import { httpGet } from './client';
 
 /** Historique du **taux de funding** au format unifié (Aster `/fapi/v3/fundingRate`). */
 export function getFundingHistory(

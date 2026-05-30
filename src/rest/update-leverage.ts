@@ -1,26 +1,7 @@
+import type { LeverageUpdate, UpdateLeverageParams } from '../common/types';
 import type { MarketKind } from '../common/types';
 import { httpPostForm } from './client';
 import { buildSignedRequest } from './signing';
-
-/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
-export interface UpdateLeverageParams {
-  /** Paire/symbole (= `Pair.name`). */
-  name: string;
-  /** Levier cible (entier). */
-  leverage: number;
-  /** Type de marché ; défaut `perp`. */
-  kind?: MarketKind;
-}
-
-/** Confirmation unifiée d'un changement de levier. */
-export interface LeverageUpdate {
-  /** Paire/symbole. */
-  name: string;
-  /** Levier appliqué. */
-  leverage: number;
-  /** Détails natifs hors cœur (rien jeté). */
-  xtras?: Record<string, unknown>;
-}
 
 interface LeverageResultWire {
   symbol: string;

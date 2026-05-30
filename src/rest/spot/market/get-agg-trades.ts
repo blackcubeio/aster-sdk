@@ -1,5 +1,5 @@
+import type { SpotAggTrade, SpotAggTradesQuery } from '../../../common/spot';
 import { httpGet } from '../../client';
-import type { SpotAggTrade, SpotAggTradesQuery } from '../types';
 
 interface AggTradeWire {
   a: number;

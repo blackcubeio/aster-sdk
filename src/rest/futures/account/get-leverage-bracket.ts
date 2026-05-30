@@ -1,6 +1,6 @@
+import type { LeverageBracket } from '../../../common/futures';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { LeverageBracket } from '../types';
 
 /** Notional & leverage brackets: one object for a given symbol, an array otherwise (`USER_DATA`). */
 export function getLeverageBracket(symbol: string, label: string): Promise<LeverageBracket>;

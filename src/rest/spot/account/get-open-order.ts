@@ -1,7 +1,7 @@
+import type { SpotOrder, SpotOrderQuery } from '../../../common/spot';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
 import { buildSpotOrderRef } from '../trade/payloads';
-import type { SpotOrder, SpotOrderQuery } from '../types';
 
 /** Query a single current open spot order (`USER_DATA`). */
 export function getOpenOrderSpot(query: SpotOrderQuery, label: string): Promise<SpotOrder> {

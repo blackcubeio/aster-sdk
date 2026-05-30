@@ -1,6 +1,3 @@
-import type { JsonObject, JsonValue } from '../../../common/types';
-import { httpGetSigned, httpPostForm } from '../../client';
-import { buildSignedRequest } from '../../signing';
 import type {
   PlaceStrategyOrderParams,
   PlaceStrategyOrderResult,
@@ -9,7 +6,10 @@ import type {
   StrategyOrderQuery,
   UpdateStrategyOrderParams,
   UpdateStrategyOrderResult,
-} from '../types';
+} from '../../../common/futures';
+import type { JsonObject, JsonValue } from '../../../common/types';
+import { httpGetSigned, httpPostForm } from '../../client';
+import { buildSignedRequest } from '../../signing';
 
 /** Place an OTO / OCO / OTOCO strategy order (`TRADE`). */
 export function placeStrategyOrder(

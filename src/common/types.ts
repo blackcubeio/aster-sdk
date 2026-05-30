@@ -440,3 +440,263 @@ export enum KlineInterval {
   OneWeek = '1w',
   OneMonth = '1M',
 }
+
+// ── depuis rest/edit-order.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface EditOrderParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Nouvelle quantité. */
+  size: string;
+  /** Nouveau prix. */
+  price: string;
+  /** ID d'ordre exchange (l'un de `id`/`clientId` requis). */
+  id?: string;
+  /** Client order id. */
+  clientId?: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+}
+
+/** Résultat unifié d'une modification d'ordre (référence du nouvel ordre). */
+export interface EditOrderResult {
+  /** Paire/symbole. */
+  name: string;
+  /** ID du nouvel ordre. */
+  id: string;
+  /** Détails natifs hors cœur (rien jeté), omis si vide. */
+  xtras?: Record<string, unknown>;
+}
+
+// ── depuis rest/get-balances.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). `user` ignoré côté Aster (compte = signataire). */
+export interface GetBalancesParams {
+  /** Adresse du compte (HL/Pacifica) ; Aster utilise le signataire de `label`. */
+  user?: string;
+}
+
+// ── depuis rest/get-trades.ts ──
+/** Paramètres unifiés (mêmes champs sur les SDK qui exposent les trades publics). */
+export interface GetTradesParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+  /** Nombre de trades. */
+  limit?: number;
+}
+
+// ── depuis rest/update-leverage.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface UpdateLeverageParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Levier cible (entier). */
+  leverage: number;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+}
+
+/** Confirmation unifiée d'un changement de levier. */
+export interface LeverageUpdate {
+  /** Paire/symbole. */
+  name: string;
+  /** Levier appliqué. */
+  leverage: number;
+  /** Détails natifs hors cœur (rien jeté). */
+  xtras?: Record<string, unknown>;
+}
+
+// ── depuis rest/get-user-trades.ts ──
+/** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */
+export interface GetUserTradesParams {
+  /** Adresse du compte (HL/Pacifica) ; Aster utilise le signataire de `label`. */
+  user?: string;
+  /** Filtre sur une paire (requis côté Aster). */
+  name?: string;
+  /** Début (ms). */
+  startTime?: number;
+  /** Fin (ms). */
+  endTime?: number;
+  /** Nombre max. */
+  limit?: number;
+}
+
+// ── depuis rest/signing.ts ──
+export interface ResolvedSigner {
+  label: string;
+  keyType: KeyType;
+  user: string;
+  signer: string;
+  privateKey: string;
+  mainPrivateKey?: string;
+  network: Network;
+}
+
+export interface SignedForm {
+  /** Corps `application/x-www-form-urlencoded` complet, signature incluse. */
+  body: string;
+  network: Network;
+}
+
+// ── depuis rest/get-candles.ts ──
+/** Prix sous-jacent des bougies (perp Aster) : dernier prix, mark price ou index price. */
+export type CandlePriceType = 'last' | 'mark' | 'index';
+
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface GetCandlesParams {
+  /** Identifiant de la paire (= `Pair.name`). */
+  name: string;
+  /** Intervalle (`1m`, `1h`, `1d`…). */
+  interval: string;
+  /** Début (ms), optionnel. */
+  startTime?: number;
+  /** Fin (ms), optionnel. */
+  endTime?: number;
+  /** Type de marché : futures (`perp`) ou spot. Défaut `perp`. */
+  kind?: MarketKind;
+  /** Prix sous-jacent (perp uniquement) : `last` (défaut), `mark`, `index`. */
+  priceType?: CandlePriceType;
+  /** Nombre max de bougies. */
+  limit?: number;
+}
+
+// ── depuis rest/place-order.ts ──
+/** Type d'ordre unifié accepté par `placeOrder`. */
+export type PlaceOrderType =
+  | 'limit'
+  | 'market'
+  | 'stop'
+  | 'stopMarket'
+  | 'takeProfit'
+  | 'takeProfitMarket';
+
+/** Time-in-force unifié. */
+export type PlaceOrderTif = 'gtc' | 'ioc' | 'fok' | 'alo';
+
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface PlaceOrderParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+  /** Sens. */
+  side: Side;
+  /** Type d'ordre. */
+  type: PlaceOrderType;
+  /** Quantité (chaîne décimale). */
+  size: string;
+  /** Prix limite (requis pour les ordres `limit`). */
+  price?: string;
+  /** Prix de déclenchement (stop/take-profit). */
+  triggerPrice?: string;
+  /** Time-in-force ; défaut exchange. */
+  tif?: PlaceOrderTif;
+  /** Reduce-only. */
+  reduceOnly?: boolean;
+  /** Client order id. */
+  clientId?: string;
+}
+
+// ── depuis rest/cancel-all-orders.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface CancelAllOrdersParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+}
+
+/** Résultat unifié d'une annulation globale. */
+export interface CancelAllResult {
+  /** Nombre d'ordres annulés ; `null` si l'exchange ne le fournit pas (Aster). */
+  cancelled: number | null;
+}
+
+// ── depuis rest/get-order-book.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface GetOrderBookParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+  /** Profondeur (nombre de niveaux). */
+  limit?: number;
+}
+
+// ── depuis rest/get-open-orders.ts ──
+/** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */
+export interface GetOpenOrdersParams {
+  /** Adresse du compte (HL/Pacifica) ; Aster utilise le signataire de `label`. */
+  user?: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+  /** Filtre optionnel sur une paire. */
+  name?: string;
+}
+
+// ── depuis rest/cancel-order.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface CancelOrderParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** ID d'ordre exchange (l'un de `id`/`clientId` requis). */
+  id?: string;
+  /** Client order id. */
+  clientId?: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+}
+
+// ── depuis rest/client.ts ──
+export type QueryValue = string | number | boolean;
+
+export type QueryParams = Record<string, QueryValue | undefined>;
+
+// ── depuis rest/get-funding-history.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface GetFundingHistoryParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** Début (ms). */
+  startTime?: number;
+  /** Fin (ms). */
+  endTime?: number;
+  /** Nombre de points. */
+  limit?: number;
+}
+
+// ── depuis rest/get-positions.ts ──
+/** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */
+export interface GetPositionsParams {
+  /** Adresse du compte (HL/Pacifica) ; Aster utilise le signataire de `label`. */
+  user?: string;
+  /** Filtre optionnel sur une paire. */
+  name?: string;
+}
+
+// ── depuis rest/get-order-history.ts ──
+/** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */
+export interface GetOrderHistoryParams {
+  /** Adresse du compte (HL/Pacifica) ; Aster utilise le signataire de `label`. */
+  user?: string;
+  /** Filtre sur une paire (requis côté Aster). */
+  name?: string;
+  /** Début (ms). */
+  startTime?: number;
+  /** Fin (ms). */
+  endTime?: number;
+  /** Nombre max. */
+  limit?: number;
+}
+
+// ── depuis rest/update-margin-mode.ts ──
+/** Paramètres unifiés (mêmes champs sur les 3 SDK). */
+export interface UpdateMarginModeParams {
+  /** Paire/symbole (= `Pair.name`). */
+  name: string;
+  /** `true` = marge isolée, `false` = cross. */
+  isolated: boolean;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
+}

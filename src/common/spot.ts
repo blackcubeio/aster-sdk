@@ -6,7 +6,7 @@ import type {
   OrderStatus,
   OrderType,
   TimeInForce,
-} from '../../common/types';
+} from './types';
 
 // ── Exchange information ──────────────────────────────────────────────────────
 

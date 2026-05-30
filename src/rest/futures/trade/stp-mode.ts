@@ -1,7 +1,7 @@
+import type { CodeMsg, StpModeResult } from '../../../common/futures';
 import type { StpMode } from '../../../common/types';
 import { httpGetSigned, httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { CodeMsg, StpModeResult } from '../types';
 
 /** Set the account-wide Self-Trade Prevention mode (`TRADE`). */
 export function updateStpMode(stpMode: StpMode, label: string): Promise<CodeMsg> {

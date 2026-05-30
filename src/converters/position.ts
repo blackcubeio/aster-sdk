@@ -1,5 +1,5 @@
+import type { PositionRisk } from '../common/futures';
 import type { Position } from '../common/types';
-import type { PositionRisk } from '../rest/futures/types';
 
 /** Position native Aster (`/fapi/v3/positionRisk`). */
 export type PositionNative = PositionRisk;

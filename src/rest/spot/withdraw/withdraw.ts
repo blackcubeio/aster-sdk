@@ -1,9 +1,14 @@
 import { ZERO_ADDRESS } from '../../../common/constants';
+import type {
+  WithdrawFee,
+  WithdrawFeeQuery,
+  WithdrawParams,
+  WithdrawResult,
+} from '../../../common/spot';
 import type { Hex } from '../../../common/types';
 import { microsecondNonce, serializeParams } from '../../../common/utils';
 import { httpGet, httpPostForm } from '../../client';
 import { assertEvmSigner, resolveMainSigner, signEip712 } from '../../signing';
-import type { WithdrawFee, WithdrawFeeQuery, WithdrawParams, WithdrawResult } from '../types';
 
 const CHAIN_NAMES: Record<string, string> = { '1': 'ETH', '56': 'BSC', '42161': 'Arbitrum' };
 

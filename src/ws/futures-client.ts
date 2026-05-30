@@ -1,19 +1,8 @@
 import { type WebSocketFactory, type WebSocketLike, getConfig } from '../common/config';
 import type { JsonObject, JsonValue, KlineInterval } from '../common/types';
+import type { DepthLevels, DepthSpeed, FuturesWsOptions } from '../common/ws';
+import type { StreamHandler, Unsubscribe } from '../common/ws';
 import { resolveReadNetwork } from '../rest/client';
-import type { StreamHandler, Unsubscribe } from './types';
-
-/** Vitesse de rafraîchissement optionnelle des flux de profondeur. */
-export type DepthSpeed = '100ms' | '500ms';
-/** Niveaux d'un flux de profondeur partielle. */
-export type DepthLevels = 5 | 10 | 20;
-
-export interface FuturesWsOptions {
-  url?: string;
-  webSocket?: WebSocketFactory;
-  /** Label du signer : choisit le réseau (défaut mainnet). */
-  label?: string;
-}
 
 /**
  * Client WebSocket des flux de marché futures (`fstream`). Connexion en mode **combined**

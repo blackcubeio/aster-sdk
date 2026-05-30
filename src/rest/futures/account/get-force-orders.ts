@@ -1,6 +1,6 @@
+import type { ForceOrdersQuery, OrderDetail } from '../../../common/futures';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { ForceOrdersQuery, OrderDetail } from '../types';
 
 /** User's liquidation / ADL orders (`USER_DATA`). */
 export function getForceOrders(

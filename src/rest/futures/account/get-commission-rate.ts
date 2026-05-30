@@ -1,6 +1,6 @@
+import type { CommissionRate } from '../../../common/futures';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { CommissionRate } from '../types';
 
 /** User maker/taker commission rate for a symbol (`USER_DATA`). */
 export function getCommissionRate(symbol: string, label: string): Promise<CommissionRate> {

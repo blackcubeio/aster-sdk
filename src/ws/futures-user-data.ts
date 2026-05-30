@@ -1,14 +1,8 @@
 import { type WebSocketFactory, type WebSocketLike, getConfig } from '../common/config';
 import type { JsonValue } from '../common/types';
+import type { FuturesUserDataOptions } from '../common/ws';
+import type { EventHandler, Unsubscribe } from '../common/ws';
 import { resolveReadNetwork } from '../rest/client';
-import type { EventHandler, Unsubscribe } from './types';
-
-export interface FuturesUserDataOptions {
-  url?: string;
-  webSocket?: WebSocketFactory;
-  /** Label du signer : choisit le réseau (défaut mainnet). */
-  label?: string;
-}
 
 /**
  * Flux user-data futures (`fstream/ws/<listenKey>`). Connexion brute liée à un `listenKey`

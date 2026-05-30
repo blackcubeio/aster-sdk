@@ -1,5 +1,5 @@
+import type { ExchangeInfo, FuturesSymbol } from '../../../common/futures';
 import { httpGet } from '../../client';
-import type { ExchangeInfo, FuturesSymbol } from '../types';
 
 type ExchangeInfoWire = Omit<ExchangeInfo, 'symbols'> & {
   symbols: Omit<FuturesSymbol, 'kind'>[];

@@ -1,8 +1,8 @@
+import type { CodeMsg, UpdateSubAccountParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce } from '../../../common/utils';
 import { httpPostForm } from '../../client';
 import { assertEvmSigner, buildSignedForm, resolveMainSigner } from '../../signing';
-import type { CodeMsg, UpdateSubAccountParams } from '../types';
 
 /**
  * Rename or freeze/unfreeze a sub-account (`TRADE`), signé par le **compte principal**

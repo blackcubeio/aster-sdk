@@ -1,5 +1,5 @@
+import type { ListenKey } from '../../../common/futures';
 import { httpPostForm } from '../../client';
-import type { ListenKey } from '../../futures/types';
 import { buildSignedRequest } from '../../signing';
 
 /** Start (or return the active) spot user-data stream `listenKey` (`USER_STREAM`). */

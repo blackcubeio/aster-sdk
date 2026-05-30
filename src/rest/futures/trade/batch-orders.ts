@@ -1,6 +1,6 @@
+import type { BatchOrderResult, NewOrderParams } from '../../../common/futures';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { BatchOrderResult, NewOrderParams } from '../types';
 import { buildOrderPayload } from './payloads';
 
 /**

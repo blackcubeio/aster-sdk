@@ -11,6 +11,7 @@ import {
   SIGNATURE_CHAIN_ID,
   ZERO_ADDRESS,
 } from '../common/constants';
+import type { ResolvedSigner, SignedForm } from '../common/types';
 import type { Hex, JsonValue, KeyType, Network, Signature, Signer } from '../common/types';
 import { microsecondNonce, serializeParams } from '../common/utils';
 
@@ -250,16 +251,6 @@ export function toChecksumAddress(address: string): Hex {
   return result as Hex;
 }
 
-export interface ResolvedSigner {
-  label: string;
-  keyType: KeyType;
-  user: string;
-  signer: string;
-  privateKey: string;
-  mainPrivateKey?: string;
-  network: Network;
-}
-
 /** Adresse (EVM checksummée ou Solana base58) dérivée d'une clé privée selon son type. */
 function addressFromKey(privateKey: string): string {
   return keyTypeOf(privateKey) === 'solana'
@@ -318,12 +309,6 @@ export function assertEvmSigner(label: string | undefined, feature: string): voi
   if (resolveSigner(label).keyType === 'solana') {
     throw new Error(`${feature} : non supporté pour un compte Solana (agent EVM requis).`);
   }
-}
-
-export interface SignedForm {
-  /** Corps `application/x-www-form-urlencoded` complet, signature incluse. */
-  body: string;
-  network: Network;
 }
 
 /**

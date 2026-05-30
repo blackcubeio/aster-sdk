@@ -1,6 +1,6 @@
+import type { SpotTransactionEntry, SpotTransactionQuery } from '../../../common/spot';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { SpotTransactionEntry, SpotTransactionQuery } from '../types';
 
 /** Spot transaction records (trades, transfers, airdrops, swaps…) (`USER_DATA`). */
 export function getTransactionHistorySpot(

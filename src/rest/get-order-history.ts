@@ -1,21 +1,8 @@
+import type { GetOrderHistoryParams } from '../common/types';
 import type { Order } from '../common/types';
-import { httpGetSigned } from './client';
 import { OrderConverter, type OrderNative } from '../converters/order';
+import { httpGetSigned } from './client';
 import { buildSignedRequest } from './signing';
-
-/** Paramètres unifiés. `user` ignoré côté Aster (compte = signataire de `label`). */
-export interface GetOrderHistoryParams {
-  /** Adresse du compte (HL/Pacifica) ; Aster utilise le signataire de `label`. */
-  user?: string;
-  /** Filtre sur une paire (requis côté Aster). */
-  name?: string;
-  /** Début (ms). */
-  startTime?: number;
-  /** Fin (ms). */
-  endTime?: number;
-  /** Nombre max. */
-  limit?: number;
-}
 
 /**
  * Historique d'ordres (actifs/annulés/exécutés) au **format unifié** `Order`

@@ -1,7 +1,7 @@
+import type { ChaseOrder, ChaseOrderParams } from '../../../common/futures';
 import type { JsonObject } from '../../../common/types';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { ChaseOrder, ChaseOrderParams } from '../types';
 import { assign } from './payloads';
 
 /**

@@ -1,7 +1,7 @@
+import type { MigrateUserResult } from '../../../common/futures';
 import { microsecondNonce } from '../../../common/utils';
 import { httpPostForm } from '../../client';
 import { buildSignedForm, resolveMainSigner } from '../../signing';
-import type { MigrateUserResult } from '../types';
 
 /**
  * Migrate all positive-balance assets from the source account to the authenticated user

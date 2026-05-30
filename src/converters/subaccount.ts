@@ -1,5 +1,5 @@
+import type { FuturesSubAccount } from '../common/futures';
 import type { SubAccount } from '../common/types';
-import type { FuturesSubAccount } from '../rest/futures/types';
 
 /** Sous-compte natif Aster (`/fapi/v3/getSubAccountList`). */
 export type SubAccountNative = FuturesSubAccount;

@@ -1,6 +1,6 @@
+import type { CountdownCancelAllParams, CountdownCancelAllResult } from '../../../common/futures';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { CountdownCancelAllParams, CountdownCancelAllResult } from '../types';
 
 /**
  * Arm/refresh a dead-man's switch that cancels all open orders on `symbol` after

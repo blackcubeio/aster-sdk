@@ -1,7 +1,7 @@
+import type { SpotOrder, SpotOrderQuery } from '../../../common/spot';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
 import { buildSpotOrderRef } from '../trade/payloads';
-import type { SpotOrder, SpotOrderQuery } from '../types';
 
 /** Query a spot order's status (`USER_DATA`). */
 export function queryOrderSpot(query: SpotOrderQuery, label: string): Promise<SpotOrder> {

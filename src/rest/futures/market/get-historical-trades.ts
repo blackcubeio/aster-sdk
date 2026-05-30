@@ -1,5 +1,5 @@
+import type { HistoricalTradesQuery, MarketTrade } from '../../../common/futures';
 import { httpGet } from '../../client';
-import type { HistoricalTradesQuery, MarketTrade } from '../types';
 
 /** Older market historical trades (`MARKET_DATA`). */
 export function getHistoricalTrades(

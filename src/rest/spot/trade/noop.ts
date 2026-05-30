@@ -1,5 +1,5 @@
+import type { CodeMsg } from '../../../common/futures';
 import { httpPostForm } from '../../client';
-import type { CodeMsg } from '../../futures/types';
 import { buildSignedRequest } from '../../signing';
 
 /** No-op signé (`TRADE`) : annule une transaction spot encore en file (même nonce ciblé). */

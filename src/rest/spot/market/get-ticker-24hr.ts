@@ -1,5 +1,5 @@
+import type { SpotTicker24hr } from '../../../common/spot';
 import { httpGet } from '../../client';
-import type { SpotTicker24hr } from '../types';
 
 /** 24h spot ticker for one symbol, or all symbols when omitted. */
 export function getTicker24hrSpot(symbol: string, label?: string): Promise<SpotTicker24hr>;

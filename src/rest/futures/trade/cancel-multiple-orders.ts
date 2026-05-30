@@ -1,7 +1,7 @@
+import type { BatchOrderResult, CancelMultipleOrdersParams } from '../../../common/futures';
 import type { JsonObject } from '../../../common/types';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { BatchOrderResult, CancelMultipleOrdersParams } from '../types';
 
 /**
  * Cancel up to 10 orders on a symbol (`TRADE`). Either `orderIdList` or

@@ -1,6 +1,6 @@
+import type { CodeMsg, PositionModeResult } from '../../../common/futures';
 import { httpGetSigned, httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { CodeMsg, PositionModeResult } from '../types';
 
 /** Set position mode for every symbol: `true` = Hedge Mode, `false` = One-way (`TRADE`). */
 export function updatePositionMode(dualSidePosition: boolean, label: string): Promise<CodeMsg> {

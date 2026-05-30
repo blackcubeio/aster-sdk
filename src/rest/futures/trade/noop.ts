@@ -1,6 +1,6 @@
+import type { CodeMsg } from '../../../common/futures';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { CodeMsg } from '../types';
 
 /**
  * No-op signé (`TRADE`) : annule efficacement une transaction encore en file et non

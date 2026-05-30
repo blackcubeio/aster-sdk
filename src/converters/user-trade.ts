@@ -1,5 +1,5 @@
+import type { FuturesUserTrade } from '../common/futures';
 import type { UserTrade } from '../common/types';
-import type { FuturesUserTrade } from '../rest/futures/types';
 
 /** Fill natif Aster (futures `FuturesUserTrade`). */
 export type UserTradeNative = FuturesUserTrade;

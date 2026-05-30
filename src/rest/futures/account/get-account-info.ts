@@ -1,6 +1,6 @@
+import type { AccountInfo } from '../../../common/futures';
 import { httpGetSigned } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { AccountInfo } from '../types';
 
 /** Current account information: balances, assets and positions (`USER_DATA`). */
 export function getAccountInfo(label: string): Promise<AccountInfo> {

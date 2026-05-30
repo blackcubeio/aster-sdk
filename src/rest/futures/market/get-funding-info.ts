@@ -1,5 +1,5 @@
+import type { FundingInfo } from '../../../common/futures';
 import { httpGet } from '../../client';
-import type { FundingInfo } from '../types';
 
 /** Funding rate configuration (interval, caps) per symbol. */
 export function getFundingInfo(symbol?: string, label?: string): Promise<FundingInfo[]> {

@@ -1,9 +1,9 @@
 import { AGENT_CHAIN_ID } from '../../../common/constants';
+import type { CodeMsg, CreateSubAccountParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce, serializeParams } from '../../../common/utils';
 import { httpPostForm } from '../../client';
 import { assertEvmSigner, buildSignedForm, resolveMainSigner, signMessage } from '../../signing';
-import type { CodeMsg, CreateSubAccountParams } from '../types';
 
 /**
  * Create a sub-account (`TRADE`) — **double signature** : le sous-compte signe d'abord

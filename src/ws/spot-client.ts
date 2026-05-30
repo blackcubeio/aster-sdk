@@ -1,17 +1,8 @@
 import { type WebSocketFactory, type WebSocketLike, getConfig } from '../common/config';
 import type { JsonObject, JsonValue, KlineInterval } from '../common/types';
+import type { SpotDepthLevels, SpotWsOptions } from '../common/ws';
+import type { StreamHandler, Unsubscribe } from '../common/ws';
 import { resolveReadNetwork } from '../rest/client';
-import type { StreamHandler, Unsubscribe } from './types';
-
-/** Niveaux d'un flux de profondeur partielle spot. */
-export type SpotDepthLevels = 5 | 10 | 20;
-
-export interface SpotWsOptions {
-  url?: string;
-  webSocket?: WebSocketFactory;
-  /** Label du signer : choisit le réseau (défaut mainnet). */
-  label?: string;
-}
 
 /**
  * Client WebSocket des flux de marché spot (`sstream`), mode **combined** (`/stream`).

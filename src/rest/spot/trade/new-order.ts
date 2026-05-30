@@ -1,7 +1,7 @@
+import type { SpotNewOrderParams, SpotOrder } from '../../../common/spot';
 import { OrderType } from '../../../common/types';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { SpotNewOrderParams, SpotOrder } from '../types';
 import { buildSpotOrderPayload } from './payloads';
 
 /** Place a spot order of any `type` (`TRADE`, signé par l'agent). */

@@ -1,6 +1,6 @@
+import type { MarketTrade } from '../common/futures';
+import type { SpotTrade } from '../common/spot';
 import type { Trade } from '../common/types';
-import type { MarketTrade } from '../rest/futures/types';
-import type { SpotTrade } from '../rest/spot/types';
 
 /** Trade public natif Aster (futures `MarketTrade` ou `SpotTrade`, même cœur positionnel). */
 export type TradeNative = MarketTrade | SpotTrade;

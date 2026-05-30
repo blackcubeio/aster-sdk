@@ -1,4 +1,5 @@
 import { getConfig } from '../common/config';
+import type { QueryParams, QueryValue } from '../common/types';
 import type { Network, Product } from '../common/types';
 
 /**
@@ -27,9 +28,6 @@ export class AsterApiError extends Error {
     this.name = 'AsterApiError';
   }
 }
-
-export type QueryValue = string | number | boolean;
-export type QueryParams = Record<string, QueryValue | undefined>;
 
 export function buildUrl(baseUrl: string, path: string, query?: QueryParams): string {
   const url = new URL(baseUrl + path);

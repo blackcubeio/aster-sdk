@@ -1,6 +1,6 @@
+import type { TransferParams, TransferResult } from '../../../common/futures';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { TransferParams, TransferResult } from '../types';
 
 /** Transfer an asset between the futures and spot wallets (`TRANSFER`). */
 export function transferFuturesSpot(

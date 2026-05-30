@@ -1,5 +1,5 @@
+import type { FuturesOrder } from '../common/futures';
 import type { Order, Side } from '../common/types';
-import type { FuturesOrder } from '../rest/futures/types';
 
 /** Ordre natif Aster (futures `FuturesOrder`, ou `OrderDetail` qui l'étend). */
 export type OrderNative = FuturesOrder;

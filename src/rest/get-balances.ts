@@ -1,13 +1,8 @@
+import type { GetBalancesParams } from '../common/types';
 import type { Balance } from '../common/types';
-import { httpGetSigned } from './client';
 import { BalanceConverter, type BalanceNative } from '../converters/balance';
+import { httpGetSigned } from './client';
 import { buildSignedRequest } from './signing';
-
-/** Paramètres unifiés (mêmes champs sur les 3 SDK). `user` ignoré côté Aster (compte = signataire). */
-export interface GetBalancesParams {
-  /** Adresse du compte (HL/Pacifica) ; Aster utilise le signataire de `label`. */
-  user?: string;
-}
 
 /**
  * Soldes par actif au **format unifié** `Balance` (Aster futures `/fapi/v3/balance`, **signé**).

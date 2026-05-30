@@ -1,5 +1,5 @@
+import type { IndexPriceReferences } from '../../../common/futures';
 import { httpGet } from '../../client';
-import type { IndexPriceReferences } from '../types';
 
 /** Component exchanges and weights behind a symbol's index price. */
 export function getIndexPriceReferences(

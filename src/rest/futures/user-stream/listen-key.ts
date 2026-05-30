@@ -1,6 +1,6 @@
+import type { ListenKey } from '../../../common/futures';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { ListenKey } from '../types';
 
 /**
  * Start (or return the active) user data stream `listenKey` (`USER_STREAM`). Valid 60 min;

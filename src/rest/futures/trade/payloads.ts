@@ -1,6 +1,6 @@
+import type { NewOrderParams } from '../../../common/futures';
 import type { JsonObject } from '../../../common/types';
 import { newClientOrderId } from '../../signing';
-import type { NewOrderParams } from '../types';
 
 /** Ajoute `key` au payload si la valeur est définie. */
 export function assign(

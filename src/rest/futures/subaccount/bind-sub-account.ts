@@ -1,9 +1,9 @@
 import { AGENT_CHAIN_ID } from '../../../common/constants';
+import type { BindSubAccountParams, CodeMsg } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { microsecondNonce, serializeParams } from '../../../common/utils';
 import { httpPostForm } from '../../client';
 import { assertEvmSigner, buildSignedForm, resolveMainSigner, signMessage } from '../../signing';
-import type { BindSubAccountParams, CodeMsg } from '../types';
 
 /**
  * Bind an existing wallet as a sub-account (`USER_DATA`) — **double signature**. Le

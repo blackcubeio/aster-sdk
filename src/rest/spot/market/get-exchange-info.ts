@@ -1,5 +1,5 @@
+import type { SpotExchangeInfo, SpotSymbol } from '../../../common/spot';
 import { httpGet } from '../../client';
-import type { SpotExchangeInfo, SpotSymbol } from '../types';
 
 type SpotExchangeInfoWire = Omit<SpotExchangeInfo, 'symbols'> & {
   symbols: Omit<SpotSymbol, 'kind'>[];

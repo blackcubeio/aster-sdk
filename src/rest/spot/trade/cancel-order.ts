@@ -1,6 +1,6 @@
+import type { SpotCancelOrderParams, SpotOrder } from '../../../common/spot';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { SpotCancelOrderParams, SpotOrder } from '../types';
 import { buildSpotOrderRef } from './payloads';
 
 /** Cancel an active spot order (`TRADE`). */

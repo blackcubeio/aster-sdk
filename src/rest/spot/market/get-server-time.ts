@@ -1,5 +1,5 @@
+import type { SpotServerTime } from '../../../common/spot';
 import { httpGet } from '../../client';
-import type { SpotServerTime } from '../types';
 
 /** Current spot server time (ms). */
 export function getServerTimeSpot(label?: string): Promise<SpotServerTime> {

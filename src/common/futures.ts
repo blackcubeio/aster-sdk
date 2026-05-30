@@ -13,7 +13,7 @@ import type {
   StpMode,
   TimeInForce,
   WorkingType,
-} from '../../common/types';
+} from './types';
 
 // ── Exchange information ──────────────────────────────────────────────────────
 
@@ -759,7 +759,6 @@ export interface AccountInfo {
   positions: AccountPosition[];
 }
 
-
 export interface CancelMultipleOrdersParams {
   symbol: string;
   orderIdList?: number[];
@@ -776,7 +775,6 @@ export interface CountdownCancelAllResult {
   symbol: string;
   countdownTime: string;
 }
-
 
 export interface UpdateIsolatedMarginParams {
   symbol: string;

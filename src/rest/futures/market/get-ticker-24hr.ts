@@ -1,5 +1,5 @@
+import type { Ticker24hr } from '../../../common/futures';
 import { httpGet } from '../../client';
-import type { Ticker24hr } from '../types';
 
 /** 24h rolling-window price change statistics for one symbol, or all when omitted. */
 export function getTicker24hr(symbol: string, label?: string): Promise<Ticker24hr>;

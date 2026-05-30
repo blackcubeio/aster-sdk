@@ -1,5 +1,5 @@
+import type { SpotPriceTicker } from '../../../common/spot';
 import { httpGet } from '../../client';
-import type { SpotPriceTicker } from '../types';
 
 /** Latest spot price for one symbol, or all symbols when omitted. */
 export function getPriceTickerSpot(symbol: string, label?: string): Promise<SpotPriceTicker>;

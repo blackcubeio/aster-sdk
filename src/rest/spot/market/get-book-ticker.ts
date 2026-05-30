@@ -1,5 +1,5 @@
+import type { SpotBookTicker } from '../../../common/spot';
 import { httpGet } from '../../client';
-import type { SpotBookTicker } from '../types';
 
 /** Best bid/ask for one symbol, or all symbols when omitted. */
 export function getBookTickerSpot(symbol: string, label?: string): Promise<SpotBookTicker>;

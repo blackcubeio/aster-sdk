@@ -23,7 +23,7 @@ export * from './rest/cancel-all-orders';
 export * from './rest/edit-order';
 export * from './rest/update-margin-mode';
 
-export * from './rest/futures/types';
+export * from './common/futures';
 
 export * from './rest/futures/market/ping';
 export * from './rest/futures/market/get-server-time';
@@ -74,7 +74,7 @@ export * from './rest/futures/asset/get-migrate-history';
 
 export * from './rest/futures/user-stream/listen-key';
 
-export * from './rest/spot/types';
+export * from './common/spot';
 
 export * from './rest/spot/market/ping';
 export * from './rest/spot/market/get-server-time';
@@ -104,7 +104,7 @@ export * from './rest/spot/withdraw/withdraw';
 
 export * from './rest/spot/user-stream/listen-key';
 
-export * from './ws/types';
+export * from './common/ws';
 export * from './ws/futures-client';
 export * from './ws/futures-user-data';
 export * from './ws/spot-client';

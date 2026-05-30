@@ -1,8 +1,8 @@
+import type { CodeMsg } from '../../../common/futures';
+import type { SpotCancelAllParams } from '../../../common/spot';
 import type { JsonObject } from '../../../common/types';
 import { httpPostForm } from '../../client';
-import type { CodeMsg } from '../../futures/types';
 import { buildSignedRequest } from '../../signing';
-import type { SpotCancelAllParams } from '../types';
 
 /**
  * Cancel all open spot orders on a symbol (`TRADE`). Optionnellement restreint à des listes

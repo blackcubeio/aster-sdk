@@ -1,7 +1,7 @@
+import type { MmpConfig, UpdateMmpParams } from '../../../common/futures';
 import type { JsonObject } from '../../../common/types';
 import { httpGetSigned, httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { MmpConfig, UpdateMmpParams } from '../types';
 
 /** Set/replace the market-maker protection config for a symbol (`USER_DATA`). */
 export function updateMmp(params: UpdateMmpParams, label: string): Promise<boolean> {

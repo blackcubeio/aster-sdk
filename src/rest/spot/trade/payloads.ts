@@ -1,6 +1,6 @@
+import type { SpotNewOrderParams } from '../../../common/spot';
 import type { JsonObject } from '../../../common/types';
 import { newClientOrderId } from '../../signing';
-import type { SpotNewOrderParams } from '../types';
 
 /** Construit la charge d'un ordre spot (partagée par createOrderSpot et ses raccourcis). */
 export function buildSpotOrderPayload(params: SpotNewOrderParams): JsonObject {

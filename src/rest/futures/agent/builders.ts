@@ -1,6 +1,11 @@
+import type {
+  ApproveBuilderParams,
+  Builder,
+  CodeMsg,
+  UpdateBuilderParams,
+} from '../../../common/futures';
 import { httpGetSigned, httpPostForm } from '../../client';
 import { buildMainTypedRequest, buildSignedRequest } from '../../signing';
-import type { ApproveBuilderParams, Builder, CodeMsg, UpdateBuilderParams } from '../types';
 
 /** List the account's builders (`USER_DATA`, agent-signed). */
 export function getBuilders(label: string): Promise<Builder[]> {

@@ -1,5 +1,5 @@
+import type { AggTrade, AggTradesQuery } from '../../../common/futures';
 import { httpGet } from '../../client';
-import type { AggTrade, AggTradesQuery } from '../types';
 
 interface AggTradeWire {
   a: number;

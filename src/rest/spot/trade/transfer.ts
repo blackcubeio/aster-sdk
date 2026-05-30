@@ -1,6 +1,6 @@
+import type { SpotTransferParams, SpotTransferResult } from '../../../common/spot';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { SpotTransferParams, SpotTransferResult } from '../types';
 
 /** Transfer an asset between spot and perp wallets (`TRADE`). */
 export function transferSpot(

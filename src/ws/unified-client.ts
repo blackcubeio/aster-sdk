@@ -10,28 +10,20 @@ import type {
   Trade,
   UserTrade,
 } from '../common/types';
-import { createListenKey } from '../rest/futures/user-stream/listen-key';
-import { type BookTickerWsNative, BboWsConverter } from '../converters/bbo';
+import type { UnifiedWsOptions } from '../common/ws';
+import type { Unsubscribe } from '../common/ws';
+import { BboWsConverter, type BookTickerWsNative } from '../converters/bbo';
 import { CandleWsConverter, type KlineWsNative } from '../converters/candle';
 import { type OrderTradeUpdateWsNative, OrderWsConverter } from '../converters/order';
 import { type DepthWsNative, OrderBookWsConverter } from '../converters/order-book';
-import {
-  type AccountPositionWsNative,
-  PositionWsConverter,
-} from '../converters/position';
+import { type AccountPositionWsNative, PositionWsConverter } from '../converters/position';
 import { type MarkPriceWsNative, PricesWsConverter } from '../converters/price';
 import { type AggTradeWsNative, TradeWsConverter } from '../converters/trade';
 import { type OrderTradeFillWsNative, UserTradeWsConverter } from '../converters/user-trade';
-import { FuturesUserDataStream } from './futures-user-data';
+import { createListenKey } from '../rest/futures/user-stream/listen-key';
 import { FuturesWsClient } from './futures-client';
+import { FuturesUserDataStream } from './futures-user-data';
 import { SpotWsClient } from './spot-client';
-import type { Unsubscribe } from './types';
-
-export interface UnifiedWsOptions {
-  /** Label du signer : choisit le réseau (défaut mainnet). */
-  label?: string;
-  webSocket?: WebSocketFactory;
-}
 
 /**
  * Client WebSocket **unifié Blackcube** : surface identique entre les SDK. Chaque méthode
@@ -174,10 +166,7 @@ export class UnifiedWsClient {
    * Démux de `ORDER_TRADE_UPDATE` sur le stream futures (listenKey du signer `label`).
    * `user` est ignoré (Aster lie le stream au `label`).
    */
-  public subscribeOrders(
-    _params: { user?: string },
-    handler: (order: Order) => void,
-  ): Unsubscribe {
+  public subscribeOrders(_params: { user?: string }, handler: (order: Order) => void): Unsubscribe {
     const converter = new OrderWsConverter();
     return this.onUserData('ORDER_TRADE_UPDATE', (msg) => {
       handler(converter.toCommon(msg as OrderTradeUpdateWsNative));

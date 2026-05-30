@@ -1,7 +1,10 @@
+import type {
+  UpdateIsolatedMarginParams,
+  UpdateIsolatedMarginResult,
+} from '../../../common/futures';
 import type { JsonObject } from '../../../common/types';
 import { httpPostForm } from '../../client';
 import { buildSignedRequest } from '../../signing';
-import type { UpdateIsolatedMarginParams, UpdateIsolatedMarginResult } from '../types';
 
 /** Add (`type` 1) or reduce (`type` 2) isolated position margin (`TRADE`). */
 export function updateIsolatedMargin(
