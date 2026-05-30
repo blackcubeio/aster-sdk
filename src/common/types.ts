@@ -283,6 +283,18 @@ export interface Balance {
 }
 
 /**
+ * Sous-compte au **format unifié Blackcube** (cœur identique entre SDK).
+ * Seule l'`address` est commune aux exchanges ; tout le reste (solde, fee tier,
+ * nom, date de création, balances…) est propre à chaque exchange → `xtras`.
+ */
+export interface SubAccount {
+  /** Adresse du sous-compte (ou du compte principal). */
+  address: string;
+  /** Champs natifs hors cœur (rien jeté), omis si vide. */
+  xtras?: Record<string, unknown>;
+}
+
+/**
  * Trade public au **format unifié Blackcube** (cœur identique entre les SDK).
  * `side` = direction du **taker** (agresseur). `maker` = ce record est-il le maker
  * (`null` si modèle par-trade, ex. Aster). `xtras` porte le natif hors cœur.

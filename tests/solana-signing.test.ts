@@ -42,7 +42,7 @@ describe.skipIf(hasSol === false)('signature Solana (clé réelle .env)', () => 
         sol: { privateKey: SOL_PRIV as string, user: SOL_PUB as string, network: 'mainnet' },
       },
     });
-    expect(() => assertEvmSigner('sol', 'getSubAccountList')).toThrow(/Solana/);
+    expect(() => assertEvmSigner('sol', 'getSubAccounts')).toThrow(/Solana/);
     resetConfig();
   });
 });

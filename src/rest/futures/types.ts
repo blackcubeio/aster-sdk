@@ -113,8 +113,12 @@ export interface SubAccountBalance {
   balance: string;
 }
 
-/** Forme réelle (vérifiée sur mainnet) ; diffère de la doc (`subAccountName` parfois absent). */
-export interface SubAccount {
+/**
+ * Sous-compte natif Aster (`/fapi/v3/getSubAccountList`).
+ * Forme réelle (vérifiée sur mainnet) ; diffère de la doc (`subAccountName` parfois absent).
+ * Renommé pour libérer `SubAccount` au profit du type unifié (`common/types`).
+ */
+export interface FuturesSubAccount {
   address: string;
   accountId: number;
   parentAccount: boolean;
