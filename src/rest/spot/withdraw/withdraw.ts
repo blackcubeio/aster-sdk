@@ -35,10 +35,10 @@ export function getWithdrawFeeSpot(query: WithdrawFeeQuery, label?: string): Pro
  * principal (`mainPrivateKey`) via l'EIP-712 domaine `Aster` / type `Action` (chainId 56).
  * `receiver` doit être le compte courant (défaut : `user`).
  */
-export function withdrawSpot(params: WithdrawParams, label: string): Promise<WithdrawResult> {
-  assertEvmSigner(label, 'withdrawSpot');
+export function withdraw(params: WithdrawParams, label: string): Promise<WithdrawResult> {
+  assertEvmSigner(label, 'withdraw');
   const resolved = resolveMainSigner(label);
-  const receiver = params.receiver ?? resolved.user;
+  const receiver = params.address ?? resolved.user;
   const destinationChain = params.destinationChain ?? CHAIN_NAMES[params.chainId] ?? params.chainId;
   const asterChain = resolved.network === 'mainnet' ? 'Mainnet' : 'Testnet';
   const nonce = Number(microsecondNonce());

@@ -299,14 +299,21 @@ export interface WithdrawFee {
   gasUsdValue: number;
 }
 
+/**
+ * Paramètres unifiés de retrait (mêmes champs que HL/Pacifica ; Aster requiert
+ * `chainId`/`asset`/`fee`). `address` = réception (défaut : `user` du signer).
+ */
 export interface WithdrawParams {
-  /** 1 (ETH), 56 (BSC), 42161 (Arbitrum). */
-  chainId: string;
-  asset: string;
+  /** Montant à retirer (chaîne décimale). */
   amount: string;
+  /** 1 (ETH), 56 (BSC), 42161 (Arbitrum) — requis côté Aster. */
+  chainId: string;
+  /** Actif — requis côté Aster. */
+  asset: string;
+  /** Frais — requis côté Aster. */
   fee: string;
   /** Adresse de réception (le compte courant). Défaut : `user` du signer. */
-  receiver?: string;
+  address?: string;
   /** Nom de chaîne destination dans la signature (ex. `BSC`). Défaut dérivé de `chainId`. */
   destinationChain?: string;
 }
