@@ -1,5 +1,4 @@
 import { type AsterClient, type InitOptions, init } from '../common/config';
-import { MarginType } from '../common/futures';
 import type {
   Balance,
   Candle,
@@ -46,8 +45,6 @@ import {
 } from '../rest/signing';
 import { getAccountInfoSpot } from '../rest/spot/account/get-account-info';
 import { getExchangeInfoSpot } from '../rest/spot/market/get-exchange-info';
-import { getServerTimeSpot } from '../rest/spot/market/get-server-time';
-import { pingSpot } from '../rest/spot/market/ping';
 import { withdraw } from '../rest/spot/withdraw/withdraw';
 import { updateLeverage } from '../rest/update-leverage';
 import { updateMarginMode } from '../rest/update-margin-mode';
