@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type {
   UpdateIsolatedMarginParams,
   UpdateIsolatedMarginResult,
@@ -8,6 +9,7 @@ import { buildSignedRequest } from '../../signing';
 
 /** Add (`type` 1) or reduce (`type` 2) isolated position margin (`TRADE`). */
 export function updateIsolatedMargin(
+  client: AsterClient,
   params: UpdateIsolatedMarginParams,
   label: string,
 ): Promise<UpdateIsolatedMarginResult> {
@@ -19,8 +21,9 @@ export function updateIsolatedMargin(
   if (params.positionSide !== undefined) {
     payload.positionSide = params.positionSide;
   }
-  const { body, network } = buildSignedRequest(payload, label);
+  const { body, network } = buildSignedRequest(client, payload, label);
   return httpPostForm<UpdateIsolatedMarginResult>(
+    client,
     'futures',
     '/fapi/v3/positionMargin',
     body,

@@ -514,6 +514,8 @@ export interface GetUserTradesParams {
   user?: string;
   /** Filtre sur une paire (requis côté Aster). */
   name?: string;
+  /** Type de marché ; défaut `perp`. */
+  kind?: MarketKind;
   /** Début (ms). */
   startTime?: number;
   /** Fin (ms). */

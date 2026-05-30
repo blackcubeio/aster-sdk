@@ -1,4 +1,5 @@
-import { type WebSocketFactory, type WebSocketLike, getConfig } from '../common/config';
+import type { AsterClient } from '../common/config';
+import type { WebSocketFactory, WebSocketLike } from '../common/config';
 import type { JsonObject, JsonValue, KlineInterval } from '../common/types';
 import type { SpotDepthLevels, SpotWsOptions } from '../common/ws';
 import type { StreamHandler, Unsubscribe } from '../common/ws';
@@ -20,11 +21,14 @@ export class SpotWsClient {
   private nextId = 1;
   private readonly handlers = new Map<string, Set<StreamHandler>>();
   private shouldReconnect = false;
+  /** Messages émis avant l'ouverture du socket, rejoués à `onopen`. */
+  private pending: string[] = [];
+  private open = false;
 
-  constructor(options: SpotWsOptions = {}) {
-    const config = getConfig();
-    this.url = options.url ?? `${config.wsUrls.spot[resolveReadNetwork(options.label)]}/stream`;
-    this.createSocket = options.webSocket ?? config.webSocket;
+  constructor(client: AsterClient, options: SpotWsOptions = {}) {
+    this.url =
+      options.url ?? `${client.wsUrls.spot[resolveReadNetwork(client, options.label)]}/stream`;
+    this.createSocket = options.webSocket ?? client.webSocket;
   }
 
   public connect(): Promise<void> {
@@ -32,7 +36,14 @@ export class SpotWsClient {
     return new Promise((resolve, reject) => {
       const socket = this.createSocket(this.url);
       this.socket = socket;
-      socket.onopen = () => resolve();
+      socket.onopen = () => {
+        this.open = true;
+        for (const payload of this.pending) {
+          socket.send(payload);
+        }
+        this.pending = [];
+        resolve();
+      };
       socket.onmessage = (event) => this.handleMessage(event.data);
       socket.onerror = (error) => {
         if (this.onError !== null) {
@@ -46,6 +57,8 @@ export class SpotWsClient {
 
   public disconnect(): void {
     this.shouldReconnect = false;
+    this.open = false;
+    this.pending = [];
     if (this.socket !== null) {
       this.socket.close();
       this.socket = null;
@@ -130,10 +143,12 @@ export class SpotWsClient {
   }
 
   private send(payload: JsonObject): void {
-    if (this.socket === null) {
-      throw new Error('WebSocket is not connected; call connect() first');
+    const serialized = JSON.stringify(payload);
+    if (this.socket === null || this.open === false) {
+      this.pending.push(serialized);
+      return;
     }
-    this.socket.send(JSON.stringify(payload));
+    this.socket.send(serialized);
   }
 
   private handleMessage(raw: unknown): void {
@@ -161,6 +176,7 @@ export class SpotWsClient {
 
   private handleClose(): void {
     this.socket = null;
+    this.open = false;
     if (this.onClose !== null) {
       this.onClose();
     }

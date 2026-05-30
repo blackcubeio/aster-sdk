@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type { CodeMsg } from '../../../common/futures';
 import type { SpotCancelAllParams } from '../../../common/spot';
 import type { JsonObject } from '../../../common/types';
@@ -8,7 +9,11 @@ import { buildSignedRequest } from '../../signing';
  * Cancel all open spot orders on a symbol (`TRADE`). Optionnellement restreint à des listes
  * d'IDs (`orderIdList` / `origClientOrderIdList`, chaînes de tableau JSON).
  */
-export function cancelAllOrdersSpot(params: SpotCancelAllParams, label: string): Promise<CodeMsg> {
+export function cancelAllOrdersSpot(
+  client: AsterClient,
+  params: SpotCancelAllParams,
+  label: string,
+): Promise<CodeMsg> {
   const payload: JsonObject = { symbol: params.symbol };
   if (params.orderIdList !== undefined) {
     payload.orderIdList = params.orderIdList;
@@ -16,6 +21,6 @@ export function cancelAllOrdersSpot(params: SpotCancelAllParams, label: string):
   if (params.origClientOrderIdList !== undefined) {
     payload.origClientOrderIdList = params.origClientOrderIdList;
   }
-  const { body, network } = buildSignedRequest(payload, label);
-  return httpPostForm<CodeMsg>('spot', '/api/v3/allOpenOrders', body, network, 'DELETE');
+  const { body, network } = buildSignedRequest(client, payload, label);
+  return httpPostForm<CodeMsg>(client, 'spot', '/api/v3/allOpenOrders', body, network, 'DELETE');
 }

@@ -1,4 +1,5 @@
-import { type WebSocketFactory, type WebSocketLike, getConfig } from '../common/config';
+import type { AsterClient } from '../common/config';
+import type { WebSocketFactory, WebSocketLike } from '../common/config';
 import type { JsonObject, JsonValue, KlineInterval } from '../common/types';
 import type { DepthLevels, DepthSpeed, FuturesWsOptions } from '../common/ws';
 import type { StreamHandler, Unsubscribe } from '../common/ws';
@@ -21,11 +22,14 @@ export class FuturesWsClient {
   private nextId = 1;
   private readonly handlers = new Map<string, Set<StreamHandler>>();
   private shouldReconnect = false;
+  /** Messages émis avant l'ouverture du socket, rejoués à `onopen`. */
+  private pending: string[] = [];
+  private open = false;
 
-  constructor(options: FuturesWsOptions = {}) {
-    const config = getConfig();
-    this.url = options.url ?? `${config.wsUrls.futures[resolveReadNetwork(options.label)]}/stream`;
-    this.createSocket = options.webSocket ?? config.webSocket;
+  constructor(client: AsterClient, options: FuturesWsOptions = {}) {
+    this.url =
+      options.url ?? `${client.wsUrls.futures[resolveReadNetwork(client, options.label)]}/stream`;
+    this.createSocket = options.webSocket ?? client.webSocket;
   }
 
   public connect(): Promise<void> {
@@ -33,7 +37,14 @@ export class FuturesWsClient {
     return new Promise((resolve, reject) => {
       const socket = this.createSocket(this.url);
       this.socket = socket;
-      socket.onopen = () => resolve();
+      socket.onopen = () => {
+        this.open = true;
+        for (const payload of this.pending) {
+          socket.send(payload);
+        }
+        this.pending = [];
+        resolve();
+      };
       socket.onmessage = (event) => this.handleMessage(event.data);
       socket.onerror = (error) => {
         if (this.onError !== null) {
@@ -47,6 +58,8 @@ export class FuturesWsClient {
 
   public disconnect(): void {
     this.shouldReconnect = false;
+    this.open = false;
+    this.pending = [];
     if (this.socket !== null) {
       this.socket.close();
       this.socket = null;
@@ -149,10 +162,13 @@ export class FuturesWsClient {
   }
 
   private send(payload: JsonObject): void {
-    if (this.socket === null) {
-      throw new Error('WebSocket is not connected; call connect() first');
+    const serialized = JSON.stringify(payload);
+    // Connexion paresseuse : tant que le socket n'est pas ouvert, on met en file (rejoué à onopen).
+    if (this.socket === null || this.open === false) {
+      this.pending.push(serialized);
+      return;
     }
-    this.socket.send(JSON.stringify(payload));
+    this.socket.send(serialized);
   }
 
   private handleMessage(raw: unknown): void {
@@ -180,6 +196,7 @@ export class FuturesWsClient {
 
   private handleClose(): void {
     this.socket = null;
+    this.open = false;
     if (this.onClose !== null) {
       this.onClose();
     }

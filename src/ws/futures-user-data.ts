@@ -1,4 +1,5 @@
-import { type WebSocketFactory, type WebSocketLike, getConfig } from '../common/config';
+import type { AsterClient } from '../common/config';
+import type { WebSocketFactory, WebSocketLike } from '../common/config';
 import type { JsonValue } from '../common/types';
 import type { FuturesUserDataOptions } from '../common/ws';
 import type { EventHandler, Unsubscribe } from '../common/ws';
@@ -22,11 +23,10 @@ export class FuturesUserDataStream {
   private readonly handlers = new Map<string, Set<EventHandler>>();
   private shouldReconnect = false;
 
-  constructor(listenKey: string, options: FuturesUserDataOptions = {}) {
-    const config = getConfig();
-    const base = config.wsUrls.futures[resolveReadNetwork(options.label)];
+  constructor(client: AsterClient, listenKey: string, options: FuturesUserDataOptions = {}) {
+    const base = client.wsUrls.futures[resolveReadNetwork(client, options.label)];
     this.url = options.url ?? `${base}/ws/${listenKey}`;
-    this.createSocket = options.webSocket ?? config.webSocket;
+    this.createSocket = options.webSocket ?? client.webSocket;
   }
 
   public connect(): Promise<void> {

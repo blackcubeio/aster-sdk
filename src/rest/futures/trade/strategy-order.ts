@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type {
   PlaceStrategyOrderParams,
   PlaceStrategyOrderResult,
@@ -13,6 +14,7 @@ import { buildSignedRequest } from '../../signing';
 
 /** Place an OTO / OCO / OTOCO strategy order (`TRADE`). */
 export function placeStrategyOrder(
+  client: AsterClient,
   params: PlaceStrategyOrderParams,
   label: string,
 ): Promise<PlaceStrategyOrderResult> {
@@ -23,8 +25,9 @@ export function placeStrategyOrder(
   if (params.clientStrategyId !== undefined) {
     payload.clientStrategyId = params.clientStrategyId;
   }
-  const { body, network } = buildSignedRequest(payload, label);
+  const { body, network } = buildSignedRequest(client, payload, label);
   return httpPostForm<PlaceStrategyOrderResult>(
+    client,
     'futures',
     '/fapi/v3/placeStrategyOrder',
     body,
@@ -34,10 +37,12 @@ export function placeStrategyOrder(
 
 /** Update sub-orders of an existing strategy order (`TRADE`). */
 export function updateStrategyOrder(
+  client: AsterClient,
   params: UpdateStrategyOrderParams,
   label: string,
 ): Promise<UpdateStrategyOrderResult[]> {
   const { body, network } = buildSignedRequest(
+    client,
     {
       strategyId: params.strategyId,
       strategyType: params.strategyType,
@@ -46,6 +51,7 @@ export function updateStrategyOrder(
     label,
   );
   return httpPostForm<UpdateStrategyOrderResult[]>(
+    client,
     'futures',
     '/fapi/v3/updateStrategyOrder',
     body,
@@ -55,18 +61,32 @@ export function updateStrategyOrder(
 
 /** Query a current open strategy order (`USER_DATA`). `strategyId` xor `clientStrategyId`. */
 export function getStrategyOpenOrder(
+  client: AsterClient,
   query: StrategyOrderQuery,
   label: string,
 ): Promise<StrategyOrder> {
-  const { body, network } = buildSignedRequest({ ...query }, label);
-  return httpGetSigned<StrategyOrder>('futures', '/fapi/v3/strategyOpenOrder', body, network);
+  const { body, network } = buildSignedRequest(client, { ...query }, label);
+  return httpGetSigned<StrategyOrder>(
+    client,
+    'futures',
+    '/fapi/v3/strategyOpenOrder',
+    body,
+    network,
+  );
 }
 
 /** Query a historical strategy order (`USER_DATA`, lookback ≤ 90 j). */
 export function getStrategyHistoryOrder(
+  client: AsterClient,
   query: StrategyHistoryQuery,
   label: string,
 ): Promise<StrategyOrder> {
-  const { body, network } = buildSignedRequest({ ...query }, label);
-  return httpGetSigned<StrategyOrder>('futures', '/fapi/v3/strategyHistoryOrder', body, network);
+  const { body, network } = buildSignedRequest(client, { ...query }, label);
+  return httpGetSigned<StrategyOrder>(
+    client,
+    'futures',
+    '/fapi/v3/strategyHistoryOrder',
+    body,
+    network,
+  );
 }

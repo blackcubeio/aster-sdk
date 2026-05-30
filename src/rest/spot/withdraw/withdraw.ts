@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import { ZERO_ADDRESS } from '../../../common/constants';
 import type {
   WithdrawFee,
@@ -26,8 +27,13 @@ const WITHDRAW_TYPES = {
 };
 
 /** Estimate the withdrawal fee for a chain/asset (no auth). */
-export function getWithdrawFeeSpot(query: WithdrawFeeQuery, label?: string): Promise<WithdrawFee> {
+export function getWithdrawFeeSpot(
+  client: AsterClient,
+  query: WithdrawFeeQuery,
+  label?: string,
+): Promise<WithdrawFee> {
   return httpGet<WithdrawFee>(
+    client,
     'spot',
     '/api/v3/aster/withdraw/estimateFee',
     { chainId: query.chainId, asset: query.asset },
@@ -40,9 +46,13 @@ export function getWithdrawFeeSpot(query: WithdrawFeeQuery, label?: string): Pro
  * principal (`mainPrivateKey`) via l'EIP-712 domaine `Aster` / type `Action` (chainId 56).
  * `receiver` doit être le compte courant (défaut : `user`).
  */
-export function withdraw(params: WithdrawParams, label: string): Promise<WithdrawResult> {
-  assertEvmSigner(label, 'withdraw');
-  const resolved = resolveMainSigner(label);
+export function withdraw(
+  client: AsterClient,
+  params: WithdrawParams,
+  label: string,
+): Promise<WithdrawResult> {
+  assertEvmSigner(client, label, 'withdraw');
+  const resolved = resolveMainSigner(client, label);
   const receiver = params.address ?? resolved.user;
   const destinationChain = params.destinationChain ?? CHAIN_NAMES[params.chainId] ?? params.chainId;
   const asterChain = resolved.network === 'mainnet' ? 'Mainnet' : 'Testnet';
@@ -75,6 +85,7 @@ export function withdraw(params: WithdrawParams, label: string): Promise<Withdra
     userSignature,
   });
   return httpPostForm<WithdrawResult>(
+    client,
     'spot',
     '/api/v3/aster/user-withdraw',
     body,

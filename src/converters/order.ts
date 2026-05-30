@@ -1,4 +1,5 @@
 import type { FuturesOrder } from '../common/futures';
+import type { SpotOrder } from '../common/spot';
 import type { Order, Side } from '../common/types';
 
 /** Ordre natif Aster (futures `FuturesOrder`, ou `OrderDetail` qui l'étend). */
@@ -71,6 +72,34 @@ export class OrderConverter {
       updateTime: order.time,
       ...order.xtras,
     } as unknown as OrderNative;
+  }
+}
+
+/**
+ * Convertisseur **unidirectionnel** ordre **spot** Aster → `Order` (`kind: 'spot'`).
+ * `SpotOrder` n'a pas de `reduceOnly`/`positionSide` (→ `reduceOnly: null`). Le reste du natif
+ * (avgPrice, cumQty, stopPrice…) va dans `xtras`.
+ */
+export class SpotOrderConverter {
+  toCommon(wire: SpotOrder): Order {
+    const { orderId, clientOrderId, symbol, price, origQty, executedQty, updateTime, ...rest } =
+      wire;
+    return {
+      name: symbol,
+      kind: 'spot',
+      id: String(orderId),
+      clientId: clientOrderId === '' ? null : clientOrderId,
+      side: (rest.side as string) === 'SELL' ? 'sell' : ('buy' as Side),
+      type: TYPE[rest.type as string] ?? 'other',
+      price,
+      size: origQty,
+      filled: executedQty,
+      status: STATUS[rest.status as string] ?? 'other',
+      tif: TIF[rest.timeInForce as string] ?? null,
+      reduceOnly: null,
+      time: updateTime,
+      xtras: rest as Record<string, unknown>,
+    };
   }
 }
 

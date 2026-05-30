@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import { AGENT_CHAIN_ID } from '../../../common/constants';
 import type { BindSubAccountParams, CodeMsg } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
@@ -10,9 +11,13 @@ import { assertEvmSigner, buildSignedForm, resolveMainSigner, signMessage } from
  * sous-compte signe `childAddress&name&nonce&user`, puis le compte principal signe ce
  * message + `childSignature`. Adresses à whitelister côté Aster.
  */
-export function bindSubAccount(params: BindSubAccountParams, label: string): Promise<CodeMsg> {
-  assertEvmSigner(label, 'bindSubAccount');
-  const resolved = resolveMainSigner(label);
+export function bindSubAccount(
+  client: AsterClient,
+  params: BindSubAccountParams,
+  label: string,
+): Promise<CodeMsg> {
+  assertEvmSigner(client, label, 'bindSubAccount');
+  const resolved = resolveMainSigner(client, label);
   const chainId = AGENT_CHAIN_ID[resolved.network];
   const nonce = microsecondNonce();
 
@@ -33,5 +38,5 @@ export function bindSubAccount(params: BindSubAccountParams, label: string): Pro
     resolved.mainPrivateKey,
     resolved.network,
   );
-  return httpPostForm<CodeMsg>('futures', '/fapi/v3/sub-accounts/bind', body, network);
+  return httpPostForm<CodeMsg>(client, 'futures', '/fapi/v3/sub-accounts/bind', body, network);
 }

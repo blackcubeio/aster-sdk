@@ -1,4 +1,4 @@
-import { getConfig } from '../common/config';
+import type { AsterClient } from '../common/config';
 import type { QueryParams, QueryValue } from '../common/types';
 import type { Network, Product } from '../common/types';
 
@@ -7,11 +7,11 @@ import type { Network, Product } from '../common/types';
  * **mainnet** (les lectures ne touchent pas au wallet), avec un label on tape sur le
  * réseau de son signer.
  */
-export function resolveReadNetwork(label?: string): Network {
+export function resolveReadNetwork(client: AsterClient, label?: string): Network {
   if (label === undefined) {
     return 'mainnet';
   }
-  const signer = getConfig().signers[label];
+  const signer = client.signers[label];
   if (signer === undefined) {
     throw new Error(`Aucun signer enregistré sous "${label}"; ajoute-le dans init({ signers })`);
   }
@@ -43,14 +43,14 @@ export function buildUrl(baseUrl: string, path: string, query?: QueryParams): st
 
 /** Lecture publique (non signée). `label` optionnel choisit le réseau (défaut mainnet). */
 export function httpGet<TData>(
+  client: AsterClient,
   product: Product,
   path: string,
   query?: QueryParams,
   label?: string,
 ): Promise<TData> {
-  const config = getConfig();
-  const base = config.restUrls[product][resolveReadNetwork(label)];
-  return config
+  const base = client.restUrls[product][resolveReadNetwork(client, label)];
+  return client
     .fetch(buildUrl(base, path, query), { method: 'GET', headers: { Accept: 'application/json' } })
     .then((response) => parseResponse<TData>(response));
 }
@@ -61,15 +61,15 @@ export function httpGet<TData>(
  * reconstruise le même `msg`. `network` provient du signer résolu en amont.
  */
 export function httpPostForm<TData>(
+  client: AsterClient,
   product: Product,
   path: string,
   body: string,
   network: Network,
   method: 'POST' | 'DELETE' | 'PUT' = 'POST',
 ): Promise<TData> {
-  const config = getConfig();
-  const base = config.restUrls[product][network];
-  return config
+  const base = client.restUrls[product][network];
+  return client
     .fetch(base + path, {
       method,
       headers: {
@@ -86,14 +86,14 @@ export function httpPostForm<TData>(
  * `buildSignedRequest`) est transmise **verbatim** en query string, signature incluse.
  */
 export function httpGetSigned<TData>(
+  client: AsterClient,
   product: Product,
   path: string,
   body: string,
   network: Network,
 ): Promise<TData> {
-  const config = getConfig();
-  const base = config.restUrls[product][network];
-  return config
+  const base = client.restUrls[product][network];
+  return client
     .fetch(`${base}${path}?${body}`, { method: 'GET', headers: { Accept: 'application/json' } })
     .then((response) => parseResponse<TData>(response));
 }

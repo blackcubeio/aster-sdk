@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type { CodeMsg, RegisterAndApproveAgentParams } from '../../../common/futures';
 import type { JsonValue } from '../../../common/types';
 import { encodeFormComponent, microsecondNonce } from '../../../common/utils';
@@ -14,10 +15,11 @@ import { buildSignedForm, resolveMainSigner } from '../../signing';
  * (1666/714) utilisé pour signer.
  */
 export function registerAndApproveAgent(
+  client: AsterClient,
   params: RegisterAndApproveAgentParams,
   label: string,
 ): Promise<CodeMsg> {
-  const resolved = resolveMainSigner(label);
+  const resolved = resolveMainSigner(client, label);
   const ordered: Record<string, JsonValue | undefined> = {
     user: resolved.user,
     nonce: microsecondNonce(),
@@ -36,5 +38,11 @@ export function registerAndApproveAgent(
     params.agentCode === undefined
       ? form.body
       : `${form.body}&agentCode=${encodeFormComponent(params.agentCode)}`;
-  return httpPostForm<CodeMsg>('futures', '/fapi/v3/registerAndApproveAgent', body, form.network);
+  return httpPostForm<CodeMsg>(
+    client,
+    'futures',
+    '/fapi/v3/registerAndApproveAgent',
+    body,
+    form.network,
+  );
 }

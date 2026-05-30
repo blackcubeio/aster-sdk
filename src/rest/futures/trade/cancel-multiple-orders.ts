@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type { BatchOrderResult, CancelMultipleOrdersParams } from '../../../common/futures';
 import type { JsonObject } from '../../../common/types';
 import { httpPostForm } from '../../client';
@@ -8,6 +9,7 @@ import { buildSignedRequest } from '../../signing';
  * `origClientOrderIdList` must be provided; each list is JSON-encoded on the wire.
  */
 export function cancelMultipleOrders(
+  client: AsterClient,
   params: CancelMultipleOrdersParams,
   label: string,
 ): Promise<BatchOrderResult[]> {
@@ -19,8 +21,9 @@ export function cancelMultipleOrders(
   } else {
     throw new Error('orderIdList ou origClientOrderIdList est requis');
   }
-  const { body, network } = buildSignedRequest(payload, label);
+  const { body, network } = buildSignedRequest(client, payload, label);
   return httpPostForm<BatchOrderResult[]>(
+    client,
     'futures',
     '/fapi/v3/batchOrders',
     body,

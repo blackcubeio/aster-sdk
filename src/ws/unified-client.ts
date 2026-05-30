@@ -1,4 +1,4 @@
-import type { WebSocketFactory } from '../common/config';
+import type { AsterClient } from '../common/config';
 import type {
   Candle,
   KlineInterval,
@@ -10,7 +10,6 @@ import type {
   Trade,
   UserTrade,
 } from '../common/types';
-import type { UnifiedWsOptions } from '../common/ws';
 import type { Unsubscribe } from '../common/ws';
 import { BboWsConverter, type BookTickerWsNative } from '../converters/bbo';
 import { CandleWsConverter, type KlineWsNative } from '../converters/candle';
@@ -26,40 +25,86 @@ import { FuturesUserDataStream } from './futures-user-data';
 import { SpotWsClient } from './spot-client';
 
 /**
- * Client WebSocket **unifié Blackcube** : surface identique entre les SDK. Chaque méthode
+ * Client WebSocket **unifié Blackcube** (interne ; exposé via `Aster.ws()`). Chaque méthode
  * `subscribeX` délivre au handler le **type unifié déjà converti** (`Candle`, `OrderBook`…).
  *
  * Aster expose nativement plusieurs sockets ; ce client les **agrège** : flux de marché
- * `futures`/`spot` routés par `kind` (+ user-data multiplexé, à venir). `connect()` ouvre
- * les deux sockets de marché publics. Converters WS **unidirectionnels** (`toCommon` seul) :
- * le flux est en lecture seule.
+ * `futures`/`spot` routés par `kind`, + user-data multiplexé (listenKey).
+ *
+ * **Connexion automatique** : chaque socket est ouvert paresseusement à sa 1ʳᵉ souscription et
+ * fermé dès que son dernier abonnement est retiré (ref-counting). Le développeur ne gère que
+ * `subscribeX(…) → unsubscribe()`. Converters WS **unidirectionnels** (lecture seule).
  */
 export class UnifiedWsClient {
-  private readonly futures: FuturesWsClient;
-  private readonly spot: SpotWsClient;
+  private readonly client: AsterClient;
   private readonly label: string | undefined;
-  /** Stream user-data (1 socket multiplexé), connecté paresseusement à la 1re souscription compte. */
+
+  private futures: FuturesWsClient | null = null;
+  private spot: SpotWsClient | null = null;
+  private futuresRefs = 0;
+  private spotRefs = 0;
+
   private userData: FuturesUserDataStream | null = null;
   private userDataPromise: Promise<FuturesUserDataStream> | null = null;
+  private userDataRefs = 0;
 
-  constructor(options: UnifiedWsOptions = {}) {
-    this.futures = new FuturesWsClient(options);
-    this.spot = new SpotWsClient(options);
-    this.label = options.label;
+  constructor(client: AsterClient, label?: string) {
+    this.client = client;
+    this.label = label;
   }
 
-  public async connect(): Promise<void> {
-    await Promise.all([this.futures.connect(), this.spot.connect()]);
-  }
-
-  public disconnect(): void {
-    this.futures.disconnect();
-    this.spot.disconnect();
-    if (this.userData !== null) {
-      this.userData.disconnect();
-      this.userData = null;
-      this.userDataPromise = null;
+  /** Ouvre (lazy) le socket de marché du produit et renvoie le client connecté. */
+  private marketClient(kind: MarketKind): FuturesWsClient | SpotWsClient {
+    if (kind === 'spot') {
+      if (this.spot === null) {
+        this.spot = new SpotWsClient(this.client, { label: this.label });
+        void this.spot.connect();
+      }
+      this.spotRefs += 1;
+      return this.spot;
     }
+    if (this.futures === null) {
+      this.futures = new FuturesWsClient(this.client, { label: this.label });
+      void this.futures.connect();
+    }
+    this.futuresRefs += 1;
+    return this.futures;
+  }
+
+  /** Décrémente le ref-count d'un socket de marché et le ferme s'il tombe à zéro. */
+  private releaseMarket(kind: MarketKind): void {
+    if (kind === 'spot') {
+      this.spotRefs -= 1;
+      if (this.spotRefs <= 0 && this.spot !== null) {
+        this.spot.disconnect();
+        this.spot = null;
+        this.spotRefs = 0;
+      }
+      return;
+    }
+    this.futuresRefs -= 1;
+    if (this.futuresRefs <= 0 && this.futures !== null) {
+      this.futures.disconnect();
+      this.futures = null;
+      this.futuresRefs = 0;
+    }
+  }
+
+  /** Souscription de marché ref-comptée : ouvre le socket au 1er abonné, ferme au dernier. */
+  private subscribeMarket<T>(
+    kind: MarketKind,
+    subscribe: (client: FuturesWsClient | SpotWsClient) => Unsubscribe,
+  ): Unsubscribe {
+    const off = subscribe(this.marketClient(kind));
+    let released = false;
+    return () => {
+      if (released === true) {
+        return;
+      }
+      released = true;
+      off();
+      this.releaseMarket(kind);
+    };
   }
 
   /** Ouvre (une seule fois) le stream user-data futures : crée le listenKey puis connecte. */
@@ -69,8 +114,8 @@ export class UnifiedWsClient {
     }
     if (this.userDataPromise === null) {
       const label = this.label;
-      this.userDataPromise = createListenKey(label).then(({ listenKey }) => {
-        const stream = new FuturesUserDataStream(listenKey, { label });
+      this.userDataPromise = createListenKey(this.client, label).then(({ listenKey }) => {
+        const stream = new FuturesUserDataStream(this.client, listenKey, { label });
         this.userData = stream;
         return stream.connect().then(() => stream);
       });
@@ -78,10 +123,11 @@ export class UnifiedWsClient {
     return this.userDataPromise;
   }
 
-  /** Branche un handler d'event user-data dès que le stream est prêt (désabonnement sync). */
+  /** Branche un handler user-data (lazy-connect) ; ferme le stream au dernier désabonnement. */
   private onUserData(eventType: string, handler: (msg: unknown) => void): Unsubscribe {
     let off: Unsubscribe = () => {};
     let cancelled = false;
+    this.userDataRefs += 1;
     this.ensureUserData()
       .then((stream) => {
         if (cancelled === false) {
@@ -90,8 +136,18 @@ export class UnifiedWsClient {
       })
       .catch(() => {});
     return () => {
+      if (cancelled === true) {
+        return;
+      }
       cancelled = true;
       off();
+      this.userDataRefs -= 1;
+      if (this.userDataRefs <= 0 && this.userData !== null) {
+        this.userData.disconnect();
+        this.userData = null;
+        this.userDataPromise = null;
+        this.userDataRefs = 0;
+      }
     };
   }
 
@@ -102,10 +158,11 @@ export class UnifiedWsClient {
   ): Unsubscribe {
     const kind = params.kind ?? 'perp';
     const converter = new CandleWsConverter(kind);
-    const client = kind === 'spot' ? this.spot : this.futures;
-    return client.subscribeKline(params.name, params.interval as KlineInterval, (raw) => {
-      handler(converter.toCommon(raw as unknown as KlineWsNative));
-    });
+    return this.subscribeMarket(kind, (client) =>
+      client.subscribeKline(params.name, params.interval as KlineInterval, (raw) => {
+        handler(converter.toCommon(raw as unknown as KlineWsNative));
+      }),
+    );
   }
 
   /** Trades publics temps réel (agrégés). `kind` (défaut `perp`) route futures/spot. */
@@ -113,11 +170,13 @@ export class UnifiedWsClient {
     params: { name: string; kind?: MarketKind },
     handler: (trade: Trade) => void,
   ): Unsubscribe {
+    const kind = params.kind ?? 'perp';
     const converter = new TradeWsConverter();
-    const client = (params.kind ?? 'perp') === 'spot' ? this.spot : this.futures;
-    return client.subscribeAggTrade(params.name, (raw) => {
-      handler(converter.toCommon(raw as unknown as AggTradeWsNative));
-    });
+    return this.subscribeMarket(kind, (client) =>
+      client.subscribeAggTrade(params.name, (raw) => {
+        handler(converter.toCommon(raw as unknown as AggTradeWsNative));
+      }),
+    );
   }
 
   /** Meilleure limite (BBO) temps réel → {@link OrderBook} (1 niveau par côté). */
@@ -127,10 +186,11 @@ export class UnifiedWsClient {
   ): Unsubscribe {
     const kind = params.kind ?? 'perp';
     const converter = new BboWsConverter(kind);
-    const client = kind === 'spot' ? this.spot : this.futures;
-    return client.subscribeBookTicker(params.name, (raw) => {
-      handler(converter.toCommon(raw as unknown as BookTickerWsNative));
-    });
+    return this.subscribeMarket(kind, (client) =>
+      client.subscribeBookTicker(params.name, (raw) => {
+        handler(converter.toCommon(raw as unknown as BookTickerWsNative));
+      }),
+    );
   }
 
   /** Carnet d'ordres (L2) temps réel → {@link OrderBook} (snapshot partiel 20 niveaux). */
@@ -140,14 +200,11 @@ export class UnifiedWsClient {
   ): Unsubscribe {
     const kind = params.kind ?? 'perp';
     const converter = new OrderBookWsConverter(kind);
-    if (kind === 'spot') {
-      return this.spot.subscribePartialDepth(params.name, 20, (raw) => {
+    return this.subscribeMarket(kind, (client) =>
+      client.subscribePartialDepth(params.name, 20, (raw) => {
         handler(converter.toCommon(raw as unknown as DepthWsNative));
-      });
-    }
-    return this.futures.subscribePartialDepth(params.name, 20, (raw) => {
-      handler(converter.toCommon(raw as unknown as DepthWsNative));
-    });
+      }),
+    );
   }
 
   /**
@@ -156,9 +213,11 @@ export class UnifiedWsClient {
    */
   public subscribePrices(handler: (prices: Price[]) => void): Unsubscribe {
     const converter = new PricesWsConverter('perp');
-    return this.futures.subscribeAllMarkPrices((raw) => {
-      handler(converter.toCommon(raw as unknown as MarkPriceWsNative[]));
-    });
+    return this.subscribeMarket('perp', (client) =>
+      (client as FuturesWsClient).subscribeAllMarkPrices((raw) => {
+        handler(converter.toCommon(raw as unknown as MarkPriceWsNative[]));
+      }),
+    );
   }
 
   /**

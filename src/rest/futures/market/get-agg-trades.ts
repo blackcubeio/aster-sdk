@@ -1,3 +1,4 @@
+import type { AsterClient } from '../../../common/config';
 import type { AggTrade, AggTradesQuery } from '../../../common/futures';
 import { httpGet } from '../../client';
 
@@ -12,8 +13,13 @@ interface AggTradeWire {
 }
 
 /** Compressed/aggregate market trades. */
-export function getAggTrades(query: AggTradesQuery, label?: string): Promise<AggTrade[]> {
+export function getAggTrades(
+  client: AsterClient,
+  query: AggTradesQuery,
+  label?: string,
+): Promise<AggTrade[]> {
   return httpGet<AggTradeWire[]>(
+    client,
     'futures',
     '/fapi/v3/aggTrades',
     {

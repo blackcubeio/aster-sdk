@@ -92,8 +92,8 @@ Aster also supports **native Solana accounts**. The SDK **auto-detects** the key
 No `keyType` field to set.
 
 ```ts
-init({ signers: { sol: { privateKey: '<base58>', user: '<base58 pubkey>', network: 'mainnet' } } });
-await getBalance('sol');          // signé en ed25519
+const dex = new Aster({ sol: { privateKey: '<base58>', user: '<base58 pubkey>', network: 'mainnet' } });
+await dex.account('sol').getBalances();   // signé en ed25519
 ```
 
 - The Solana account signs the **same querystring** as EVM, but with **ed25519** (signature
