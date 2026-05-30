@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { init, resetConfig } from '../src/common/config';
 import type { Hex, Network } from '../src/common/types';
-import { cancelOrder } from '../src/rest/futures/trade/cancel-order';
+import { cancelOrder } from '../src/rest/cancel-order';
 import { getOpenOrders } from '../src/rest/get-open-orders';
 import { placeOrder } from '../src/rest/place-order';
 import { newClientOrderId } from '../src/rest/signing';
@@ -55,11 +55,7 @@ describe.skipIf(ready === false)(
       const open = await getOpenOrders({ name: 'BTCUSDT' }, 'trader');
       expect(open.some((order) => order.id === created.id)).toBe(true);
 
-      const canceled = await cancelOrder(
-        { symbol: 'BTCUSDT', orderId: Number(created.id) },
-        'trader',
-      );
-      expect(canceled.status).toBe('CANCELED');
+      await cancelOrder({ name: 'BTCUSDT', id: created.id }, 'trader');
 
       const after = await getOpenOrders({ name: 'BTCUSDT' }, 'trader');
       expect(after.some((order) => order.id === created.id)).toBe(false);

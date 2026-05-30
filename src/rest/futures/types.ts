@@ -763,12 +763,6 @@ export interface EditOrderParams {
   origClientOrderId?: string;
 }
 
-export interface CancelOrderParams {
-  symbol: string;
-  orderId?: number;
-  origClientOrderId?: string;
-}
-
 export interface CancelMultipleOrdersParams {
   symbol: string;
   orderIdList?: number[];
