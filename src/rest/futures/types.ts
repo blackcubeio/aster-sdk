@@ -755,13 +755,6 @@ export interface AccountInfo {
   positions: AccountPosition[];
 }
 
-export interface EditOrderParams {
-  symbol: string;
-  quantity: string;
-  price: string;
-  orderId?: number;
-  origClientOrderId?: string;
-}
 
 export interface CancelMultipleOrdersParams {
   symbol: string;
