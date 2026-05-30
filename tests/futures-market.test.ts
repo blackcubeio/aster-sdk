@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { init } from '../src/common/config';
 import { type Hex, KlineInterval } from '../src/common/types';
-import { getBookTicker } from '../src/rest/futures/market/get-book-ticker';
 import { getExchangeInfo } from '../src/rest/futures/market/get-exchange-info';
 import { getServerTime } from '../src/rest/futures/market/get-server-time';
 import { ping } from '../src/rest/futures/market/ping';
@@ -88,6 +87,9 @@ describe('futures market data (testnet réel)', () => {
     expect(Number(btc?.mark)).toBeGreaterThan(0);
     expect(Number(btc?.oracle)).toBeGreaterThan(0);
     expect(btc?.mid).toBeNull();
+    expect(Number(btc?.bid)).toBeGreaterThan(0);
+    expect(Number(btc?.ask)).toBeGreaterThanOrEqual(Number(btc?.bid));
+    expect(Number(btc?.last)).toBeGreaterThan(0);
     expect(typeof btc?.xtras?.interestRate).toBe('string');
   });
 
@@ -99,11 +101,5 @@ describe('futures market data (testnet réel)', () => {
     expect(['buy', 'sell']).toContain(trade?.side);
     expect(trade?.maker).toBeNull();
     expect(typeof trade?.id).toBe('number');
-  });
-
-  it('getBookTicker renvoie le meilleur bid/ask', async () => {
-    const ticker = await getBookTicker('BTCUSDT', TN);
-    expect(Number(ticker.bidPrice)).toBeGreaterThan(0);
-    expect(Number(ticker.askPrice)).toBeGreaterThanOrEqual(Number(ticker.bidPrice));
   });
 });
