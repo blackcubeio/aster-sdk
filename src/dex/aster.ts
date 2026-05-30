@@ -23,6 +23,7 @@ import { getExchangeInfo } from '../rest/futures/market/get-exchange-info';
 import { getServerTime } from '../rest/futures/market/get-server-time';
 import { ping } from '../rest/futures/market/ping';
 import { getSubAccounts } from '../rest/futures/subaccount/get-sub-account-list';
+import { countdownCancelAll } from '../rest/futures/trade/countdown-cancel-all';
 import { updateIsolatedMargin } from '../rest/futures/trade/update-isolated-margin';
 import { getBalances } from '../rest/get-balances';
 import { getCandles } from '../rest/get-candles';
@@ -57,6 +58,7 @@ import type {
   EvmHelper,
   FundingQuery,
   IAccount,
+  IDeadManSwitch,
   IIsolatedMargin,
   IMarginMode,
   IMarketData,
@@ -218,7 +220,7 @@ class AsterMarket
 }
 
 /** Scope **compte transverse** (sans produit) : soldes, sous-comptes, retrait. */
-class AsterAccount implements IAccount, ISubAccounts {
+class AsterAccount implements IAccount, ISubAccounts, IDeadManSwitch {
   constructor(
     private readonly client: AsterClient,
     private readonly label: string | undefined,
@@ -239,6 +241,30 @@ class AsterAccount implements IAccount, ISubAccounts {
   }
   public withdraw(input: WithdrawInput): Promise<unknown> {
     return withdraw(this.client, input as never, this.signed());
+  }
+
+  // ── IDeadManSwitch ──
+  // Aster : `countdownCancelAll` est **par symbole** (durée relative ms, 0 désarme). On arme/désarme
+  // chaque marché perp ayant des ordres ouverts (le heartbeat re-couvre les nouveaux symboles).
+  private async openPerpSymbols(): Promise<string[]> {
+    const orders = await getOpenOrders(this.client, { kind: 'perp' }, this.signed());
+    return [...new Set(orders.map((o) => o.name))];
+  }
+  public async armCancelAll(afterMs: number): Promise<unknown> {
+    const symbols = await this.openPerpSymbols();
+    return Promise.all(
+      symbols.map((symbol) =>
+        countdownCancelAll(this.client, { symbol, countdownTime: afterMs }, this.signed()),
+      ),
+    );
+  }
+  public async disarm(): Promise<unknown> {
+    const symbols = await this.openPerpSymbols();
+    return Promise.all(
+      symbols.map((symbol) =>
+        countdownCancelAll(this.client, { symbol, countdownTime: 0 }, this.signed()),
+      ),
+    );
   }
 }
 
