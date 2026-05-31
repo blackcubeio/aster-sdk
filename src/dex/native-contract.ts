@@ -141,7 +141,7 @@ export interface IAnalytics {
 }
 
 /** Données de marché supplémentaires (lectures). */
-export interface IMarketDataExtra {
+export interface INativeMarket {
   aggTrades(query: Args<typeof getAggTrades>): ReturnType<typeof getAggTrades>;
   historicalTrades(query: Args<typeof getHistoricalTrades>): ReturnType<typeof getHistoricalTrades>;
   fundingInfo(symbol?: string): ReturnType<typeof getFundingInfo>;

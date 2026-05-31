@@ -135,9 +135,9 @@ import type {
   IAgents,
   IAnalytics,
   IBuilders,
-  IMarketDataExtra,
   IMmp,
   IModes,
+  INativeMarket,
   IPrediction,
   ISubAccountsAdmin,
 } from './native-contract';
@@ -500,7 +500,7 @@ class AsterAnalyticsScope extends AsterNativeScope implements IAnalytics {
 }
 
 /** Données de marché supplémentaires : **publiques** (label optionnel). */
-class AsterMarketDataScope extends AsterNativeScope implements IMarketDataExtra {
+class AsterMarketDataScope extends AsterNativeScope implements INativeMarket {
   public aggTrades(query: Parameters<typeof getAggTrades>[1]) {
     return getAggTrades(this.client, query, this.label);
   }

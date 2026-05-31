@@ -89,7 +89,7 @@ await dex.native.analytics().forceOrders();
 await dex.native.analytics().marginHistory({ symbol: 'BTCUSDT' });
 ```
 
-## `native.marketData()` — `IMarketDataExtra` (marché, **public**)
+## `native.marketData()` — `INativeMarket` (marché, **public**)
 | `aggTrades(query)` | `AggTradesQuery` | `Promise<AggTrade[]>` |
 | `historicalTrades(query)` | `HistoricalTradesQuery` | `Promise<MarketTrade[]>` |
 | `fundingInfo(symbol?)` | `string?` | `Promise<FundingInfo[]>` |
