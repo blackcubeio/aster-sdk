@@ -49,6 +49,13 @@ import type {
   placeStrategyOrder,
   updateStrategyOrder,
 } from '../rest/futures/trade/strategy-order';
+import type { predictionBurn } from '../rest/prediction/burn';
+import type { getPredictionExchangeInfo } from '../rest/prediction/get-exchange-info';
+import type { getPredictionPositionHistories } from '../rest/prediction/get-position-histories';
+import type { getPredictionPositions } from '../rest/prediction/get-positions';
+import type { getPredictionSettlementHistories } from '../rest/prediction/get-settlement-histories';
+import type { getPredictionTransactionHistory } from '../rest/prediction/get-transaction-history';
+import type { predictionMint } from '../rest/prediction/mint';
 
 /** `params` (2ᵉ arg) d'une fonction REST `fn(client, params, label)`. */
 type Args<F extends (...a: never[]) => unknown> = Parameters<F>[1];
@@ -76,6 +83,9 @@ export type CancelMany = Args<typeof cancelMultipleOrders>;
 export type Chase = Args<typeof chaseOrder>;
 export type PlaceStrategy = Args<typeof placeStrategyOrder>;
 export type UpdateStrategy = Args<typeof updateStrategyOrder>;
+// prediction (marchés de prédiction, host papi — testnet-only)
+export type PredictionMint = Args<typeof predictionMint>;
+export type PredictionBurn = Args<typeof predictionBurn>;
 // subAccounts (`CreateSubAccount`/`TransferSubAccount` partagés)
 export type BindSubAccount = Args<typeof bindSubAccount>;
 export type CreateSubAccount = Args<typeof createSubAccount>;
@@ -152,6 +162,23 @@ export interface IAdvancedOrders {
   ): ReturnType<typeof getStrategyHistoryOrder>;
   query(params: Args<typeof queryOrder>): ReturnType<typeof queryOrder>;
   getOpen(params: Args<typeof getOpenOrder>): ReturnType<typeof getOpenOrder>;
+}
+
+/** Marchés de **prédiction** (host `papi`, testnet-only) : infos, positions/historiques, mint/burn. */
+export interface IPrediction {
+  exchangeInfo(): ReturnType<typeof getPredictionExchangeInfo>;
+  positions(query?: Args<typeof getPredictionPositions>): ReturnType<typeof getPredictionPositions>;
+  positionHistories(
+    query?: Args<typeof getPredictionPositionHistories>,
+  ): ReturnType<typeof getPredictionPositionHistories>;
+  settlementHistories(
+    query?: Args<typeof getPredictionSettlementHistories>,
+  ): ReturnType<typeof getPredictionSettlementHistories>;
+  transactionHistory(
+    query?: Args<typeof getPredictionTransactionHistory>,
+  ): ReturnType<typeof getPredictionTransactionHistory>;
+  mint(params: PredictionMint): ReturnType<typeof predictionMint>;
+  burn(params: PredictionBurn): ReturnType<typeof predictionBurn>;
 }
 
 /** Sous-comptes : liaison, création, mise à jour, transferts (la **liste** est dans `account()`). */

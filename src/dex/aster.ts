@@ -77,6 +77,13 @@ import { getPrices } from '../rest/get-prices';
 import { getTrades } from '../rest/get-trades';
 import { getUserTrades } from '../rest/get-user-trades';
 import { placeOrder } from '../rest/place-order';
+import { predictionBurn } from '../rest/prediction/burn';
+import { getPredictionExchangeInfo } from '../rest/prediction/get-exchange-info';
+import { getPredictionPositionHistories } from '../rest/prediction/get-position-histories';
+import { getPredictionPositions } from '../rest/prediction/get-positions';
+import { getPredictionSettlementHistories } from '../rest/prediction/get-settlement-histories';
+import { getPredictionTransactionHistory } from '../rest/prediction/get-transaction-history';
+import { predictionMint } from '../rest/prediction/mint';
 import {
   keyTypeOf,
   privateKeyToAddress,
@@ -90,16 +97,6 @@ import { withdraw } from '../rest/spot/withdraw/withdraw';
 import { updateLeverage } from '../rest/update-leverage';
 import { updateMarginMode } from '../rest/update-margin-mode';
 import { UnifiedWsClient } from '../ws/unified-client';
-import type {
-  IAdvancedOrders,
-  IAgents,
-  IAnalytics,
-  IBuilders,
-  IMarketDataExtra,
-  IMmp,
-  IModes,
-  ISubAccountsAdmin,
-} from './native-contract';
 import type {
   CancelAllInput,
   CancelOrderInput,
@@ -133,6 +130,17 @@ import type {
   TradesQuery,
   WithdrawInput,
 } from './contract';
+import type {
+  IAdvancedOrders,
+  IAgents,
+  IAnalytics,
+  IBuilders,
+  IMarketDataExtra,
+  IMmp,
+  IModes,
+  IPrediction,
+  ISubAccountsAdmin,
+} from './native-contract';
 
 /** Options de construction d'un {@link Aster}. */
 export interface AsterDexOptions extends Omit<InitOptions, 'signers'> {
@@ -560,6 +568,31 @@ class AsterSubAccountsScope extends AsterNativeScope implements ISubAccountsAdmi
   }
 }
 
+/** Marchés de **prédiction** (host `papi`, testnet-only). `exchangeInfo` public ; le reste signé. */
+class AsterPredictionScope extends AsterNativeScope implements IPrediction {
+  public exchangeInfo() {
+    return getPredictionExchangeInfo(this.client, this.label);
+  }
+  public positions(query: Parameters<typeof getPredictionPositions>[1] = {}) {
+    return getPredictionPositions(this.client, query, this.signed());
+  }
+  public positionHistories(query: Parameters<typeof getPredictionPositionHistories>[1] = {}) {
+    return getPredictionPositionHistories(this.client, query, this.signed());
+  }
+  public settlementHistories(query: Parameters<typeof getPredictionSettlementHistories>[1] = {}) {
+    return getPredictionSettlementHistories(this.client, query, this.signed());
+  }
+  public transactionHistory(query: Parameters<typeof getPredictionTransactionHistory>[1] = {}) {
+    return getPredictionTransactionHistory(this.client, query, this.signed());
+  }
+  public mint(params: Parameters<typeof predictionMint>[1]) {
+    return predictionMint(this.client, params, this.signed());
+  }
+  public burn(params: Parameters<typeof predictionBurn>[1]) {
+    return predictionBurn(this.client, params, this.signed());
+  }
+}
+
 /**
  * Façade **Aster** : `const dex = new Aster({ deskA: signer }, { default: 'deskA' })`, puis
  * `dex.perp(label?)` / `dex.spot(label?)` (marché), `dex.account(label?)` (compte),
@@ -621,7 +654,8 @@ export class Aster {
 
   /**
    * Surplus **spécifique Aster** (hors contrat commun), accès uniforme `dex.native.<capacité>(label?)` :
-   * `agents`, `builders`, `mmp`, `modes`, `analytics`, `marketData`, `advancedOrders`, `subAccounts`.
+   * `agents`, `builders`, `mmp`, `modes`, `analytics`, `marketData`, `advancedOrders`, `subAccounts`,
+   * `prediction`.
    */
   public get native() {
     const resolve = (label?: string) => this.resolve(label);
@@ -634,6 +668,8 @@ export class Aster {
       marketData: (label?: string) => new AsterMarketDataScope(this.client, resolve(label)),
       advancedOrders: (label?: string) => new AsterAdvancedOrdersScope(this.client, resolve(label)),
       subAccounts: (label?: string) => new AsterSubAccountsScope(this.client, resolve(label)),
+      /** Marchés de prédiction (testnet-only). */
+      prediction: (label?: string) => new AsterPredictionScope(this.client, resolve(label)),
     };
   }
 

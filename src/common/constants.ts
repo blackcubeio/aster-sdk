@@ -11,6 +11,15 @@ export const TESTNET_FUTURES_WS_URL = 'wss://fstream.asterdex-testnet.com';
 export const TESTNET_SPOT_REST_URL = 'https://sapi.asterdex-testnet.com';
 export const TESTNET_SPOT_WS_URL = 'wss://sstream.asterdex-testnet.com';
 
+// Prediction markets : host dédié `papi`. L'API Prediction est **testnet-only** à ce jour
+// (le host mainnet est un best-guess parallèle, non garanti tant que Prediction n'est pas en prod).
+export const PREDICTION_REST_URL = 'https://papi.asterdex.com';
+export const TESTNET_PREDICTION_REST_URL = 'https://papi.asterdex-testnet.com';
+// WS prediction (`pstream`, parallèle à fstream/sstream) — non câblé pour l'instant ; placeholders
+// pour satisfaire le type `Record<Product, …>`. À reconfirmer avant d'exposer un scope WS prediction.
+export const PREDICTION_WS_URL = 'wss://pstream.asterdex.com';
+export const TESTNET_PREDICTION_WS_URL = 'wss://pstream.asterdex-testnet.com';
+
 /**
  * chainId du domaine EIP-712 pour la signature **agent** (trading & user_data) :
  * Aster L1 mainnet = 1666, testnet = 714. Ne pas confondre avec `SIGNATURE_CHAIN_ID`

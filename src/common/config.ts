@@ -1,10 +1,14 @@
 import {
   FUTURES_REST_URL,
   FUTURES_WS_URL,
+  PREDICTION_REST_URL,
+  PREDICTION_WS_URL,
   SPOT_REST_URL,
   SPOT_WS_URL,
   TESTNET_FUTURES_REST_URL,
   TESTNET_FUTURES_WS_URL,
+  TESTNET_PREDICTION_REST_URL,
+  TESTNET_PREDICTION_WS_URL,
   TESTNET_SPOT_REST_URL,
   TESTNET_SPOT_WS_URL,
 } from './constants';
@@ -81,6 +85,10 @@ export function init(options: InitOptions = {}): AsterClient {
         mainnet: options.restUrls?.spot?.mainnet ?? SPOT_REST_URL,
         testnet: options.restUrls?.spot?.testnet ?? TESTNET_SPOT_REST_URL,
       },
+      prediction: {
+        mainnet: options.restUrls?.prediction?.mainnet ?? PREDICTION_REST_URL,
+        testnet: options.restUrls?.prediction?.testnet ?? TESTNET_PREDICTION_REST_URL,
+      },
     },
     wsUrls: {
       futures: {
@@ -90,6 +98,10 @@ export function init(options: InitOptions = {}): AsterClient {
       spot: {
         mainnet: options.wsUrls?.spot?.mainnet ?? SPOT_WS_URL,
         testnet: options.wsUrls?.spot?.testnet ?? TESTNET_SPOT_WS_URL,
+      },
+      prediction: {
+        mainnet: options.wsUrls?.prediction?.mainnet ?? PREDICTION_WS_URL,
+        testnet: options.wsUrls?.prediction?.testnet ?? TESTNET_PREDICTION_WS_URL,
       },
     },
   };

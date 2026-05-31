@@ -140,8 +140,29 @@ await dex.native.subAccounts().transfer({ from: 'main', to: 'sub1', asset: 'USDT
 await dex.native.subAccounts().transferFuturesSpot({ asset: 'USDT', amount: '50', type: 1 });
 ```
 
+## `native.prediction()` — `IPrediction` (marchés de prédiction)
+*(host dédié `papi`, **testnet-only** à ce jour. `exchangeInfo` public ; le reste signé.)*
+| Méthode | Entrée | Sortie |
+|---|---|---|
+| `exchangeInfo()` | — | `Promise<unknown>` (marchés, statuts, filtres) |
+| `positions(q?)` | `{ symbol? }` | `Promise<unknown>` |
+| `positionHistories(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
+| `settlementHistories(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
+| `transactionHistory(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
+| `mint(p)` | `PredictionMint` `{ symbol; quantity; newClientOrderId? }` | `Promise<unknown>` |
+| `burn(p)` | `PredictionBurn` `{ symbol; quantity; newClientOrderId? }` | `Promise<unknown>` |
+
+```ts
+await dex.native.prediction().exchangeInfo();
+await dex.native.prediction().positions();
+await dex.native.prediction().positionHistories({ limit: 50 });
+await dex.native.prediction().mint({ symbol: 'BTC_UP_DOWN_…_YUSDT', quantity: '1' });   // émet 1 paire YES+NO
+await dex.native.prediction().burn({ symbol: 'BTC_UP_DOWN_…_YUSDT', quantity: '1' });   // brûle 1 paire
+```
+
 ---
 
 > Types d'I/O détaillés : `src/common/futures.ts` / `src/common/types.ts` (exportés par le package).
 > Capacités signées (agents, builders, mmp, modes, analytics, advancedOrders, subAccounts) validées
-> sur **testnet réel** ; `marketData` est **public**.
+> sur **testnet réel** ; `marketData` est **public**. `prediction` : host `papi` testnet-only — `exchangeInfo`
+> public + lectures signées testées sur testnet ; `mint`/`burn` (mouvement de quote) testés manuellement.

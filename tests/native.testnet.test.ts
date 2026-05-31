@@ -62,4 +62,23 @@ describe.skipIf(ready === false)('Aster native — capacités signées (testnet 
     const force = await dex.native.analytics().forceOrders();
     expect(Array.isArray(force)).toBe(true);
   });
+
+  it('native.prediction() : exchangeInfo (public) + lectures signées (host papi testnet)', async () => {
+    const info = (await dex.native.prediction().exchangeInfo()) as { symbols?: unknown[] };
+    console.log('prediction symbols:', info.symbols?.length);
+    expect(Array.isArray(info.symbols)).toBe(true);
+
+    // Lectures signées sur le host `papi` (prouvent signature + routage produit prediction).
+    const [pos, hist, settle, tx] = await Promise.all([
+      dex.native.prediction().positions(),
+      dex.native.prediction().positionHistories({ limit: 10 }),
+      dex.native.prediction().settlementHistories({ limit: 10 }),
+      dex.native.prediction().transactionHistory({ limit: 10 }),
+    ]);
+    expect(pos).toBeDefined();
+    expect(hist).toBeDefined();
+    expect(settle).toBeDefined();
+    expect(tx).toBeDefined();
+    // mint/burn (mouvement de quote) : préparés + documentés, testés manuellement.
+  }, 30_000);
 });

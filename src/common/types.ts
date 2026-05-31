@@ -10,7 +10,7 @@ export type Hex = `0x${string}`;
 export type Network = 'mainnet' | 'testnet';
 
 /** Aster expose deux produits sur des hôtes distincts. */
-export type Product = 'futures' | 'spot';
+export type Product = 'futures' | 'spot' | 'prediction';
 
 /** Type de marché d'une paire : perpetual (futures) ou spot. */
 export type MarketKind = 'perp' | 'spot';
