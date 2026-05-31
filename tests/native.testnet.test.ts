@@ -29,9 +29,9 @@ describe.skipIf(ready === false)('Aster native — capacités signées (testnet 
     );
   });
 
-  it('native.agents().list() + native.builders().list()', async () => {
-    const agents = await dex.native.agents().list();
-    const builders = await dex.native.builders().list();
+  it('native.agents().getAgents() + native.builders().getBuilders()', async () => {
+    const agents = await dex.native.agents().getAgents();
+    const builders = await dex.native.builders().getBuilders();
     console.log('agents:', agents.length, 'builders:', builders.length);
     expect(Array.isArray(agents)).toBe(true);
     expect(Array.isArray(builders)).toBe(true);
@@ -49,31 +49,31 @@ describe.skipIf(ready === false)('Aster native — capacités signées (testnet 
     expect(stp).toBeDefined();
   });
 
-  // NB : `native.mmp().get()` est câblé pareil mais timeout sur testnet (MMP indisponible côté
+  // NB : `native.mmp().getConfig()` est câblé pareil mais timeout sur testnet (MMP indisponible côté
   // Aster testnet — limite d'infra, pas un bug). Validé : commissionRate / income / forceOrders.
-  it('native.analytics() : commissionRate / income / forceOrders', async () => {
-    const commission = await dex.native.analytics().commissionRate('BTCUSDT');
+  it('native.account() : commissionRate / income / forceOrders', async () => {
+    const commission = await dex.native.account().getCommissionRate('BTCUSDT');
     console.log('commissionRate BTCUSDT:', JSON.stringify(commission));
     expect(commission).toBeDefined();
 
-    const income = await dex.native.analytics().income();
+    const income = await dex.native.account().getIncome();
     expect(Array.isArray(income)).toBe(true);
 
-    const force = await dex.native.analytics().forceOrders();
+    const force = await dex.native.account().getForceOrders();
     expect(Array.isArray(force)).toBe(true);
   });
 
   it('native.prediction() : exchangeInfo (public) + lectures signées (host papi testnet)', async () => {
-    const info = (await dex.native.prediction().exchangeInfo()) as { symbols?: unknown[] };
+    const info = (await dex.native.prediction().getExchangeInfo()) as { symbols?: unknown[] };
     console.log('prediction symbols:', info.symbols?.length);
     expect(Array.isArray(info.symbols)).toBe(true);
 
     // Lectures signées sur le host `papi` (prouvent signature + routage produit prediction).
     const [pos, hist, settle, tx] = await Promise.all([
-      dex.native.prediction().positions(),
-      dex.native.prediction().positionHistories({ limit: 10 }),
-      dex.native.prediction().settlementHistories({ limit: 10 }),
-      dex.native.prediction().transactionHistory({ limit: 10 }),
+      dex.native.prediction().getPositions(),
+      dex.native.prediction().getPositionHistories({ limit: 10 }),
+      dex.native.prediction().getSettlementHistories({ limit: 10 }),
+      dex.native.prediction().getTransactionHistory({ limit: 10 }),
     ]);
     expect(pos).toBeDefined();
     expect(hist).toBeDefined();

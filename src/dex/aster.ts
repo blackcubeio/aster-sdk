@@ -136,10 +136,10 @@ import type {
 } from './contract';
 import type {
   IAgents,
-  IAnalytics,
   IBuilders,
   IMmp,
   IModes,
+  INativeAccount,
   INativeMarket,
   INativeOrders,
   IPrediction,
@@ -459,7 +459,7 @@ class AsterNativeScope {
 }
 
 class AsterAgentsScope extends AsterNativeScope implements IAgents {
-  public list() {
+  public getAgents() {
     return getAgents(this.client, this.signed());
   }
   public approve(params: Parameters<typeof approveAgent>[1]) {
@@ -477,7 +477,7 @@ class AsterAgentsScope extends AsterNativeScope implements IAgents {
 }
 
 class AsterBuildersScope extends AsterNativeScope implements IBuilders {
-  public list() {
+  public getBuilders() {
     return getBuilders(this.client, this.signed());
   }
   public approve(params: Parameters<typeof approveBuilder>[1]) {
@@ -492,7 +492,7 @@ class AsterBuildersScope extends AsterNativeScope implements IBuilders {
 }
 
 class AsterMmpScope extends AsterNativeScope implements IMmp {
-  public get(symbol?: string) {
+  public getConfig(symbol?: string) {
     return getMmp(this.client, symbol, this.signed());
   }
   public set(params: Parameters<typeof updateMmp>[1]) {
@@ -527,44 +527,45 @@ class AsterModesScope extends AsterNativeScope implements IModes {
   }
 }
 
-class AsterAnalyticsScope extends AsterNativeScope implements IAnalytics {
-  public forceOrders(query?: Parameters<typeof getForceOrders>[1]) {
+/** Lectures de compte étendues Aster (ex-`analytics`), exposées via `native.account()`. */
+class AsterAccountExtra extends AsterNativeScope implements INativeAccount {
+  public getForceOrders(query?: Parameters<typeof getForceOrders>[1]) {
     return getForceOrders(this.client, query, this.signed());
   }
-  public adlQuantile(symbol?: string) {
+  public getAdlQuantile(symbol?: string) {
     return getAdlQuantile(this.client, symbol, this.signed());
   }
-  public commissionRate(symbol: string) {
+  public getCommissionRate(symbol: string) {
     return getCommissionRate(this.client, symbol, this.signed());
   }
-  public income(query?: Parameters<typeof getIncome>[1]) {
+  public getIncome(query?: Parameters<typeof getIncome>[1]) {
     return getIncome(this.client, query, this.signed());
   }
-  public leverageBracket(symbol?: string) {
+  public getLeverageBracket(symbol?: string) {
     return symbol === undefined
       ? getLeverageBracket(this.client, undefined, this.signed())
       : getLeverageBracket(this.client, symbol, this.signed());
   }
-  public marginHistory(query: Parameters<typeof getPositionMarginHistory>[1]) {
+  public getMarginHistory(query: Parameters<typeof getPositionMarginHistory>[1]) {
     return getPositionMarginHistory(this.client, query, this.signed());
   }
 }
 
 /** Données de marché supplémentaires : **publiques** (label optionnel). */
 class AsterMarketDataScope extends AsterNativeScope implements INativeMarket {
-  public aggTrades(query: Parameters<typeof getAggTrades>[1]) {
+  public getAggregateTrades(query: Parameters<typeof getAggTrades>[1]) {
     return getAggTrades(this.client, query, this.label);
   }
-  public historicalTrades(query: Parameters<typeof getHistoricalTrades>[1]) {
+  public getHistoricalTrades(query: Parameters<typeof getHistoricalTrades>[1]) {
     return getHistoricalTrades(this.client, query, this.label);
   }
-  public fundingInfo(symbol?: string) {
+  public getFundingInfo(symbol?: string) {
     return getFundingInfo(this.client, symbol, this.label);
   }
-  public indexPriceReferences(symbol: string) {
+  public getIndexPriceReferences(symbol: string) {
     return getIndexPriceReferences(this.client, symbol, this.label);
   }
-  public ticker24hr(symbol?: string) {
+  public getTicker24hr(symbol?: string) {
     return symbol === undefined
       ? getTicker24hr(this.client, undefined, this.label)
       : getTicker24hr(this.client, symbol, this.label);
@@ -581,29 +582,25 @@ class AsterSubAccountsScope extends AsterNativeScope implements ISubAccountsAdmi
   public update(params: Parameters<typeof updateSubAccount>[1]) {
     return updateSubAccount(this.client, params, this.signed());
   }
-  public transfer(params: Parameters<typeof subAccountTransfer>[1]) {
-    return subAccountTransfer(this.client, params, this.signed());
-  }
-  public transferFuturesSpot(params: Parameters<typeof transferFuturesSpot>[1]) {
-    return transferFuturesSpot(this.client, params, this.signed());
-  }
 }
 
 /** Marchés de **prédiction** (host `papi`, testnet-only). `exchangeInfo` public ; le reste signé. */
 class AsterPredictionScope extends AsterNativeScope implements IPrediction {
-  public exchangeInfo() {
+  public getExchangeInfo() {
     return getPredictionExchangeInfo(this.client, this.label);
   }
-  public positions(query: Parameters<typeof getPredictionPositions>[1] = {}) {
+  public getPositions(query: Parameters<typeof getPredictionPositions>[1] = {}) {
     return getPredictionPositions(this.client, query, this.signed());
   }
-  public positionHistories(query: Parameters<typeof getPredictionPositionHistories>[1] = {}) {
+  public getPositionHistories(query: Parameters<typeof getPredictionPositionHistories>[1] = {}) {
     return getPredictionPositionHistories(this.client, query, this.signed());
   }
-  public settlementHistories(query: Parameters<typeof getPredictionSettlementHistories>[1] = {}) {
+  public getSettlementHistories(
+    query: Parameters<typeof getPredictionSettlementHistories>[1] = {},
+  ) {
     return getPredictionSettlementHistories(this.client, query, this.signed());
   }
-  public transactionHistory(query: Parameters<typeof getPredictionTransactionHistory>[1] = {}) {
+  public getTransactionHistory(query: Parameters<typeof getPredictionTransactionHistory>[1] = {}) {
     return getPredictionTransactionHistory(this.client, query, this.signed());
   }
   public mint(params: Parameters<typeof predictionMint>[1]) {
@@ -720,8 +717,8 @@ export class Aster {
 
   /**
    * Surplus **spécifique Aster** (hors contrat commun), accès uniforme `dex.native.<capacité>(label?)` :
-   * `agents`, `builders`, `mmp`, `modes`, `analytics`, `marketData`, `advancedOrders`, `subAccounts`,
-   * `prediction`.
+   * `agents`, `builders`, `mmp`, `modes`, `account` (ex-analytics), `marketData`, `subAccounts`,
+   * `prediction`. (Le surplus **ordres** est porté par `perp()`/`spot()`.)
    */
   public get native() {
     const resolve = (label?: string) => this.resolve(label);
@@ -730,7 +727,7 @@ export class Aster {
       builders: (label?: string) => new AsterBuildersScope(this.client, resolve(label)),
       mmp: (label?: string) => new AsterMmpScope(this.client, resolve(label)),
       modes: (label?: string) => new AsterModesScope(this.client, resolve(label)),
-      analytics: (label?: string) => new AsterAnalyticsScope(this.client, resolve(label)),
+      account: (label?: string) => new AsterAccountExtra(this.client, resolve(label)),
       marketData: (label?: string) => new AsterMarketDataScope(this.client, resolve(label)),
       subAccounts: (label?: string) => new AsterSubAccountsScope(this.client, resolve(label)),
       /** Marchés de prédiction (testnet-only). */

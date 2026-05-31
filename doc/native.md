@@ -6,7 +6,7 @@ Accès uniforme à tous les SDK : **`dex.native.<capacité>(label?)`**. Les noms
 
 ```ts
 const dex = new Aster({ desk: signer }, { default: 'desk' });
-dex.native.agents().list();
+dex.native.agents().getAgents();
 ```
 
 `label?` choisit le signer (défaut : signer par défaut). Lectures signées comprises (compte privé).
@@ -16,14 +16,14 @@ dex.native.agents().list();
 ## `native.agents()` — `IAgents` (API wallets / agents)
 | Méthode | Entrée | Sortie |
 |---|---|---|
-| `list()` | — | `Promise<Agent[]>` |
-| `approve(p)` | `ApproveAgent` | `Promise<CodeMsg>` |
-| `register(p)` | `RegisterAgent` | `Promise<CodeMsg>` |
-| `update(p)` | `UpdateAgent` | `Promise<CodeMsg>` |
+| `getAgents()` | — | `Promise<Agent[]>` |
+| `approve(p)` | `ApproveAgentParams` | `Promise<CodeMsg>` |
+| `register(p)` | `RegisterAgentParams` | `Promise<CodeMsg>` |
+| `update(p)` | `UpdateAgentParams` | `Promise<CodeMsg>` |
 | `revoke(agentAddress)` | `string` | `Promise<CodeMsg>` |
 
 ```ts
-await dex.native.agents().list();
+await dex.native.agents().getAgents();
 await dex.native.agents().approve({ agentAddress: '0x…', agentName: 'bot' });
 await dex.native.agents().register({ agentAddress: '0x…' });
 await dex.native.agents().update({ agentAddress: '0x…', agentName: 'bot2' });
@@ -31,25 +31,25 @@ await dex.native.agents().revoke('0x…');
 ```
 
 ## `native.builders()` — `IBuilders` (fee builders)
-| `list()` | — | `Promise<Builder[]>` |
-| `approve(p)` | `ApproveBuilder` | `Promise<CodeMsg>` |
-| `update(p)` | `UpdateBuilder` | `Promise<CodeMsg>` |
+| `getBuilders()` | — | `Promise<Builder[]>` |
+| `approve(p)` | `ApproveBuilderParams` | `Promise<CodeMsg>` |
+| `update(p)` | `UpdateBuilderParams` | `Promise<CodeMsg>` |
 | `revoke(builder)` | `string` | `Promise<CodeMsg>` |
 
 ```ts
-await dex.native.builders().list();
+await dex.native.builders().getBuilders();
 await dex.native.builders().approve({ builder: '0x…', maxFeeRate: '0.001' });
 await dex.native.builders().revoke('0x…');
 ```
 
 ## `native.mmp()` — `IMmp` (market-maker protection)
-| `get(symbol?)` | `string?` | `Promise<MmpConfig[]>` |
-| `set(p)` | `UpdateMmp` | `Promise<boolean>` |
+| `getConfig(symbol?)` | `string?` | `Promise<MmpConfig[]>` |
+| `set(p)` | `UpdateMmpParams` | `Promise<boolean>` |
 | `reset(symbol)` | `string` | `Promise<boolean>` |
 | `remove(symbol)` | `string` | `Promise<boolean>` |
 
 ```ts
-await dex.native.mmp().get('BTCUSDT');
+await dex.native.mmp().getConfig('BTCUSDT');
 await dex.native.mmp().set({ symbol: 'BTCUSDT', windowMs: 5000, frozenMs: 10000, qtyLimit: '100' });
 await dex.native.mmp().reset('BTCUSDT');
 await dex.native.mmp().remove('BTCUSDT');
@@ -61,7 +61,7 @@ await dex.native.mmp().remove('BTCUSDT');
 | `getPosition()` | — | `Promise<PositionModeResult>` |
 | `setPosition(dualSide)` | `boolean` | `Promise<CodeMsg>` |
 | `getStp()` | — | `Promise<StpModeResult>` |
-| `setStp(mode)` | `StpMode` | `Promise<CodeMsg>` |
+| `setStp(mode)` | `SetStpModeParams` | `Promise<CodeMsg>` |
 
 ```ts
 await dex.native.modes().getMultiAssets();           // { multiAssetsMargin: true }
@@ -72,36 +72,36 @@ await dex.native.modes().getStp();                   // { stpMode: 'EXPIRE_MAKER
 await dex.native.modes().setStp('EXPIRE_TAKER');
 ```
 
-## `native.analytics()` — `IAnalytics` (lectures de compte)
-| `forceOrders(query?)` | `ForceOrdersQuery?` | `Promise<OrderDetail[]>` |
-| `adlQuantile(symbol?)` | `string?` | `Promise<AdlQuantile[]>` |
-| `commissionRate(symbol)` | `string` | `Promise<CommissionRate>` |
-| `income(query?)` | `IncomeQuery?` | `Promise<IncomeEntry[]>` |
-| `leverageBracket(symbol?)` | `string?` | `Promise<LeverageBracket \| LeverageBracket[]>` |
-| `marginHistory(query)` | `PositionMarginHistoryQuery` | `Promise<PositionMarginHistoryEntry[]>` |
+## `native.account()` — `INativeAccount` (lectures de compte, ex-`analytics`)
+| `getForceOrders(query?)` | `ForceOrdersQuery?` | `Promise<OrderDetail[]>` |
+| `getAdlQuantile(symbol?)` | `string?` | `Promise<AdlQuantile[]>` |
+| `getCommissionRate(symbol)` | `string` | `Promise<CommissionRate>` |
+| `getIncome(query?)` | `IncomeQuery?` | `Promise<IncomeEntry[]>` |
+| `getLeverageBracket(symbol?)` | `string?` | `Promise<LeverageBracket \| LeverageBracket[]>` |
+| `getMarginHistory(query)` | `PositionMarginHistoryQuery` | `Promise<PositionMarginHistoryEntry[]>` |
 
 ```ts
-await dex.native.analytics().commissionRate('BTCUSDT'); // { makerCommissionRate, takerCommissionRate }
-await dex.native.analytics().income({ incomeType: 'FUNDING_FEE', limit: 100 });
-await dex.native.analytics().leverageBracket('BTCUSDT');
-await dex.native.analytics().adlQuantile();
-await dex.native.analytics().forceOrders();
-await dex.native.analytics().marginHistory({ symbol: 'BTCUSDT' });
+await dex.native.account().getCommissionRate('BTCUSDT'); // { makerCommissionRate, takerCommissionRate }
+await dex.native.account().getIncome({ incomeType: 'FUNDING_FEE', limit: 100 });
+await dex.native.account().getLeverageBracket('BTCUSDT');
+await dex.native.account().getAdlQuantile();
+await dex.native.account().getForceOrders();
+await dex.native.account().getMarginHistory({ symbol: 'BTCUSDT' });
 ```
 
 ## `native.marketData()` — `INativeMarket` (marché, **public**)
-| `aggTrades(query)` | `AggTradesQuery` | `Promise<AggTrade[]>` |
-| `historicalTrades(query)` | `HistoricalTradesQuery` | `Promise<MarketTrade[]>` |
-| `fundingInfo(symbol?)` | `string?` | `Promise<FundingInfo[]>` |
-| `indexPriceReferences(symbol)` | `string` | `Promise<IndexPriceReferences>` |
-| `ticker24hr(symbol?)` | `string?` | `Promise<Ticker24hr \| Ticker24hr[]>` |
+| `getAggregateTrades(query)` | `AggregateTradesParams` | `Promise<AggTrade[]>` |
+| `getHistoricalTrades(query)` | `HistoricalTradesParams` | `Promise<MarketTrade[]>` |
+| `getFundingInfo(symbol?)` | `string?` | `Promise<FundingInfo[]>` |
+| `getIndexPriceReferences(symbol)` | `string` | `Promise<IndexPriceReferences>` |
+| `getTicker24hr(symbol?)` | `string?` | `Promise<Ticker24hr \| Ticker24hr[]>` |
 
 ```ts
-await dex.native.marketData().aggTrades({ symbol: 'BTCUSDT', limit: 100 });
-await dex.native.marketData().historicalTrades({ symbol: 'BTCUSDT', limit: 100 });
-await dex.native.marketData().fundingInfo();
-await dex.native.marketData().indexPriceReferences('BTCUSDT');
-await dex.native.marketData().ticker24hr('BTCUSDT');
+await dex.native.marketData().getAggregateTrades({ symbol: 'BTCUSDT', limit: 100 });
+await dex.native.marketData().getHistoricalTrades({ symbol: 'BTCUSDT', limit: 100 });
+await dex.native.marketData().getFundingInfo();
+await dex.native.marketData().getIndexPriceReferences('BTCUSDT');
+await dex.native.marketData().getTicker24hr('BTCUSDT');
 ```
 
 ## Surplus ordres — `INativeOrders`, porté par `perp()` / `spot()`
@@ -134,35 +134,32 @@ await dex.perp().getOpenById({ symbol: 'BTCUSDT', orderId: 123 });
 ```
 
 ## `native.subAccounts()` — `ISubAccountsAdmin`
-*(la **liste** des sous-comptes est dans `account().getSubAccounts()`.)*
-| `bind(p)` | `BindSubAccount` | `Promise<CodeMsg>` |
-| `create(p)` | `CreateSubAccount` | `Promise<CodeMsg>` |
-| `update(p)` | `UpdateSubAccount` | `Promise<CodeMsg>` |
-| `transfer(p)` | `TransferSubAccount` | `Promise<CodeMsg>` |
-| `transferFuturesSpot(p)` | `TransferFuturesSpot` | `Promise<TransferResult>` |
+*(la **liste** est dans `account().getSubAccounts()` ; les **transferts** sont sur `transfers()`.)*
+| `bind(p)` | `BindSubAccountParams` | `Promise<CodeMsg>` |
+| `create(p)` | `CreateSubAccountParams` | `Promise<CodeMsg>` |
+| `update(p)` | `UpdateSubAccountParams` | `Promise<CodeMsg>` |
 
 ```ts
 await dex.native.subAccounts().create({ subAccountId: 'sub1' });
-await dex.native.subAccounts().transfer({ from: 'main', to: 'sub1', asset: 'USDT', amount: '100' });
-await dex.native.subAccounts().transferFuturesSpot({ asset: 'USDT', amount: '50', type: 1 });
+// Transfert master↔sous-compte : voir transfers() (commun) → dex.transfers().transfer({ to: { subAccount } })
 ```
 
 ## `native.prediction()` — `IPrediction` (marchés de prédiction)
-*(host dédié `papi`, **testnet-only** à ce jour. `exchangeInfo` public ; le reste signé.)*
+*(host dédié `papi`, **testnet-only** à ce jour. `getExchangeInfo` public ; le reste signé.)*
 | Méthode | Entrée | Sortie |
 |---|---|---|
-| `exchangeInfo()` | — | `Promise<unknown>` (marchés, statuts, filtres) |
-| `positions(q?)` | `{ symbol? }` | `Promise<unknown>` |
-| `positionHistories(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
-| `settlementHistories(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
-| `transactionHistory(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
-| `mint(p)` | `PredictionMint` `{ symbol; quantity; newClientOrderId? }` | `Promise<unknown>` |
-| `burn(p)` | `PredictionBurn` `{ symbol; quantity; newClientOrderId? }` | `Promise<unknown>` |
+| `getExchangeInfo()` | — | `Promise<unknown>` (marchés, statuts, filtres) |
+| `getPositions(q?)` | `{ symbol? }` | `Promise<unknown>` |
+| `getPositionHistories(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
+| `getSettlementHistories(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
+| `getTransactionHistory(q?)` | `{ symbol?; startTime?; endTime?; limit? }` | `Promise<unknown>` |
+| `mint(p)` | `PredictionMintParams` `{ symbol; quantity; newClientOrderId? }` | `Promise<unknown>` |
+| `burn(p)` | `PredictionBurnParams` `{ symbol; quantity; newClientOrderId? }` | `Promise<unknown>` |
 
 ```ts
-await dex.native.prediction().exchangeInfo();
-await dex.native.prediction().positions();
-await dex.native.prediction().positionHistories({ limit: 50 });
+await dex.native.prediction().getExchangeInfo();
+await dex.native.prediction().getPositions();
+await dex.native.prediction().getPositionHistories({ limit: 50 });
 await dex.native.prediction().mint({ symbol: 'BTC_UP_DOWN_…_YUSDT', quantity: '1' });   // émet 1 paire YES+NO
 await dex.native.prediction().burn({ symbol: 'BTC_UP_DOWN_…_YUSDT', quantity: '1' });   // brûle 1 paire
 ```
@@ -170,6 +167,6 @@ await dex.native.prediction().burn({ symbol: 'BTC_UP_DOWN_…_YUSDT', quantity: 
 ---
 
 > Types d'I/O détaillés : `src/common/futures.ts` / `src/common/types.ts` (exportés par le package).
-> Capacités signées (agents, builders, mmp, modes, analytics, surplus ordres sur `perp()`/`spot()`,
-> subAccounts) validées sur **testnet réel** ; `marketData` est **public**. `prediction` : host `papi` testnet-only — `exchangeInfo`
+> Capacités signées (agents, builders, mmp, modes, account, surplus ordres sur `perp()`/`spot()`,
+> subAccounts) validées sur **testnet réel** ; `marketData` est **public**. `prediction` : host `papi` testnet-only — `getExchangeInfo`
 > public + lectures signées testées sur testnet ; `mint`/`burn` (mouvement de quote) testés manuellement.

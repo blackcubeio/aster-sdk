@@ -12,26 +12,29 @@ describe('Aster — namespace native (mainnet réel, public)', () => {
       'builders',
       'mmp',
       'modes',
-      'analytics',
+      'account',
       'marketData',
-      'advancedOrders',
       'subAccounts',
     ]) {
       expect(typeof (caps as Record<string, unknown>)[c]).toBe('function');
     }
+    // `analytics`→`account` ; surplus ordres (placeBatch/chase/strategy…) sur perp()/spot().
+    expect((caps as Record<string, unknown>).analytics).toBeUndefined();
+    expect((caps as Record<string, unknown>).advancedOrders).toBeUndefined();
+    expect(typeof dex.perp().placeBatch).toBe('function');
   });
 
-  it('native.marketData().ticker24hr() (tous les symboles)', async () => {
-    const tickers = (await dex.native.marketData().ticker24hr()) as unknown[];
+  it('native.marketData().getTicker24hr() (tous les symboles)', async () => {
+    const tickers = (await dex.native.marketData().getTicker24hr()) as unknown[];
     expect(Array.isArray(tickers)).toBe(true);
     expect(tickers.length).toBeGreaterThan(0);
   });
 
-  it('native.marketData().aggTrades({ symbol }) + fundingInfo()', async () => {
-    const agg = await dex.native.marketData().aggTrades({ symbol: 'BTCUSDT', limit: 3 });
+  it('native.marketData().getAggregateTrades({ symbol }) + fundingInfo()', async () => {
+    const agg = await dex.native.marketData().getAggregateTrades({ symbol: 'BTCUSDT', limit: 3 });
     expect(agg.length).toBeGreaterThan(0);
 
-    const funding = await dex.native.marketData().fundingInfo();
+    const funding = await dex.native.marketData().getFundingInfo();
     expect(Array.isArray(funding)).toBe(true);
     expect(funding.length).toBeGreaterThan(0);
   });
