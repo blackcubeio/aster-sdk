@@ -33,7 +33,7 @@ describe.skipIf(ready === false)(
 
     it('place un LIMIT loin du marché, le voit, l’annule, puis il a disparu', async () => {
       const clientOrderId = globalThis.crypto.randomUUID().replace(/-/g, '');
-      const created = await dex.perp().placeOrder({
+      const created = await dex.perp().place({
         name: 'BTCUSDT',
         side: 'buy',
         type: 'limit',
@@ -45,12 +45,12 @@ describe.skipIf(ready === false)(
       expect(created.status).toBe('open');
       expect(Number(created.id)).toBeGreaterThan(0);
 
-      const open = await dex.perp().getOpenOrders({ name: 'BTCUSDT' });
+      const open = await dex.perp().getOpens({ name: 'BTCUSDT' });
       expect(open.some((order) => order.id === created.id)).toBe(true);
 
-      await dex.perp().cancelOrder({ name: 'BTCUSDT', id: created.id });
+      await dex.perp().cancel({ name: 'BTCUSDT', id: created.id });
 
-      const after = await dex.perp().getOpenOrders({ name: 'BTCUSDT' });
+      const after = await dex.perp().getOpens({ name: 'BTCUSDT' });
       expect(after.some((order) => order.id === created.id)).toBe(false);
     }, 30_000);
   },

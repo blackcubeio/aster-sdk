@@ -149,19 +149,23 @@ export interface INativeMarket {
   ticker24hr(symbol?: string): Promise<unknown>; // surchargée (Ticker24hr | Ticker24hr[])
 }
 
-/** Ordres avancés : batch, annulation multiple, chase, stratégie (TWAP/VP), query. */
-export interface IAdvancedOrders {
+/**
+ * Surplus **ordres** Aster, porté par le scope marché (`perp()`/`spot()`) : batch, annulation
+ * multiple, chase, stratégie (TWAP/VP), lecture par id. Verbes alignés inter-SDK.
+ * (`getOpenById` = ordre **ouvert** par id, endpoint `/openOrder` distinct de `getById`.)
+ */
+export interface INativeOrders {
   placeBatch(orders: PlaceBatch): ReturnType<typeof batchOrders>;
   cancelMany(params: CancelMany): ReturnType<typeof cancelMultipleOrders>;
   chase(params: Chase): ReturnType<typeof chaseOrder>;
   placeStrategy(params: PlaceStrategy): ReturnType<typeof placeStrategyOrder>;
-  updateStrategy(params: UpdateStrategy): ReturnType<typeof updateStrategyOrder>;
-  strategyOpen(query: Args<typeof getStrategyOpenOrder>): ReturnType<typeof getStrategyOpenOrder>;
-  strategyHistory(
+  editStrategy(params: UpdateStrategy): ReturnType<typeof updateStrategyOrder>;
+  getStrategies(query: Args<typeof getStrategyOpenOrder>): ReturnType<typeof getStrategyOpenOrder>;
+  getStrategyHistory(
     query: Args<typeof getStrategyHistoryOrder>,
   ): ReturnType<typeof getStrategyHistoryOrder>;
-  query(params: Args<typeof queryOrder>): ReturnType<typeof queryOrder>;
-  getOpen(params: Args<typeof getOpenOrder>): ReturnType<typeof getOpenOrder>;
+  getById(params: Args<typeof queryOrder>): ReturnType<typeof queryOrder>;
+  getOpenById(params: Args<typeof getOpenOrder>): ReturnType<typeof getOpenOrder>;
 }
 
 /** Marchés de **prédiction** (host `papi`, testnet-only) : infos, positions/historiques, mint/burn. */

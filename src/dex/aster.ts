@@ -135,13 +135,13 @@ import type {
   WithdrawParams,
 } from './contract';
 import type {
-  IAdvancedOrders,
   IAgents,
   IAnalytics,
   IBuilders,
   IMmp,
   IModes,
   INativeMarket,
+  INativeOrders,
   IPrediction,
   ISubAccountsAdmin,
 } from './native-contract';
@@ -164,6 +164,7 @@ class AsterMarket
     IOrderHistory,
     IPublicTrades,
     ITrading,
+    INativeOrders,
     IMarginMode,
     IIsolatedMargin,
     IRemovableMargin
@@ -235,13 +236,13 @@ class AsterMarket
     // Positions : perp uniquement côté Aster ; le spot n'a pas de positions.
     return getPositions(this.client, { name: query?.name }, this.signed());
   }
-  public getOpenOrders(query?: SymbolParams): Promise<Order[]> {
+  public getOpens(query?: SymbolParams): Promise<Order[]> {
     return getOpenOrders(this.client, { name: query?.name, kind: this.kind }, this.signed());
   }
   public getUserTrades(query?: SymbolParams): Promise<UserTrade[]> {
     return getUserTrades(this.client, { name: query?.name, kind: this.kind }, this.signed());
   }
-  public getOrderHistory(query?: SymbolParams): Promise<Order[]> {
+  public getHistory(query?: SymbolParams): Promise<Order[]> {
     return getOrderHistory(this.client, { name: query?.name }, this.signed());
   }
   public getAccountInfo(): Promise<unknown> {
@@ -250,18 +251,18 @@ class AsterMarket
       : getAccountInfo(this.client, this.signed());
   }
 
-  public placeOrder(input: PlaceOrderParams): Promise<Order> {
+  public place(input: PlaceOrderParams): Promise<Order> {
     return placeOrder(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public cancelOrder(input: CancelOrderParams): Promise<void> {
+  public cancel(input: CancelOrderParams): Promise<void> {
     return cancelOrder(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public cancelAllOrders(input: CancelAllParams): Promise<{ cancelled: number | null }> {
+  public cancelAll(input: CancelAllParams): Promise<{ cancelled: number | null }> {
     return cancelAllOrders(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public editOrder(input: EditOrderParams): Promise<{ name: string; id: string }> {
+  public edit(input: EditOrderParams): Promise<{ name: string; id: string }> {
     if (input.price === undefined) {
-      throw new Error('editOrder (Aster) : `price` est requis.');
+      throw new Error('edit (Aster) : `price` est requis.');
     }
     return editOrder(
       this.client,
@@ -295,6 +296,35 @@ class AsterMarket
       { symbol: input.name, amount: input.amount, type: 2 },
       this.signed(),
     ).then(() => undefined);
+  }
+
+  // ── INativeOrders : surplus ordres Aster porté par le scope marché ──
+  public placeBatch(orders: Parameters<typeof batchOrders>[1]) {
+    return batchOrders(this.client, orders, this.signed());
+  }
+  public cancelMany(params: Parameters<typeof cancelMultipleOrders>[1]) {
+    return cancelMultipleOrders(this.client, params, this.signed());
+  }
+  public chase(params: Parameters<typeof chaseOrder>[1]) {
+    return chaseOrder(this.client, params, this.signed());
+  }
+  public placeStrategy(params: Parameters<typeof placeStrategyOrder>[1]) {
+    return placeStrategyOrder(this.client, params, this.signed());
+  }
+  public editStrategy(params: Parameters<typeof updateStrategyOrder>[1]) {
+    return updateStrategyOrder(this.client, params, this.signed());
+  }
+  public getStrategies(query: Parameters<typeof getStrategyOpenOrder>[1]) {
+    return getStrategyOpenOrder(this.client, query, this.signed());
+  }
+  public getStrategyHistory(query: Parameters<typeof getStrategyHistoryOrder>[1]) {
+    return getStrategyHistoryOrder(this.client, query, this.signed());
+  }
+  public getById(params: Parameters<typeof queryOrder>[1]) {
+    return queryOrder(this.client, params, this.signed());
+  }
+  public getOpenById(params: Parameters<typeof getOpenOrder>[1]) {
+    return getOpenOrder(this.client, params, this.signed());
   }
 }
 
@@ -541,36 +571,6 @@ class AsterMarketDataScope extends AsterNativeScope implements INativeMarket {
   }
 }
 
-class AsterAdvancedOrdersScope extends AsterNativeScope implements IAdvancedOrders {
-  public placeBatch(orders: Parameters<typeof batchOrders>[1]) {
-    return batchOrders(this.client, orders, this.signed());
-  }
-  public cancelMany(params: Parameters<typeof cancelMultipleOrders>[1]) {
-    return cancelMultipleOrders(this.client, params, this.signed());
-  }
-  public chase(params: Parameters<typeof chaseOrder>[1]) {
-    return chaseOrder(this.client, params, this.signed());
-  }
-  public placeStrategy(params: Parameters<typeof placeStrategyOrder>[1]) {
-    return placeStrategyOrder(this.client, params, this.signed());
-  }
-  public updateStrategy(params: Parameters<typeof updateStrategyOrder>[1]) {
-    return updateStrategyOrder(this.client, params, this.signed());
-  }
-  public strategyOpen(query: Parameters<typeof getStrategyOpenOrder>[1]) {
-    return getStrategyOpenOrder(this.client, query, this.signed());
-  }
-  public strategyHistory(query: Parameters<typeof getStrategyHistoryOrder>[1]) {
-    return getStrategyHistoryOrder(this.client, query, this.signed());
-  }
-  public query(params: Parameters<typeof queryOrder>[1]) {
-    return queryOrder(this.client, params, this.signed());
-  }
-  public getOpen(params: Parameters<typeof getOpenOrder>[1]) {
-    return getOpenOrder(this.client, params, this.signed());
-  }
-}
-
 class AsterSubAccountsScope extends AsterNativeScope implements ISubAccountsAdmin {
   public bind(params: Parameters<typeof bindSubAccount>[1]) {
     return bindSubAccount(this.client, params, this.signed());
@@ -732,7 +732,6 @@ export class Aster {
       modes: (label?: string) => new AsterModesScope(this.client, resolve(label)),
       analytics: (label?: string) => new AsterAnalyticsScope(this.client, resolve(label)),
       marketData: (label?: string) => new AsterMarketDataScope(this.client, resolve(label)),
-      advancedOrders: (label?: string) => new AsterAdvancedOrdersScope(this.client, resolve(label)),
       subAccounts: (label?: string) => new AsterSubAccountsScope(this.client, resolve(label)),
       /** Marchés de prédiction (testnet-only). */
       prediction: (label?: string) => new AsterPredictionScope(this.client, resolve(label)),

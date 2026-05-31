@@ -71,7 +71,7 @@ describe.skipIf(ready === false)('futures signé — agent (réel) — via faça
   });
 
   it('perp().getOpenOrders renvoie un tableau d’ordres unifiés', async () => {
-    const orders = await dex.perp().getOpenOrders({ name: 'BTCUSDT' });
+    const orders = await dex.perp().getOpens({ name: 'BTCUSDT' });
     expect(Array.isArray(orders)).toBe(true);
     for (const o of orders) {
       expect(['buy', 'sell']).toContain(o.side);

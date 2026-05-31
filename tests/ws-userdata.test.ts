@@ -49,7 +49,7 @@ describe.skipIf(ready === false)('façade ws() user-data Aster (testnet réel)',
     const off = dex.ws().subscribeOrders((o) => orders.push(o));
     try {
       await new Promise((r) => setTimeout(r, 1500));
-      const created = await dex.perp().placeOrder({
+      const created = await dex.perp().place({
         name: 'BTCUSDT',
         side: 'buy',
         type: 'limit',
@@ -66,7 +66,7 @@ describe.skipIf(ready === false)('façade ws() user-data Aster (testnet réel)',
       expect(order.tif).toBe('gtc');
       await dex
         .perp()
-        .cancelOrder({ name: 'BTCUSDT', id: created.id })
+        .cancel({ name: 'BTCUSDT', id: created.id })
         .catch(() => {});
     } finally {
       off();
@@ -80,7 +80,7 @@ describe.skipIf(ready === false)('façade ws() user-data Aster (testnet réel)',
     const offP = dex.ws().subscribePositions((p) => positions.push(p));
     try {
       await new Promise((r) => setTimeout(r, 1500));
-      await dex.perp().placeOrder({ name: 'BTCUSDT', side: 'buy', type: 'market', size: '0.001' });
+      await dex.perp().place({ name: 'BTCUSDT', side: 'buy', type: 'market', size: '0.001' });
       const fill = await waitFor(fills, (t) => t.name === 'BTCUSDT', 20_000);
       expect(fill.kind).toBe('perp');
       expect(typeof fill.id).toBe('string');
@@ -95,7 +95,7 @@ describe.skipIf(ready === false)('façade ws() user-data Aster (testnet réel)',
     } finally {
       await dex
         .perp()
-        .placeOrder({
+        .place({
           name: 'BTCUSDT',
           side: 'sell',
           type: 'market',

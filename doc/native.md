@@ -104,26 +104,33 @@ await dex.native.marketData().indexPriceReferences('BTCUSDT');
 await dex.native.marketData().ticker24hr('BTCUSDT');
 ```
 
-## `native.advancedOrders()` — `IAdvancedOrders`
+## Surplus ordres — `INativeOrders`, porté par `perp()` / `spot()`
+
+> Le surplus **ordres** (batch / chase / stratégies / lecture par id) n'a **pas** de scope `native`
+> dédié : il est exposé sur le scope marché `dex.perp()` / `dex.spot()`, aux côtés des verbes communs
+> (`place`/`cancel`/`edit`…).
+
+| Méthode | Entrée | Sortie |
+|---|---|---|
 | `placeBatch(orders)` | `PlaceBatch` | `Promise<BatchOrderResult[]>` |
 | `cancelMany(p)` | `CancelMany` | `Promise<BatchOrderResult[]>` |
 | `chase(p)` | `Chase` | `Promise<ChaseOrder>` |
 | `placeStrategy(p)` | `PlaceStrategy` | `Promise<PlaceStrategyOrderResult>` |
-| `updateStrategy(p)` | `UpdateStrategy` | `Promise<UpdateStrategyOrderResult[]>` |
-| `strategyOpen(query)` | `StrategyOrderQuery` | `Promise<StrategyOrder>` |
-| `strategyHistory(query)` | `StrategyHistoryQuery` | `Promise<StrategyOrder>` |
-| `query(p)` | `OrderQuery` | `Promise<OrderDetail>` |
-| `getOpen(p)` | `OrderQuery` | `Promise<OrderDetail>` |
+| `editStrategy(p)` | `UpdateStrategy` | `Promise<UpdateStrategyOrderResult[]>` |
+| `getStrategies(query)` | `StrategyOrderQuery` | `Promise<StrategyOrder>` |
+| `getStrategyHistory(query)` | `StrategyHistoryQuery` | `Promise<StrategyOrder>` |
+| `getById(p)` | `OrderQuery` | `Promise<OrderDetail>` |
+| `getOpenById(p)` | `OrderQuery` | `Promise<OrderDetail>` (endpoint `/openOrder`) |
 
 ```ts
-await dex.native.advancedOrders().placeBatch([
+await dex.perp().placeBatch([
   { symbol: 'BTCUSDT', side: 'BUY', type: 'LIMIT', quantity: '0.001', price: '50000' },
 ]);
-await dex.native.advancedOrders().cancelMany({ symbol: 'BTCUSDT', orderIdList: [1, 2] });
-await dex.native.advancedOrders().chase({ symbol: 'BTCUSDT', side: 'BUY', quantity: '0.001' });
-await dex.native.advancedOrders().placeStrategy({ symbol: 'BTCUSDT', strategyType: 'TWAP', side: 'BUY', quantity: '1', durationSec: 3600 });
-await dex.native.advancedOrders().query({ symbol: 'BTCUSDT', orderId: 123 });
-await dex.native.advancedOrders().getOpen({ symbol: 'BTCUSDT', orderId: 123 });
+await dex.perp().cancelMany({ symbol: 'BTCUSDT', orderIdList: [1, 2] });
+await dex.perp().chase({ symbol: 'BTCUSDT', side: 'BUY', quantity: '0.001' });
+await dex.perp().placeStrategy({ symbol: 'BTCUSDT', strategyType: 'TWAP', side: 'BUY', quantity: '1', durationSec: 3600 });
+await dex.perp().getById({ symbol: 'BTCUSDT', orderId: 123 });
+await dex.perp().getOpenById({ symbol: 'BTCUSDT', orderId: 123 });
 ```
 
 ## `native.subAccounts()` — `ISubAccountsAdmin`
@@ -163,6 +170,6 @@ await dex.native.prediction().burn({ symbol: 'BTC_UP_DOWN_…_YUSDT', quantity: 
 ---
 
 > Types d'I/O détaillés : `src/common/futures.ts` / `src/common/types.ts` (exportés par le package).
-> Capacités signées (agents, builders, mmp, modes, analytics, advancedOrders, subAccounts) validées
-> sur **testnet réel** ; `marketData` est **public**. `prediction` : host `papi` testnet-only — `exchangeInfo`
+> Capacités signées (agents, builders, mmp, modes, analytics, surplus ordres sur `perp()`/`spot()`,
+> subAccounts) validées sur **testnet réel** ; `marketData` est **public**. `prediction` : host `papi` testnet-only — `exchangeInfo`
 > public + lectures signées testées sur testnet ; `mint`/`burn` (mouvement de quote) testés manuellement.

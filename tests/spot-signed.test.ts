@@ -40,8 +40,8 @@ describe.skipIf(ready === false)('spot signé — agent (réel) — via façade'
     }
   });
 
-  it('spot().getOpenOrders(ASTERUSDT) renvoie des ordres unifiés (kind spot)', async () => {
-    const orders = await dex.spot().getOpenOrders({ name: 'ASTERUSDT' });
+  it('spot().getOpens(ASTERUSDT) renvoie des ordres unifiés (kind spot)', async () => {
+    const orders = await dex.spot().getOpens({ name: 'ASTERUSDT' });
     expect(Array.isArray(orders)).toBe(true);
     for (const o of orders) {
       expect(o.kind).toBe('spot');
