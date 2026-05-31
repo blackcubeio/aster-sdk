@@ -1,4 +1,5 @@
 import { type AsterClient, type InitOptions, init } from '../common/config';
+import { SubAccountTransferKind, TransferKind } from '../common/futures';
 import type {
   Balance,
   Candle,
@@ -120,6 +121,7 @@ import type {
   ISubAccounts,
   ISystem,
   ITrading,
+  ITransfers,
   IsolatedMarginParams,
   KeyHelper,
   LeverageParams,
@@ -129,6 +131,7 @@ import type {
   SolanaHelper,
   SymbolParams,
   TradesParams,
+  TransferParams,
   WithdrawParams,
 } from './contract';
 import type {
@@ -612,6 +615,46 @@ class AsterPredictionScope extends AsterNativeScope implements IPrediction {
 }
 
 /**
+ * Scope **transferts** unifié (commun aux 4 SDK). Route le modèle abstrait
+ * `transfer({ from?, to, asset?, amount })` vers les endpoints Aster :
+ * - `wallet ↔ wallet` (perp↔spot) → `transferFuturesSpot` ;
+ * - `to: { subAccount }` → `subAccountTransfer` (master↔sous-compte) ;
+ * - `to: { account }` → non supporté (Aster n'a pas d'envoi externe générique).
+ */
+class AsterTransfers extends AsterNativeScope implements ITransfers {
+  public transfer(p: TransferParams) {
+    const asset = p.asset ?? 'USDT';
+    if ('subAccount' in p.to) {
+      return subAccountTransfer(
+        this.client,
+        {
+          toAccountAddress: p.to.subAccount,
+          asset,
+          amount: p.amount,
+          kindType: SubAccountTransferKind.FuturesToFutures,
+          ...(p.from !== undefined && 'subAccount' in p.from
+            ? { fromAccountAddress: p.from.subAccount }
+            : {}),
+        },
+        this.signed(),
+      );
+    }
+    if ('wallet' in p.to && p.from !== undefined && 'wallet' in p.from) {
+      const kindType =
+        p.from.wallet === 'spot' ? TransferKind.SpotToFutures : TransferKind.FuturesToSpot;
+      return transferFuturesSpot(
+        this.client,
+        { asset, amount: p.amount, clientTranId: `aster-${Date.now()}`, kindType },
+        this.signed(),
+      );
+    }
+    throw new Error(
+      'transfer : Aster supporte `wallet ↔ wallet` (perp↔spot) et `to: { subAccount }` ; pas `to: { account }`.',
+    );
+  }
+}
+
+/**
  * Façade **Aster** : `const dex = new Aster({ deskA: signer }, { default: 'deskA' })`, puis
  * `dex.perp(label?)` / `dex.spot(label?)` (marché), `dex.account(label?)` (compte),
  * `dex.ws(label?)` (temps réel), `dex.native.<capacité>(label?)` (surplus spécifique Aster).
@@ -648,6 +691,11 @@ export class Aster {
   /** Scope **compte** transverse (soldes, sous-comptes, retrait). */
   public account(label?: string): AsterAccount {
     return new AsterAccount(this.client, this.resolve(label));
+  }
+
+  /** Scope **transferts** unifié (perp↔spot, master↔sous-compte). */
+  public transfers(label?: string): AsterTransfers {
+    return new AsterTransfers(this.client, this.resolve(label));
   }
 
   /** Scope **système** (connectivité, horloge serveur). */
