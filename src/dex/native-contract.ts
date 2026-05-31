@@ -252,10 +252,10 @@ export interface IBuilders {
 
 /** Market-maker protection. */
 export interface IMmp {
-  getConfig(symbol?: string): ReturnType<typeof getMmp>;
+  getConfig(name?: string): ReturnType<typeof getMmp>;
   set(params: UpdateMmpParams): ReturnType<typeof updateMmp>;
-  reset(symbol: string): ReturnType<typeof resetMmp>;
-  remove(symbol: string): ReturnType<typeof deleteMmp>;
+  reset(name: string): ReturnType<typeof resetMmp>;
+  remove(name: string): ReturnType<typeof deleteMmp>;
 }
 
 /** Modes de compte : multi-assets, position (hedge/one-way), self-trade prevention. */

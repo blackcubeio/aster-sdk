@@ -502,17 +502,17 @@ class AsterBuildersScope extends AsterNativeScope implements IBuilders {
 }
 
 class AsterMmpScope extends AsterNativeScope implements IMmp {
-  public getConfig(symbol?: string) {
-    return getMmp(this.client, symbol, this.signed());
+  public getConfig(name?: string) {
+    return getMmp(this.client, name, this.signed());
   }
   public set(params: Parameters<typeof updateMmp>[1]) {
     return updateMmp(this.client, params, this.signed());
   }
-  public reset(symbol: string) {
-    return resetMmp(this.client, symbol, this.signed());
+  public reset(name: string) {
+    return resetMmp(this.client, name, this.signed());
   }
-  public remove(symbol: string) {
-    return deleteMmp(this.client, symbol, this.signed());
+  public remove(name: string) {
+    return deleteMmp(this.client, name, this.signed());
   }
 }
 

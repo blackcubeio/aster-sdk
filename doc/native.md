@@ -51,10 +51,10 @@ await dex.native.builders().revoke('0x…');
 ```
 
 ## `native.mmp()` — `IMmp` (market-maker protection)
-| `getConfig(symbol?)` | `string?` | `Promise<MmpConfig[]>` |
+| `getConfig(name?)` | `string?` | `Promise<MmpConfig[]>` |
 | `set(p)` | `UpdateMmpParams` | `Promise<boolean>` |
-| `reset(symbol)` | `string` | `Promise<boolean>` |
-| `remove(symbol)` | `string` | `Promise<boolean>` |
+| `reset(name)` | `string` | `Promise<boolean>` |
+| `remove(name)` | `string` | `Promise<boolean>` |
 
 ```ts
 await dex.native.mmp().getConfig('BTCUSDT');
