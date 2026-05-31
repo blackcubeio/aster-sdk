@@ -15,6 +15,7 @@ import type {
   UserTrade,
 } from '../common/types';
 import type { Hex } from '../common/types';
+import { dateToMs } from '../common/utils';
 import { cancelAllOrders } from '../rest/cancel-all-orders';
 import { cancelOrder } from '../rest/cancel-order';
 import { editOrder } from '../rest/edit-order';
@@ -187,7 +188,16 @@ class AsterMarket
     );
   }
   public getCandles(query: CandlesParams): Promise<Candle[]> {
-    return getCandles(this.client, { ...query, kind: this.kind }, this.label);
+    return getCandles(
+      this.client,
+      {
+        ...query,
+        kind: this.kind,
+        startTime: query.startTime === undefined ? undefined : dateToMs(query.startTime),
+        endTime: query.endTime === undefined ? undefined : dateToMs(query.endTime),
+      },
+      this.label,
+    );
   }
   public getOrderBook(query: OrderBookParams): Promise<OrderBook> {
     return getOrderBook(this.client, { ...query, kind: this.kind }, this.label);
@@ -196,7 +206,15 @@ class AsterMarket
     return getPrices(this.client, this.label);
   }
   public getFundingHistory(query: FundingParams): Promise<FundingRate[]> {
-    return getFundingHistory(this.client, query, this.label);
+    return getFundingHistory(
+      this.client,
+      {
+        ...query,
+        startTime: query.startTime === undefined ? undefined : dateToMs(query.startTime),
+        endTime: query.endTime === undefined ? undefined : dateToMs(query.endTime),
+      },
+      this.label,
+    );
   }
   public getTrades(query: TradesParams): Promise<Trade[]> {
     return getTrades(this.client, { ...query, kind: this.kind }, this.label);
