@@ -30,7 +30,7 @@ const dex = new Aster(
 
 // REST : requête → réponse
 const candles = await dex.perp().getCandles({ name: 'BTCUSDT', interval: '1m', limit: 100 });
-const order = await dex.perp().placeOrder({
+const order = await dex.perp().place({
   name: 'BTCUSDT', side: 'buy', type: 'limit', size: '0.001', price: '20000',
 });
 
@@ -79,8 +79,8 @@ par le **scope** (`perp()` vs `spot()`), pas par un paramètre `kind`.
 | Catégorie | Méthodes |
 |---|---|
 | Marché (public) | `getPairs()`, `getCandles(q)`, `getOrderBook(q)`, `getPrices()`, `getFundingHistory(q)`, `getTrades(q)`, `getExchangeInfo()` |
-| Compte du produit (signé) | `getPositions(q?)`, `getOpenOrders(q?)`, `getUserTrades(q?)`, `getOrderHistory(q?)`, `getAccountInfo()` |
-| Trading (signé) | `placeOrder(i)`, `cancelOrder(i)`, `cancelAllOrders(i)`, `editOrder(i)`, `updateLeverage(i)`, `setMarginMode(i)`, `addIsolatedMargin(i)`, `removeIsolatedMargin(i)` |
+| Compte du produit (signé) | `getPositions(q?)`, `getOpens(q?)`, `getUserTrades(q?)`, `getHistory(q?)`, `getAccountInfo()` |
+| Trading (signé) | `place(i)`, `cancel(i)`, `cancelAll(i)`, `edit(i)`, `updateLeverage(i)`, `setMarginMode(i)`, `addIsolatedMargin(i)`, `removeIsolatedMargin(i)` |
 
 > Le spot Aster n'a pas de positions ; `spot().getPositions()` vise le compte perp.
 
@@ -114,13 +114,13 @@ const pub = new Aster();
 const book = await pub.perp().getOrderBook({ name: 'BTCUSDT', limit: 5 });
 
 // Cycle d'ordre (testnet)
-const created = await dex.perp().placeOrder({
+const created = await dex.perp().place({
   name: 'BTCUSDT', side: 'buy', type: 'limit', tif: 'gtc', size: '0.001', price: '20000',
 });
-await dex.perp().cancelOrder({ name: 'BTCUSDT', id: created.id });
+await dex.perp().cancel({ name: 'BTCUSDT', id: created.id });
 
 // Spot — mêmes méthodes, retours unifiés (kind: 'spot')
-const spotOrders = await dex.spot().getOpenOrders({ name: 'ASTERUSDT' });
+const spotOrders = await dex.spot().getOpens({ name: 'ASTERUSDT' });
 
 // Compte transverse
 const balances = await dex.account().getBalances();
