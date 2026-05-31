@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { Position } from '../../src/common/types';
 import { PositionConverter, type PositionNative } from '../../src/converters/position';
 
 const POSITION_CORE_KEYS = [

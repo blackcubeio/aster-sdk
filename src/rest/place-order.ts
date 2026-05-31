@@ -1,6 +1,6 @@
 import type { AsterClient } from '../common/config';
 import type { PlaceOrderParams, PlaceOrderTif, PlaceOrderType } from '../common/types';
-import type { MarketKind, Order, Side } from '../common/types';
+import type { Order, Side } from '../common/types';
 import { OrderSide, OrderType, TimeInForce } from '../common/types';
 import { OrderConverter } from '../converters/order';
 import { createOrder } from './futures/trade/new-order';

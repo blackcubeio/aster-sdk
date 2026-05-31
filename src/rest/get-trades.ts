@@ -1,6 +1,6 @@
 import type { AsterClient } from '../common/config';
 import type { GetTradesParams } from '../common/types';
-import type { MarketKind, Trade } from '../common/types';
+import type { Trade } from '../common/types';
 import { TradeConverter, type TradeNative } from '../converters/trade';
 import { httpGet } from './client';
 

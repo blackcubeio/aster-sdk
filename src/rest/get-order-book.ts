@@ -1,6 +1,6 @@
 import type { AsterClient } from '../common/config';
 import type { GetOrderBookParams } from '../common/types';
-import type { MarketKind, OrderBook } from '../common/types';
+import type { OrderBook } from '../common/types';
 import { OrderBookConverter, type OrderBookNative } from '../converters/order-book';
 import { httpGet } from './client';
 

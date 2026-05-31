@@ -1,6 +1,5 @@
 import type { AsterClient } from '../common/config';
 import type { CancelAllOrdersParams, CancelAllResult } from '../common/types';
-import type { MarketKind } from '../common/types';
 import { httpPostForm } from './client';
 import { buildSignedRequest } from './signing';
 

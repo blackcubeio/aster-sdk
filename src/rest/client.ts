@@ -1,5 +1,5 @@
 import type { AsterClient } from '../common/config';
-import type { QueryParams, QueryValue } from '../common/types';
+import type { QueryParams } from '../common/types';
 import type { Network, Product } from '../common/types';
 
 /**

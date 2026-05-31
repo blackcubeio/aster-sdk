@@ -1,7 +1,6 @@
 import type { AsterClient } from '../common/config';
 import type { FuturesOrder } from '../common/futures';
 import type { EditOrderParams, EditOrderResult } from '../common/types';
-import type { MarketKind } from '../common/types';
 import { httpPostForm } from './client';
 import { buildOrderRef } from './futures/trade/payloads';
 import { buildSignedRequest } from './signing';

@@ -53,29 +53,57 @@ import type {
 /** `params` (2ᵉ arg) d'une fonction REST `fn(client, params, label)`. */
 type Args<F extends (...a: never[]) => unknown> = Parameters<F>[1];
 
+// ── Types d'ENTRÉE des ÉCRITURES (noms de concept propres, alignés inter-SDK) ──────────────
+// Découplés des noms REST internes (le nom public reste stable si l'endpoint change). Les noms
+// partagés (`ApproveAgent`, `PlaceBatch`, `CancelMany`, `CreateSubAccount`, `TransferSubAccount`)
+// sont **identiques** sur les autres SDK portant le même geste ; les noms spécifiques Aster restent
+// descriptifs (« similaires »). Les lectures gardent `Args<typeof fn>` en ligne (un type nommé pour
+// un filtre de lecture n'apporte rien).
+// agents (`ApproveAgent` partagé)
+export type ApproveAgent = Args<typeof approveAgent>;
+export type RegisterAgent = Args<typeof registerAndApproveAgent>;
+export type UpdateAgent = Args<typeof updateAgent>;
+// builders
+export type ApproveBuilder = Args<typeof approveBuilder>;
+export type UpdateBuilder = Args<typeof updateBuilder>;
+// mmp
+export type UpdateMmp = Args<typeof updateMmp>;
+// modes
+export type SetStpMode = Args<typeof updateStpMode>;
+// advancedOrders (`PlaceBatch`/`CancelMany` partagés)
+export type PlaceBatch = Args<typeof batchOrders>;
+export type CancelMany = Args<typeof cancelMultipleOrders>;
+export type Chase = Args<typeof chaseOrder>;
+export type PlaceStrategy = Args<typeof placeStrategyOrder>;
+export type UpdateStrategy = Args<typeof updateStrategyOrder>;
+// subAccounts (`CreateSubAccount`/`TransferSubAccount` partagés)
+export type BindSubAccount = Args<typeof bindSubAccount>;
+export type CreateSubAccount = Args<typeof createSubAccount>;
+export type UpdateSubAccount = Args<typeof updateSubAccount>;
+export type TransferSubAccount = Args<typeof subAccountTransfer>;
+export type TransferFuturesSpot = Args<typeof transferFuturesSpot>;
+
 /** Agents (API wallets) : autorisation, listage, mise à jour, révocation. */
 export interface IAgents {
   list(): ReturnType<typeof getAgents>;
-  approve(params: Args<typeof approveAgent>): ReturnType<typeof approveAgent>;
-  register(
-    params: Args<typeof registerAndApproveAgent>,
-  ): ReturnType<typeof registerAndApproveAgent>;
-  update(params: Args<typeof updateAgent>): ReturnType<typeof updateAgent>;
+  approve(params: ApproveAgent): ReturnType<typeof approveAgent>;
+  register(params: RegisterAgent): ReturnType<typeof registerAndApproveAgent>;
+  update(params: UpdateAgent): ReturnType<typeof updateAgent>;
   revoke(agentAddress: string): ReturnType<typeof deleteAgent>;
 }
 
 /** Builders (fee builders) : autorisation, listage, mise à jour, révocation. */
 export interface IBuilders {
   list(): ReturnType<typeof getBuilders>;
-  approve(params: Args<typeof approveBuilder>): ReturnType<typeof approveBuilder>;
-  update(params: Args<typeof updateBuilder>): ReturnType<typeof updateBuilder>;
+  approve(params: ApproveBuilder): ReturnType<typeof approveBuilder>;
+  update(params: UpdateBuilder): ReturnType<typeof updateBuilder>;
   revoke(builder: string): ReturnType<typeof deleteBuilder>;
 }
 
 /** Market-maker protection. */
 export interface IMmp {
   get(symbol?: string): ReturnType<typeof getMmp>;
-  set(params: Args<typeof updateMmp>): ReturnType<typeof updateMmp>;
+  set(params: UpdateMmp): ReturnType<typeof updateMmp>;
   reset(symbol: string): ReturnType<typeof resetMmp>;
   remove(symbol: string): ReturnType<typeof deleteMmp>;
 }
@@ -87,7 +115,7 @@ export interface IModes {
   getPosition(): ReturnType<typeof getPositionMode>;
   setPosition(dualSide: boolean): ReturnType<typeof updatePositionMode>;
   getStp(): ReturnType<typeof getStpMode>;
-  setStp(mode: Parameters<typeof updateStpMode>[1]): ReturnType<typeof updateStpMode>;
+  setStp(mode: SetStpMode): ReturnType<typeof updateStpMode>;
 }
 
 /** Analytics de compte (lectures). */
@@ -113,11 +141,11 @@ export interface IMarketDataExtra {
 
 /** Ordres avancés : batch, annulation multiple, chase, stratégie (TWAP/VP), query. */
 export interface IAdvancedOrders {
-  placeBatch(orders: Args<typeof batchOrders>): ReturnType<typeof batchOrders>;
-  cancelMany(params: Args<typeof cancelMultipleOrders>): ReturnType<typeof cancelMultipleOrders>;
-  chase(params: Args<typeof chaseOrder>): ReturnType<typeof chaseOrder>;
-  placeStrategy(params: Args<typeof placeStrategyOrder>): ReturnType<typeof placeStrategyOrder>;
-  updateStrategy(params: Args<typeof updateStrategyOrder>): ReturnType<typeof updateStrategyOrder>;
+  placeBatch(orders: PlaceBatch): ReturnType<typeof batchOrders>;
+  cancelMany(params: CancelMany): ReturnType<typeof cancelMultipleOrders>;
+  chase(params: Chase): ReturnType<typeof chaseOrder>;
+  placeStrategy(params: PlaceStrategy): ReturnType<typeof placeStrategyOrder>;
+  updateStrategy(params: UpdateStrategy): ReturnType<typeof updateStrategyOrder>;
   strategyOpen(query: Args<typeof getStrategyOpenOrder>): ReturnType<typeof getStrategyOpenOrder>;
   strategyHistory(
     query: Args<typeof getStrategyHistoryOrder>,
@@ -128,11 +156,9 @@ export interface IAdvancedOrders {
 
 /** Sous-comptes : liaison, création, mise à jour, transferts (la **liste** est dans `account()`). */
 export interface ISubAccountsAdmin {
-  bind(params: Args<typeof bindSubAccount>): ReturnType<typeof bindSubAccount>;
-  create(params: Args<typeof createSubAccount>): ReturnType<typeof createSubAccount>;
-  update(params: Args<typeof updateSubAccount>): ReturnType<typeof updateSubAccount>;
-  transfer(params: Args<typeof subAccountTransfer>): ReturnType<typeof subAccountTransfer>;
-  transferFuturesSpot(
-    params: Args<typeof transferFuturesSpot>,
-  ): ReturnType<typeof transferFuturesSpot>;
+  bind(params: BindSubAccount): ReturnType<typeof bindSubAccount>;
+  create(params: CreateSubAccount): ReturnType<typeof createSubAccount>;
+  update(params: UpdateSubAccount): ReturnType<typeof updateSubAccount>;
+  transfer(params: TransferSubAccount): ReturnType<typeof subAccountTransfer>;
+  transferFuturesSpot(params: TransferFuturesSpot): ReturnType<typeof transferFuturesSpot>;
 }

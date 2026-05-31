@@ -1,7 +1,6 @@
 import type { AsterClient } from '../common/config';
 import { MarginType } from '../common/futures';
 import type { UpdateMarginModeParams } from '../common/types';
-import type { MarketKind } from '../common/types';
 import { httpPostForm } from './client';
 import { buildSignedRequest } from './signing';
 

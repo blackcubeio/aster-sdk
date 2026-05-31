@@ -17,9 +17,9 @@ dex.native.agents().list();
 | Méthode | Entrée | Sortie |
 |---|---|---|
 | `list()` | — | `Promise<Agent[]>` |
-| `approve(p)` | `ApproveAgentParams` | `Promise<CodeMsg>` |
-| `register(p)` | `RegisterAndApproveAgentParams` | `Promise<CodeMsg>` |
-| `update(p)` | `UpdateAgentParams` | `Promise<CodeMsg>` |
+| `approve(p)` | `ApproveAgent` | `Promise<CodeMsg>` |
+| `register(p)` | `RegisterAgent` | `Promise<CodeMsg>` |
+| `update(p)` | `UpdateAgent` | `Promise<CodeMsg>` |
 | `revoke(agentAddress)` | `string` | `Promise<CodeMsg>` |
 
 ```ts
@@ -32,8 +32,8 @@ await dex.native.agents().revoke('0x…');
 
 ## `native.builders()` — `IBuilders` (fee builders)
 | `list()` | — | `Promise<Builder[]>` |
-| `approve(p)` | `ApproveBuilderParams` | `Promise<CodeMsg>` |
-| `update(p)` | `UpdateBuilderParams` | `Promise<CodeMsg>` |
+| `approve(p)` | `ApproveBuilder` | `Promise<CodeMsg>` |
+| `update(p)` | `UpdateBuilder` | `Promise<CodeMsg>` |
 | `revoke(builder)` | `string` | `Promise<CodeMsg>` |
 
 ```ts
@@ -44,7 +44,7 @@ await dex.native.builders().revoke('0x…');
 
 ## `native.mmp()` — `IMmp` (market-maker protection)
 | `get(symbol?)` | `string?` | `Promise<MmpConfig[]>` |
-| `set(p)` | `UpdateMmpParams` | `Promise<boolean>` |
+| `set(p)` | `UpdateMmp` | `Promise<boolean>` |
 | `reset(symbol)` | `string` | `Promise<boolean>` |
 | `remove(symbol)` | `string` | `Promise<boolean>` |
 
@@ -105,11 +105,11 @@ await dex.native.marketData().ticker24hr('BTCUSDT');
 ```
 
 ## `native.advancedOrders()` — `IAdvancedOrders`
-| `placeBatch(orders)` | `NewOrderParams[]` | `Promise<BatchOrderResult[]>` |
-| `cancelMany(p)` | `CancelMultipleOrdersParams` | `Promise<BatchOrderResult[]>` |
-| `chase(p)` | `ChaseOrderParams` | `Promise<ChaseOrder>` |
-| `placeStrategy(p)` | `PlaceStrategyOrderParams` | `Promise<PlaceStrategyOrderResult>` |
-| `updateStrategy(p)` | `UpdateStrategyOrderParams` | `Promise<UpdateStrategyOrderResult[]>` |
+| `placeBatch(orders)` | `PlaceBatch` | `Promise<BatchOrderResult[]>` |
+| `cancelMany(p)` | `CancelMany` | `Promise<BatchOrderResult[]>` |
+| `chase(p)` | `Chase` | `Promise<ChaseOrder>` |
+| `placeStrategy(p)` | `PlaceStrategy` | `Promise<PlaceStrategyOrderResult>` |
+| `updateStrategy(p)` | `UpdateStrategy` | `Promise<UpdateStrategyOrderResult[]>` |
 | `strategyOpen(query)` | `StrategyOrderQuery` | `Promise<StrategyOrder>` |
 | `strategyHistory(query)` | `StrategyHistoryQuery` | `Promise<StrategyOrder>` |
 | `query(p)` | `OrderQuery` | `Promise<OrderDetail>` |
@@ -128,11 +128,11 @@ await dex.native.advancedOrders().getOpen({ symbol: 'BTCUSDT', orderId: 123 });
 
 ## `native.subAccounts()` — `ISubAccountsAdmin`
 *(la **liste** des sous-comptes est dans `account().getSubAccounts()`.)*
-| `bind(p)` | `BindSubAccountParams` | `Promise<CodeMsg>` |
-| `create(p)` | `CreateSubAccountParams` | `Promise<CodeMsg>` |
-| `update(p)` | `UpdateSubAccountParams` | `Promise<CodeMsg>` |
-| `transfer(p)` | `SubAccountTransferParams` | `Promise<CodeMsg>` |
-| `transferFuturesSpot(p)` | `TransferParams` | `Promise<TransferResult>` |
+| `bind(p)` | `BindSubAccount` | `Promise<CodeMsg>` |
+| `create(p)` | `CreateSubAccount` | `Promise<CodeMsg>` |
+| `update(p)` | `UpdateSubAccount` | `Promise<CodeMsg>` |
+| `transfer(p)` | `TransferSubAccount` | `Promise<CodeMsg>` |
+| `transferFuturesSpot(p)` | `TransferFuturesSpot` | `Promise<TransferResult>` |
 
 ```ts
 await dex.native.subAccounts().create({ subAccountId: 'sub1' });
