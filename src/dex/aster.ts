@@ -99,7 +99,7 @@ import type {
   IMmp,
   IModes,
   ISubAccountsAdmin,
-} from './aster-contract';
+} from './native-contract';
 import type {
   CancelAllInput,
   CancelOrderInput,

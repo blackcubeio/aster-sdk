@@ -9,7 +9,7 @@ export { Aster, type AsterDexOptions } from './dex/aster';
 export type * from './dex/contract';
 
 /** Interfaces **complémentaires** Aster (surplus exposé via `dex.native.<capacité>()`). */
-export type * from './dex/aster-contract';
+export type * from './dex/native-contract';
 
 /** Configuration d'un signer (passé au constructeur) et réseau. */
 export type { Signer, Network } from './common/types';
