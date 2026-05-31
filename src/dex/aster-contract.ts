@@ -54,7 +54,7 @@ import type {
 type Args<F extends (...a: never[]) => unknown> = Parameters<F>[1];
 
 /** Agents (API wallets) : autorisation, listage, mise à jour, révocation. */
-export interface IAsterAgents {
+export interface IAgents {
   list(): ReturnType<typeof getAgents>;
   approve(params: Args<typeof approveAgent>): ReturnType<typeof approveAgent>;
   register(
@@ -65,7 +65,7 @@ export interface IAsterAgents {
 }
 
 /** Builders (fee builders) : autorisation, listage, mise à jour, révocation. */
-export interface IAsterBuilders {
+export interface IBuilders {
   list(): ReturnType<typeof getBuilders>;
   approve(params: Args<typeof approveBuilder>): ReturnType<typeof approveBuilder>;
   update(params: Args<typeof updateBuilder>): ReturnType<typeof updateBuilder>;
@@ -73,7 +73,7 @@ export interface IAsterBuilders {
 }
 
 /** Market-maker protection. */
-export interface IAsterMmp {
+export interface IMmp {
   get(symbol?: string): ReturnType<typeof getMmp>;
   set(params: Args<typeof updateMmp>): ReturnType<typeof updateMmp>;
   reset(symbol: string): ReturnType<typeof resetMmp>;
@@ -81,7 +81,7 @@ export interface IAsterMmp {
 }
 
 /** Modes de compte : multi-assets, position (hedge/one-way), self-trade prevention. */
-export interface IAsterModes {
+export interface IModes {
   getMultiAssets(): ReturnType<typeof getMultiAssetsMode>;
   setMultiAssets(enabled: boolean): ReturnType<typeof updateMultiAssetsMode>;
   getPosition(): ReturnType<typeof getPositionMode>;
@@ -91,7 +91,7 @@ export interface IAsterModes {
 }
 
 /** Analytics de compte (lectures). */
-export interface IAsterAnalytics {
+export interface IAnalytics {
   forceOrders(query?: Args<typeof getForceOrders>): ReturnType<typeof getForceOrders>;
   adlQuantile(symbol?: string): ReturnType<typeof getAdlQuantile>;
   commissionRate(symbol: string): ReturnType<typeof getCommissionRate>;
@@ -103,7 +103,7 @@ export interface IAsterAnalytics {
 }
 
 /** Données de marché supplémentaires (lectures). */
-export interface IAsterMarketData {
+export interface IMarketDataExtra {
   aggTrades(query: Args<typeof getAggTrades>): ReturnType<typeof getAggTrades>;
   historicalTrades(query: Args<typeof getHistoricalTrades>): ReturnType<typeof getHistoricalTrades>;
   fundingInfo(symbol?: string): ReturnType<typeof getFundingInfo>;
@@ -112,7 +112,7 @@ export interface IAsterMarketData {
 }
 
 /** Ordres avancés : batch, annulation multiple, chase, stratégie (TWAP/VP), query. */
-export interface IAsterAdvancedOrders {
+export interface IAdvancedOrders {
   placeBatch(orders: Args<typeof batchOrders>): ReturnType<typeof batchOrders>;
   cancelMany(params: Args<typeof cancelMultipleOrders>): ReturnType<typeof cancelMultipleOrders>;
   chase(params: Args<typeof chaseOrder>): ReturnType<typeof chaseOrder>;
@@ -127,7 +127,7 @@ export interface IAsterAdvancedOrders {
 }
 
 /** Sous-comptes : liaison, création, mise à jour, transferts (la **liste** est dans `account()`). */
-export interface IAsterSubAccounts {
+export interface ISubAccountsAdmin {
   bind(params: Args<typeof bindSubAccount>): ReturnType<typeof bindSubAccount>;
   create(params: Args<typeof createSubAccount>): ReturnType<typeof createSubAccount>;
   update(params: Args<typeof updateSubAccount>): ReturnType<typeof updateSubAccount>;

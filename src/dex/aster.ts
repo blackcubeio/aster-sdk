@@ -91,14 +91,14 @@ import { updateLeverage } from '../rest/update-leverage';
 import { updateMarginMode } from '../rest/update-margin-mode';
 import { UnifiedWsClient } from '../ws/unified-client';
 import type {
-  IAsterAdvancedOrders,
-  IAsterAgents,
-  IAsterAnalytics,
-  IAsterBuilders,
-  IAsterMarketData,
-  IAsterMmp,
-  IAsterModes,
-  IAsterSubAccounts,
+  IAdvancedOrders,
+  IAgents,
+  IAnalytics,
+  IBuilders,
+  IMarketDataExtra,
+  IMmp,
+  IModes,
+  ISubAccountsAdmin,
 } from './aster-contract';
 import type {
   CancelAllInput,
@@ -399,7 +399,7 @@ class AsterNativeScope {
   }
 }
 
-class AsterAgentsScope extends AsterNativeScope implements IAsterAgents {
+class AsterAgentsScope extends AsterNativeScope implements IAgents {
   public list() {
     return getAgents(this.client, this.signed());
   }
@@ -417,7 +417,7 @@ class AsterAgentsScope extends AsterNativeScope implements IAsterAgents {
   }
 }
 
-class AsterBuildersScope extends AsterNativeScope implements IAsterBuilders {
+class AsterBuildersScope extends AsterNativeScope implements IBuilders {
   public list() {
     return getBuilders(this.client, this.signed());
   }
@@ -432,7 +432,7 @@ class AsterBuildersScope extends AsterNativeScope implements IAsterBuilders {
   }
 }
 
-class AsterMmpScope extends AsterNativeScope implements IAsterMmp {
+class AsterMmpScope extends AsterNativeScope implements IMmp {
   public get(symbol?: string) {
     return getMmp(this.client, symbol, this.signed());
   }
@@ -447,7 +447,7 @@ class AsterMmpScope extends AsterNativeScope implements IAsterMmp {
   }
 }
 
-class AsterModesScope extends AsterNativeScope implements IAsterModes {
+class AsterModesScope extends AsterNativeScope implements IModes {
   public getMultiAssets() {
     return getMultiAssetsMode(this.client, this.signed());
   }
@@ -468,7 +468,7 @@ class AsterModesScope extends AsterNativeScope implements IAsterModes {
   }
 }
 
-class AsterAnalyticsScope extends AsterNativeScope implements IAsterAnalytics {
+class AsterAnalyticsScope extends AsterNativeScope implements IAnalytics {
   public forceOrders(query?: Parameters<typeof getForceOrders>[1]) {
     return getForceOrders(this.client, query, this.signed());
   }
@@ -492,7 +492,7 @@ class AsterAnalyticsScope extends AsterNativeScope implements IAsterAnalytics {
 }
 
 /** Données de marché supplémentaires : **publiques** (label optionnel). */
-class AsterMarketDataScope extends AsterNativeScope implements IAsterMarketData {
+class AsterMarketDataScope extends AsterNativeScope implements IMarketDataExtra {
   public aggTrades(query: Parameters<typeof getAggTrades>[1]) {
     return getAggTrades(this.client, query, this.label);
   }
@@ -512,7 +512,7 @@ class AsterMarketDataScope extends AsterNativeScope implements IAsterMarketData 
   }
 }
 
-class AsterAdvancedOrdersScope extends AsterNativeScope implements IAsterAdvancedOrders {
+class AsterAdvancedOrdersScope extends AsterNativeScope implements IAdvancedOrders {
   public placeBatch(orders: Parameters<typeof batchOrders>[1]) {
     return batchOrders(this.client, orders, this.signed());
   }
@@ -542,7 +542,7 @@ class AsterAdvancedOrdersScope extends AsterNativeScope implements IAsterAdvance
   }
 }
 
-class AsterSubAccountsScope extends AsterNativeScope implements IAsterSubAccounts {
+class AsterSubAccountsScope extends AsterNativeScope implements ISubAccountsAdmin {
   public bind(params: Parameters<typeof bindSubAccount>[1]) {
     return bindSubAccount(this.client, params, this.signed());
   }
