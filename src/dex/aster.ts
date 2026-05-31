@@ -98,12 +98,12 @@ import { updateLeverage } from '../rest/update-leverage';
 import { updateMarginMode } from '../rest/update-margin-mode';
 import { UnifiedWsClient } from '../ws/unified-client';
 import type {
-  CancelAllInput,
-  CancelOrderInput,
-  CandlesQuery,
-  EditOrderInput,
+  CancelAllParams,
+  CancelOrderParams,
+  CandlesParams,
+  EditOrderParams,
   EvmHelper,
-  FundingQuery,
+  FundingParams,
   IAccount,
   IDeadManSwitch,
   IIsolatedMargin,
@@ -119,16 +119,16 @@ import type {
   ISubAccounts,
   ISystem,
   ITrading,
-  IsolatedMarginInput,
+  IsolatedMarginParams,
   KeyHelper,
-  LeverageInput,
-  MarginModeInput,
-  OrderBookQuery,
-  PlaceOrderInput,
+  LeverageParams,
+  MarginModeParams,
+  OrderBookParams,
+  PlaceOrderParams,
   SolanaHelper,
-  SymbolQuery,
-  TradesQuery,
-  WithdrawInput,
+  SymbolParams,
+  TradesParams,
+  WithdrawParams,
 } from './contract';
 import type {
   IAdvancedOrders,
@@ -186,19 +186,19 @@ class AsterMarket
       pairs.filter((pair) => pair.kind === this.kind),
     );
   }
-  public getCandles(query: CandlesQuery): Promise<Candle[]> {
+  public getCandles(query: CandlesParams): Promise<Candle[]> {
     return getCandles(this.client, { ...query, kind: this.kind }, this.label);
   }
-  public getOrderBook(query: OrderBookQuery): Promise<OrderBook> {
+  public getOrderBook(query: OrderBookParams): Promise<OrderBook> {
     return getOrderBook(this.client, { ...query, kind: this.kind }, this.label);
   }
   public getPrices(): Promise<Price[]> {
     return getPrices(this.client, this.label);
   }
-  public getFundingHistory(query: FundingQuery): Promise<FundingRate[]> {
+  public getFundingHistory(query: FundingParams): Promise<FundingRate[]> {
     return getFundingHistory(this.client, query, this.label);
   }
-  public getTrades(query: TradesQuery): Promise<Trade[]> {
+  public getTrades(query: TradesParams): Promise<Trade[]> {
     return getTrades(this.client, { ...query, kind: this.kind }, this.label);
   }
 
@@ -210,17 +210,17 @@ class AsterMarket
   }
 
   // ── IProductAccount (compte du produit) ──
-  public getPositions(query?: SymbolQuery): Promise<Position[]> {
+  public getPositions(query?: SymbolParams): Promise<Position[]> {
     // Positions : perp uniquement côté Aster ; le spot n'a pas de positions.
     return getPositions(this.client, { name: query?.name }, this.signed());
   }
-  public getOpenOrders(query?: SymbolQuery): Promise<Order[]> {
+  public getOpenOrders(query?: SymbolParams): Promise<Order[]> {
     return getOpenOrders(this.client, { name: query?.name, kind: this.kind }, this.signed());
   }
-  public getUserTrades(query?: SymbolQuery): Promise<UserTrade[]> {
+  public getUserTrades(query?: SymbolParams): Promise<UserTrade[]> {
     return getUserTrades(this.client, { name: query?.name, kind: this.kind }, this.signed());
   }
-  public getOrderHistory(query?: SymbolQuery): Promise<Order[]> {
+  public getOrderHistory(query?: SymbolParams): Promise<Order[]> {
     return getOrderHistory(this.client, { name: query?.name }, this.signed());
   }
   public getAccountInfo(): Promise<unknown> {
@@ -229,16 +229,16 @@ class AsterMarket
       : getAccountInfo(this.client, this.signed());
   }
 
-  public placeOrder(input: PlaceOrderInput): Promise<Order> {
+  public placeOrder(input: PlaceOrderParams): Promise<Order> {
     return placeOrder(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public cancelOrder(input: CancelOrderInput): Promise<void> {
+  public cancelOrder(input: CancelOrderParams): Promise<void> {
     return cancelOrder(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public cancelAllOrders(input: CancelAllInput): Promise<{ cancelled: number | null }> {
+  public cancelAllOrders(input: CancelAllParams): Promise<{ cancelled: number | null }> {
     return cancelAllOrders(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public editOrder(input: EditOrderInput): Promise<{ name: string; id: string }> {
+  public editOrder(input: EditOrderParams): Promise<{ name: string; id: string }> {
     if (input.price === undefined) {
       throw new Error('editOrder (Aster) : `price` est requis.');
     }
@@ -255,20 +255,20 @@ class AsterMarket
       this.signed(),
     );
   }
-  public updateLeverage(input: LeverageInput): Promise<unknown> {
+  public updateLeverage(input: LeverageParams): Promise<unknown> {
     return updateLeverage(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public setMarginMode(input: MarginModeInput): Promise<void> {
+  public setMarginMode(input: MarginModeParams): Promise<void> {
     return updateMarginMode(this.client, { ...input, kind: this.kind }, this.signed());
   }
-  public addIsolatedMargin(input: IsolatedMarginInput): Promise<void> {
+  public addIsolatedMargin(input: IsolatedMarginParams): Promise<void> {
     return updateIsolatedMargin(
       this.client,
       { symbol: input.name, amount: input.amount, type: 1 },
       this.signed(),
     ).then(() => undefined);
   }
-  public removeIsolatedMargin(input: IsolatedMarginInput): Promise<void> {
+  public removeIsolatedMargin(input: IsolatedMarginParams): Promise<void> {
     return updateIsolatedMargin(
       this.client,
       { symbol: input.name, amount: input.amount, type: 2 },
@@ -297,7 +297,7 @@ class AsterAccount implements IAccount, ISubAccounts, IDeadManSwitch {
   public getSubAccounts(): Promise<SubAccount[]> {
     return getSubAccounts(this.client, this.signed());
   }
-  public withdraw(input: WithdrawInput): Promise<unknown> {
+  public withdraw(input: WithdrawParams): Promise<unknown> {
     return withdraw(this.client, input as never, this.signed());
   }
 

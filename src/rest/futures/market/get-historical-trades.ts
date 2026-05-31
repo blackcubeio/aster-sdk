@@ -1,11 +1,11 @@
 import type { AsterClient } from '../../../common/config';
-import type { HistoricalTradesQuery, MarketTrade } from '../../../common/futures';
+import type { HistoricalTradesParams, MarketTrade } from '../../../common/futures';
 import { httpGet } from '../../client';
 
 /** Older market historical trades (`MARKET_DATA`). */
 export function getHistoricalTrades(
   client: AsterClient,
-  query: HistoricalTradesQuery,
+  query: HistoricalTradesParams,
   label?: string,
 ): Promise<MarketTrade[]> {
   return httpGet<MarketTrade[]>(

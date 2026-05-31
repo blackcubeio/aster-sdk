@@ -444,13 +444,13 @@ export interface IndexPriceReferences {
 
 // ── Query parameters ────────────────────────────────────────────────────────
 
-export interface HistoricalTradesQuery {
+export interface HistoricalTradesParams {
   symbol: string;
   limit?: number;
   fromId?: number;
 }
 
-export interface AggTradesQuery {
+export interface AggTradesParams {
   symbol: string;
   fromId?: number;
   startTime?: number;
@@ -594,7 +594,7 @@ export interface AllOrdersQuery {
   limit?: number;
 }
 
-export interface UserTradesQuery {
+export interface UserTradesParams {
   symbol: string;
   startTime?: number;
   endTime?: number;

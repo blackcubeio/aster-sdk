@@ -126,13 +126,13 @@ export interface SpotCommissionRate {
   takerCommissionRate: string;
 }
 
-export interface SpotHistoricalTradesQuery {
+export interface SpotHistoricalTradesParams {
   symbol: string;
   limit?: number;
   fromId?: number;
 }
 
-export interface SpotAggTradesQuery {
+export interface SpotAggTradesParams {
   symbol: string;
   fromId?: number;
   startTime?: number;
@@ -208,7 +208,7 @@ export interface SpotAllOrdersQuery {
   limit?: number;
 }
 
-export interface SpotUserTradesQuery {
+export interface SpotUserTradesParams {
   symbol?: string;
   orderId?: number;
   startTime?: number;
