@@ -106,6 +106,28 @@ Chaque `subscribeX` renvoie une fonction de désabonnement (`Unsubscribe`).
 | Public | `subscribeCandles(q, cb)`, `subscribeOrderBook(q, cb)`, `subscribeTrades(q, cb)`, `subscribeBbo(q, cb)` (→ `OrderBook` 1 niveau), `subscribePrices(cb)` (→ `Price[]`) |
 | Compte (signé) | `subscribeOrders(cb)`, `subscribeUserTrades(cb)`, `subscribePositions(cb)` |
 
+### `dex.transfers(label?)` — transferts de fonds (commun)
+
+`transfer({ from?, to, asset?, amount })`, `to`/`from` = `{ wallet:'perp'|'spot' } | { account } | { subAccount }`.
+Routes Aster : perp↔spot (`transferFuturesSpot`), `to:{subAccount}` (`subAccountTransfer`).
+
+### Surface `native` — spécifique Aster (`dex.native.<cap>()`)
+
+Le namespace `native` **miroite** le commun ; détail dans [`doc/native.md`](doc/native.md).
+
+| Scope | Contenu |
+|---|---|
+| `dex.native.perp()` | miroir natif de `perp()` : reads marché (`getAggregateTrades`, `getHistoricalTrades`, `getFundingInfo`, `getIndexPriceReferences`, `getTicker24hr`) **+** ordres avancés (`placeBatch`, `cancelMany`, `chase`, `placeStrategy`, `editStrategy`, `getStrategies`, `getStrategyHistory`, `getById`, `getOpenById`) |
+| `dex.native.account()` | miroir natif de `account()` (ex-`analytics`) : `getForceOrders`, `getAdlQuantile`, `getCommissionRate`, `getIncome`, `getLeverageBracket`, `getMarginHistory` |
+| `dex.native.agents()` | `getAgents`, `approve`, `register`, `update`, `revoke` |
+| `dex.native.builders()` | `getBuilders`, `approve`, `update`, `revoke` |
+| `dex.native.mmp()` | `getConfig`, `set`, `reset`, `remove` (market-maker protection) |
+| `dex.native.modes()` | `getMultiAssets`/`setMultiAssets`, `getPosition`/`setPosition`, `getStp`/`setStp` |
+| `dex.native.subAccounts()` | `bind`, `create`, `update` (transferts via `transfers()`) |
+| `dex.native.prediction()` | marchés de prédiction (testnet-only) : `getExchangeInfo`, `getPositions`, `getPositionHistories`, `getSettlementHistories`, `getTransactionHistory`, `mint`, `burn` |
+
+> **Dead-man's switch** commun : `dex.account().armCancelAll(ms)` / `disarm()`.
+
 ## Exemples
 
 ```ts

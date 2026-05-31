@@ -140,8 +140,7 @@ import type {
   IMmp,
   IModes,
   INativeAccount,
-  INativeMarket,
-  INativeOrders,
+  INativePerp,
   IPrediction,
   ISubAccountsAdmin,
 } from './native-contract';
@@ -164,7 +163,6 @@ class AsterMarket
     IOrderHistory,
     IPublicTrades,
     ITrading,
-    INativeOrders,
     IMarginMode,
     IIsolatedMargin,
     IRemovableMargin
@@ -296,35 +294,6 @@ class AsterMarket
       { symbol: input.name, amount: input.amount, type: 2 },
       this.signed(),
     ).then(() => undefined);
-  }
-
-  // ── INativeOrders : surplus ordres Aster porté par le scope marché ──
-  public placeBatch(orders: Parameters<typeof batchOrders>[1]) {
-    return batchOrders(this.client, orders, this.signed());
-  }
-  public cancelMany(params: Parameters<typeof cancelMultipleOrders>[1]) {
-    return cancelMultipleOrders(this.client, params, this.signed());
-  }
-  public chase(params: Parameters<typeof chaseOrder>[1]) {
-    return chaseOrder(this.client, params, this.signed());
-  }
-  public placeStrategy(params: Parameters<typeof placeStrategyOrder>[1]) {
-    return placeStrategyOrder(this.client, params, this.signed());
-  }
-  public editStrategy(params: Parameters<typeof updateStrategyOrder>[1]) {
-    return updateStrategyOrder(this.client, params, this.signed());
-  }
-  public getStrategies(query: Parameters<typeof getStrategyOpenOrder>[1]) {
-    return getStrategyOpenOrder(this.client, query, this.signed());
-  }
-  public getStrategyHistory(query: Parameters<typeof getStrategyHistoryOrder>[1]) {
-    return getStrategyHistoryOrder(this.client, query, this.signed());
-  }
-  public getById(params: Parameters<typeof queryOrder>[1]) {
-    return queryOrder(this.client, params, this.signed());
-  }
-  public getOpenById(params: Parameters<typeof getOpenOrder>[1]) {
-    return getOpenOrder(this.client, params, this.signed());
   }
 }
 
@@ -551,8 +520,12 @@ class AsterAccountExtra extends AsterNativeScope implements INativeAccount {
   }
 }
 
-/** Données de marché supplémentaires : **publiques** (label optionnel). */
-class AsterMarketDataScope extends AsterNativeScope implements INativeMarket {
+/**
+ * Surplus **perp** Aster (miroir natif de `dex.perp()`), accès `dex.native.perp(label?)` :
+ * lectures marché supplémentaires (publiques) + ordres avancés (signés). Hors contrat portable.
+ */
+class AsterNativePerp extends AsterNativeScope implements INativePerp {
+  // ── lectures marché supplémentaires (publiques) ──
   public getAggregateTrades(query: Parameters<typeof getAggTrades>[1]) {
     return getAggTrades(this.client, query, this.label);
   }
@@ -569,6 +542,34 @@ class AsterMarketDataScope extends AsterNativeScope implements INativeMarket {
     return symbol === undefined
       ? getTicker24hr(this.client, undefined, this.label)
       : getTicker24hr(this.client, symbol, this.label);
+  }
+  // ── ordres avancés (signés ; formes natives) ──
+  public placeBatch(orders: Parameters<typeof batchOrders>[1]) {
+    return batchOrders(this.client, orders, this.signed());
+  }
+  public cancelMany(params: Parameters<typeof cancelMultipleOrders>[1]) {
+    return cancelMultipleOrders(this.client, params, this.signed());
+  }
+  public chase(params: Parameters<typeof chaseOrder>[1]) {
+    return chaseOrder(this.client, params, this.signed());
+  }
+  public placeStrategy(params: Parameters<typeof placeStrategyOrder>[1]) {
+    return placeStrategyOrder(this.client, params, this.signed());
+  }
+  public editStrategy(params: Parameters<typeof updateStrategyOrder>[1]) {
+    return updateStrategyOrder(this.client, params, this.signed());
+  }
+  public getStrategies(query: Parameters<typeof getStrategyOpenOrder>[1]) {
+    return getStrategyOpenOrder(this.client, query, this.signed());
+  }
+  public getStrategyHistory(query: Parameters<typeof getStrategyHistoryOrder>[1]) {
+    return getStrategyHistoryOrder(this.client, query, this.signed());
+  }
+  public getById(params: Parameters<typeof queryOrder>[1]) {
+    return queryOrder(this.client, params, this.signed());
+  }
+  public getOpenById(params: Parameters<typeof getOpenOrder>[1]) {
+    return getOpenOrder(this.client, params, this.signed());
   }
 }
 
@@ -716,19 +717,22 @@ export class Aster {
   }
 
   /**
-   * Surplus **spécifique Aster** (hors contrat commun), accès uniforme `dex.native.<capacité>(label?)` :
-   * `agents`, `builders`, `mmp`, `modes`, `account` (ex-analytics), `marketData`, `subAccounts`,
-   * `prediction`. (Le surplus **ordres** est porté par `perp()`/`spot()`.)
+   * Surplus **spécifique Aster**. Le namespace `native` **miroite** le commun : `dex.native.perp()`
+   * (reads marché + ordres avancés, miroir de `perp()`), `dex.native.account()` (lectures de compte
+   * étendues, ex-analytics, miroir de `account()`) ; + capacités propres `agents`, `builders`, `mmp`,
+   * `modes`, `subAccounts`, `prediction`.
    */
   public get native() {
     const resolve = (label?: string) => this.resolve(label);
     return {
+      /** Surplus **perp** (miroir natif de perp()) : reads marché + ordres avancés. */
+      perp: (label?: string) => new AsterNativePerp(this.client, resolve(label)),
+      /** Lectures de compte étendues (ex-analytics, miroir natif de account()). */
+      account: (label?: string) => new AsterAccountExtra(this.client, resolve(label)),
       agents: (label?: string) => new AsterAgentsScope(this.client, resolve(label)),
       builders: (label?: string) => new AsterBuildersScope(this.client, resolve(label)),
       mmp: (label?: string) => new AsterMmpScope(this.client, resolve(label)),
       modes: (label?: string) => new AsterModesScope(this.client, resolve(label)),
-      account: (label?: string) => new AsterAccountExtra(this.client, resolve(label)),
-      marketData: (label?: string) => new AsterMarketDataScope(this.client, resolve(label)),
       subAccounts: (label?: string) => new AsterSubAccountsScope(this.client, resolve(label)),
       /** Marchés de prédiction (testnet-only). */
       prediction: (label?: string) => new AsterPredictionScope(this.client, resolve(label)),

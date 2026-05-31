@@ -134,8 +134,14 @@ export interface INativeAccount {
   ): ReturnType<typeof getPositionMarginHistory>;
 }
 
-/** Données de marché supplémentaires (lectures **publiques**, get-préfixées). */
-export interface INativeMarket {
+/**
+ * Surplus **perp** Aster spécifique, accès `dex.native.perp(label?)` (miroir natif de `dex.perp()`) :
+ * lectures marché supplémentaires (publiques, get-préfixées) **+** ordres avancés (batch/chase/
+ * stratégie/lecture par id). Hors contrat portable — formes natives Binance-like assumées.
+ * (`getOpenById` = ordre **ouvert** par id, endpoint `/openOrder` distinct de `getById`.)
+ */
+export interface INativePerp {
+  // ── lectures marché supplémentaires (publiques) ──
   getAggregateTrades(query: Args<typeof getAggTrades>): ReturnType<typeof getAggTrades>;
   getHistoricalTrades(
     query: Args<typeof getHistoricalTrades>,
@@ -143,14 +149,7 @@ export interface INativeMarket {
   getFundingInfo(symbol?: string): ReturnType<typeof getFundingInfo>;
   getIndexPriceReferences(symbol: string): ReturnType<typeof getIndexPriceReferences>;
   getTicker24hr(symbol?: string): Promise<unknown>; // surchargée (Ticker24hr | Ticker24hr[])
-}
-
-/**
- * Surplus **ordres** Aster, porté par le scope marché (`perp()`/`spot()`) : batch, annulation
- * multiple, chase, stratégie (TWAP/VP), lecture par id. Verbes alignés inter-SDK.
- * (`getOpenById` = ordre **ouvert** par id, endpoint `/openOrder` distinct de `getById`.)
- */
-export interface INativeOrders {
+  // ── ordres avancés (signés ; formes natives) ──
   placeBatch(orders: PlaceBatchParams): ReturnType<typeof batchOrders>;
   cancelMany(params: CancelManyParams): ReturnType<typeof cancelMultipleOrders>;
   chase(params: ChaseParams): ReturnType<typeof chaseOrder>;
