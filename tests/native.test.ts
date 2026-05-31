@@ -27,7 +27,7 @@ describe('Aster — namespace native (mainnet réel, public)', () => {
   });
 
   it('native.perp().getAggregateTrades({ symbol }) + getFundingInfo()', async () => {
-    const agg = await dex.native.perp().getAggregateTrades({ symbol: 'BTCUSDT', limit: 3 });
+    const agg = await dex.native.perp().getAggregateTrades({ name: 'BTCUSDT', limit: 3 });
     expect(agg.length).toBeGreaterThan(0);
 
     const funding = await dex.native.perp().getFundingInfo();

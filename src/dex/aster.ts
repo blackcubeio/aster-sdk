@@ -1,8 +1,27 @@
 import { type AsterClient, type InitOptions, init } from '../common/config';
-import { SubAccountTransferKind, TransferKind } from '../common/futures';
+import type {
+  AdlQuantile,
+  ChaseOrderParams,
+  CommissionRate,
+  IncomeEntry,
+  LeverageBracket,
+  PlaceStrategyOrderParams,
+  PlaceStrategyOrderResult,
+  PositionMarginHistoryEntry,
+  StrategySubOrder,
+  UpdateStrategyOrderParams,
+  UpdateStrategyOrderResult,
+} from '../common/futures';
+import {
+  ChaseOffsetType,
+  QuantityUnit,
+  SubAccountTransferKind,
+  TransferKind,
+} from '../common/futures';
 import type {
   Balance,
   Candle,
+  PlaceOrderParams as CommonPlaceOrderParams,
   FundingRate,
   MarketKind,
   Order,
@@ -10,14 +29,23 @@ import type {
   Pair,
   Position,
   Price,
+  Side,
   Signer,
   SubAccount,
   Trade,
   UserTrade,
 } from '../common/types';
+import { OrderSide, OrderType, TimeInForce } from '../common/types';
 import type { Hex } from '../common/types';
 import { dateToMs } from '../common/utils';
+import { AggTradeConverter } from '../converters/agg-trade';
+import { OrderConverter } from '../converters/order';
+import type { ChaseResult, StrategyInfo } from '../converters/strategy';
+import { ChaseConverter, StrategyConverter } from '../converters/strategy';
+import { Ticker24hrConverter } from '../converters/ticker';
+import { TradeConverter } from '../converters/trade';
 import { cancelAllOrders } from '../rest/cancel-all-orders';
+import { cancelManyOrders } from '../rest/cancel-many';
 import { cancelOrder } from '../rest/cancel-order';
 import { editOrder } from '../rest/edit-order';
 import { getAccountInfo } from '../rest/futures/account/get-account-info';
@@ -53,8 +81,6 @@ import { createSubAccount } from '../rest/futures/subaccount/create-sub-account'
 import { getSubAccounts } from '../rest/futures/subaccount/get-sub-account-list';
 import { subAccountTransfer } from '../rest/futures/subaccount/sub-account-transfer';
 import { updateSubAccount } from '../rest/futures/subaccount/update-sub-account';
-import { batchOrders } from '../rest/futures/trade/batch-orders';
-import { cancelMultipleOrders } from '../rest/futures/trade/cancel-multiple-orders';
 import { chaseOrder } from '../rest/futures/trade/chase-order';
 import { countdownCancelAll } from '../rest/futures/trade/countdown-cancel-all';
 import { getMultiAssetsMode, updateMultiAssetsMode } from '../rest/futures/trade/multi-assets-mode';
@@ -78,6 +104,7 @@ import { getPositions } from '../rest/get-positions';
 import { getPrices } from '../rest/get-prices';
 import { getTrades } from '../rest/get-trades';
 import { getUserTrades } from '../rest/get-user-trades';
+import { placeBatchOrders } from '../rest/place-batch';
 import { placeOrder } from '../rest/place-order';
 import { predictionBurn } from '../rest/prediction/burn';
 import { getPredictionExchangeInfo } from '../rest/prediction/get-exchange-info';
@@ -135,6 +162,13 @@ import type {
   WithdrawParams,
 } from './contract';
 import type {
+  AggregateTradesParams,
+  CancelManyParams,
+  ChaseParams,
+  EditStrategyParams,
+  ForceOrdersParams,
+  FundingConfig,
+  HistoricalTradesParams,
   IAgents,
   IBuilders,
   IMmp,
@@ -143,6 +177,13 @@ import type {
   INativePerp,
   IPrediction,
   ISubAccountsAdmin,
+  IncomeParams,
+  IndexComposition,
+  MarginHistoryParams,
+  OrderRefParams,
+  PlaceStrategyParams,
+  StrategyLegParams,
+  StrategyQueryParams,
 } from './native-contract';
 
 /** Options de construction d'un {@link Aster}. */
@@ -496,80 +537,262 @@ class AsterModesScope extends AsterNativeScope implements IModes {
   }
 }
 
-/** Lectures de compte étendues Aster (ex-`analytics`), exposées via `native.account()`. */
+/**
+ * Lectures de compte étendues Aster (ex-`analytics`), exposées via `native.account()`.
+ * **I/O normalisés** : entrées en vocabulaire commun (`name`, dates datetime UTC), sorties typées
+ * (`Order[]` pour les ordres de liquidation ; interfaces nommées sinon).
+ */
 class AsterAccountExtra extends AsterNativeScope implements INativeAccount {
-  public getForceOrders(query?: Parameters<typeof getForceOrders>[1]) {
-    return getForceOrders(this.client, query, this.signed());
+  public getForceOrders(query?: ForceOrdersParams): Promise<Order[]> {
+    const converter = new OrderConverter();
+    return getForceOrders(
+      this.client,
+      {
+        symbol: query?.name,
+        autoCloseType: query?.autoCloseType,
+        startTime: query?.startTime === undefined ? undefined : dateToMs(query.startTime),
+        endTime: query?.endTime === undefined ? undefined : dateToMs(query.endTime),
+        limit: query?.limit,
+      },
+      this.signed(),
+    ).then((orders) => orders.map((o) => converter.toCommon(o)));
   }
-  public getAdlQuantile(symbol?: string) {
-    return getAdlQuantile(this.client, symbol, this.signed());
+  public getAdlQuantile(name?: string): Promise<AdlQuantile[]> {
+    return getAdlQuantile(this.client, name, this.signed());
   }
-  public getCommissionRate(symbol: string) {
-    return getCommissionRate(this.client, symbol, this.signed());
+  public getCommissionRate(name: string): Promise<CommissionRate> {
+    return getCommissionRate(this.client, name, this.signed());
   }
-  public getIncome(query?: Parameters<typeof getIncome>[1]) {
-    return getIncome(this.client, query, this.signed());
+  public getIncome(query?: IncomeParams): Promise<IncomeEntry[]> {
+    return getIncome(
+      this.client,
+      {
+        symbol: query?.name,
+        incomeType: query?.incomeType,
+        startTime: query?.startTime === undefined ? undefined : dateToMs(query.startTime),
+        endTime: query?.endTime === undefined ? undefined : dateToMs(query.endTime),
+        limit: query?.limit,
+      },
+      this.signed(),
+    );
   }
-  public getLeverageBracket(symbol?: string) {
-    return symbol === undefined
+  public getLeverageBracket(name?: string): Promise<LeverageBracket | LeverageBracket[]> {
+    return name === undefined
       ? getLeverageBracket(this.client, undefined, this.signed())
-      : getLeverageBracket(this.client, symbol, this.signed());
+      : getLeverageBracket(this.client, name, this.signed());
   }
-  public getMarginHistory(query: Parameters<typeof getPositionMarginHistory>[1]) {
-    return getPositionMarginHistory(this.client, query, this.signed());
+  public getMarginHistory(query: MarginHistoryParams): Promise<PositionMarginHistoryEntry[]> {
+    return getPositionMarginHistory(
+      this.client,
+      {
+        symbol: query.name,
+        type: query.type,
+        startTime: query.startTime === undefined ? undefined : dateToMs(query.startTime),
+        endTime: query.endTime === undefined ? undefined : dateToMs(query.endTime),
+        limit: query.limit,
+      },
+      this.signed(),
+    );
   }
+}
+
+// ── Maps vocab commun → natif (réutilisées par chase + legs de stratégie) ──
+const NATIVE_SIDE: Record<Side, OrderSide> = { buy: OrderSide.Buy, sell: OrderSide.Sell };
+const NATIVE_TYPE: Record<string, OrderType> = {
+  limit: OrderType.Limit,
+  market: OrderType.Market,
+  stop: OrderType.Stop,
+  stopMarket: OrderType.StopMarket,
+  takeProfit: OrderType.TakeProfit,
+  takeProfitMarket: OrderType.TakeProfitMarket,
+  trailingStop: OrderType.TrailingStopMarket,
+};
+const NATIVE_TIF: Record<string, TimeInForce> = {
+  gtc: TimeInForce.Gtc,
+  ioc: TimeInForce.Ioc,
+  fok: TimeInForce.Fok,
+  alo: TimeInForce.Gtx,
+};
+const NATIVE_QTY_UNIT: Record<'BASE' | 'QUOTE', QuantityUnit> = {
+  BASE: QuantityUnit.Base,
+  QUOTE: QuantityUnit.Quote,
+};
+const NATIVE_OFFSET_TYPE: Record<'ABSOLUTE' | 'PERCENTAGE', ChaseOffsetType> = {
+  ABSOLUTE: ChaseOffsetType.Absolute,
+  PERCENTAGE: ChaseOffsetType.Percentage,
+};
+
+/** Mappe un leg de stratégie (vocab commun) vers le sous-ordre natif `StrategySubOrder`. */
+function toStrategySubOrder(leg: StrategyLegParams): StrategySubOrder {
+  return {
+    strategySubId: (leg.xtras?.strategySubId as string) ?? '',
+    securityType: (leg.xtras?.securityType as string) ?? '',
+    symbol: leg.name,
+    side: NATIVE_SIDE[leg.side],
+    type: NATIVE_TYPE[leg.type] ?? OrderType.Limit,
+    quantity: leg.size,
+    price: leg.price,
+    stopPrice: leg.triggerPrice,
+    reduceOnly: leg.reduceOnly,
+    clientOrderId: leg.clientId,
+    ...(leg.xtras ?? {}),
+  } as StrategySubOrder;
 }
 
 /**
  * Surplus **perp** Aster (miroir natif de `dex.perp()`), accès `dex.native.perp(label?)` :
- * lectures marché supplémentaires (publiques) + ordres avancés (signés). Hors contrat portable.
+ * lectures marché supplémentaires (publiques) + ordres avancés (signés). **I/O normalisés** :
+ * entrées en vocabulaire commun (`name`/`side`/`size`…), sorties via convertisseurs (`Trade`/
+ * `Price`/`Order` quand le concept existe, sinon interface dédiée nommée).
  */
 class AsterNativePerp extends AsterNativeScope implements INativePerp {
-  // ── lectures marché supplémentaires (publiques) ──
-  public getAggregateTrades(query: Parameters<typeof getAggTrades>[1]) {
-    return getAggTrades(this.client, query, this.label);
+  // ── lectures marché supplémentaires (publiques ; I/O normalisés) ──
+  public getAggregateTrades(query: AggregateTradesParams): Promise<Trade[]> {
+    const converter = new AggTradeConverter();
+    return getAggTrades(
+      this.client,
+      {
+        symbol: query.name,
+        fromId: query.fromId,
+        startTime: query.startTime === undefined ? undefined : dateToMs(query.startTime),
+        endTime: query.endTime === undefined ? undefined : dateToMs(query.endTime),
+        limit: query.limit,
+      },
+      this.label,
+    ).then((trades) => trades.map((t) => converter.toCommon(t)));
   }
-  public getHistoricalTrades(query: Parameters<typeof getHistoricalTrades>[1]) {
-    return getHistoricalTrades(this.client, query, this.label);
+  public getHistoricalTrades(query: HistoricalTradesParams): Promise<Trade[]> {
+    const converter = new TradeConverter();
+    return getHistoricalTrades(
+      this.client,
+      { symbol: query.name, limit: query.limit, fromId: query.fromId },
+      this.label,
+    ).then((trades) => trades.map((t) => converter.toCommon(t)));
   }
-  public getFundingInfo(symbol?: string) {
-    return getFundingInfo(this.client, symbol, this.label);
+  public getFundingInfo(name?: string): Promise<FundingConfig[]> {
+    return getFundingInfo(this.client, name, this.label).then((rows) =>
+      rows.map((r) => ({
+        name: r.symbol,
+        interestRate: r.interestRate,
+        fundingIntervalHours: r.fundingIntervalHours,
+        fundingFeeCap: r.fundingFeeCap,
+        fundingFeeFloor: r.fundingFeeFloor,
+        time: r.time,
+      })),
+    );
   }
-  public getIndexPriceReferences(symbol: string) {
-    return getIndexPriceReferences(this.client, symbol, this.label);
+  public getIndexPriceReferences(name: string): Promise<IndexComposition> {
+    return getIndexPriceReferences(this.client, name, this.label).then((r) => ({
+      name: r.symbol,
+      time: r.time,
+      components: r.references.map((c) => ({
+        exchange: c.exchange,
+        symbol: c.symbol,
+        weight: c.weight,
+      })),
+    }));
   }
-  public getTicker24hr(symbol?: string) {
-    return symbol === undefined
-      ? getTicker24hr(this.client, undefined, this.label)
-      : getTicker24hr(this.client, symbol, this.label);
+  public getTicker24hr(name?: string): Promise<Price[]> {
+    const converter = new Ticker24hrConverter();
+    return name === undefined
+      ? getTicker24hr(this.client, undefined, this.label).then((rows) =>
+          rows.map((r) => converter.toCommon(r)),
+        )
+      : getTicker24hr(this.client, name, this.label).then((r) => [converter.toCommon(r)]);
   }
-  // ── ordres avancés (signés ; formes natives) ──
-  public placeBatch(orders: Parameters<typeof batchOrders>[1]) {
-    return batchOrders(this.client, orders, this.signed());
+  // ── ordres avancés (signés ; I/O normalisés, types communs) ──
+  public placeBatch(orders: CommonPlaceOrderParams[]): Promise<Order[]> {
+    return placeBatchOrders(this.client, orders, this.signed());
   }
-  public cancelMany(params: Parameters<typeof cancelMultipleOrders>[1]) {
-    return cancelMultipleOrders(this.client, params, this.signed());
+  public cancelMany(params: CancelManyParams): Promise<Order[]> {
+    return cancelManyOrders(this.client, params, this.signed());
   }
-  public chase(params: Parameters<typeof chaseOrder>[1]) {
-    return chaseOrder(this.client, params, this.signed());
+  public chase(params: ChaseParams): Promise<ChaseResult> {
+    const converter = new ChaseConverter();
+    const native: ChaseOrderParams = {
+      symbol: params.name,
+      side: NATIVE_SIDE[params.side],
+      quantityUnit: NATIVE_QTY_UNIT[params.quantityUnit ?? 'BASE'],
+      quantity: params.size,
+      reduceOnly: params.reduceOnly,
+      chaseOffset: params.chaseOffset,
+      chaseOffsetType:
+        params.chaseOffsetType === undefined
+          ? undefined
+          : NATIVE_OFFSET_TYPE[params.chaseOffsetType],
+      maxChaseOffset: params.maxChaseOffset,
+      maxChaseOffsetType:
+        params.maxChaseOffsetType === undefined
+          ? undefined
+          : NATIVE_OFFSET_TYPE[params.maxChaseOffsetType],
+      priceLimit: params.priceLimit,
+      timeInForce: params.tif === undefined ? undefined : NATIVE_TIF[params.tif],
+      clientStrategyId: params.clientId,
+    };
+    return chaseOrder(this.client, native, this.signed()).then((c) => converter.toCommon(c));
   }
-  public placeStrategy(params: Parameters<typeof placeStrategyOrder>[1]) {
-    return placeStrategyOrder(this.client, params, this.signed());
+  public placeStrategy(params: PlaceStrategyParams): Promise<PlaceStrategyOrderResult> {
+    const native: PlaceStrategyOrderParams = {
+      strategyType: params.strategyType,
+      subOrderList: params.legs.map(toStrategySubOrder),
+      clientStrategyId: params.clientId,
+    };
+    return placeStrategyOrder(this.client, native, this.signed());
   }
-  public editStrategy(params: Parameters<typeof updateStrategyOrder>[1]) {
-    return updateStrategyOrder(this.client, params, this.signed());
+  public editStrategy(params: EditStrategyParams): Promise<UpdateStrategyOrderResult[]> {
+    const native: UpdateStrategyOrderParams = {
+      strategyId: params.id,
+      strategyType: params.strategyType,
+      subOrderList: params.legs.map(toStrategySubOrder),
+    };
+    return updateStrategyOrder(this.client, native, this.signed());
   }
-  public getStrategies(query: Parameters<typeof getStrategyOpenOrder>[1]) {
-    return getStrategyOpenOrder(this.client, query, this.signed());
+  public getStrategies(query: StrategyQueryParams): Promise<StrategyInfo> {
+    const converter = new StrategyConverter();
+    return getStrategyOpenOrder(
+      this.client,
+      { strategyType: query.strategyType, strategyId: query.id, clientStrategyId: query.clientId },
+      this.signed(),
+    ).then((s) => converter.toCommon(s));
   }
-  public getStrategyHistory(query: Parameters<typeof getStrategyHistoryOrder>[1]) {
-    return getStrategyHistoryOrder(this.client, query, this.signed());
+  public getStrategyHistory(query: StrategyQueryParams): Promise<StrategyInfo> {
+    const converter = new StrategyConverter();
+    return getStrategyHistoryOrder(
+      this.client,
+      {
+        strategyType: query.strategyType,
+        strategyId: query.id,
+        clientStrategyId: query.clientId,
+        startTime: query.startTime === undefined ? undefined : dateToMs(query.startTime),
+        endTime: query.endTime === undefined ? undefined : dateToMs(query.endTime),
+        limit: query.limit,
+      },
+      this.signed(),
+    ).then((s) => converter.toCommon(s));
   }
-  public getById(params: Parameters<typeof queryOrder>[1]) {
-    return queryOrder(this.client, params, this.signed());
+  public getById(params: OrderRefParams): Promise<Order> {
+    const converter = new OrderConverter();
+    return queryOrder(
+      this.client,
+      {
+        symbol: params.name,
+        orderId: params.id === undefined ? undefined : Number(params.id),
+        origClientOrderId: params.clientId,
+      },
+      this.signed(),
+    ).then((o) => converter.toCommon(o));
   }
-  public getOpenById(params: Parameters<typeof getOpenOrder>[1]) {
-    return getOpenOrder(this.client, params, this.signed());
+  public getOpenById(params: OrderRefParams): Promise<Order> {
+    const converter = new OrderConverter();
+    return getOpenOrder(
+      this.client,
+      {
+        symbol: params.name,
+        orderId: params.id === undefined ? undefined : Number(params.id),
+        origClientOrderId: params.clientId,
+      },
+      this.signed(),
+    ).then((o) => converter.toCommon(o));
   }
 }
 

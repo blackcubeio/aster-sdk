@@ -81,58 +81,68 @@ await dex.native.modes().setStp('EXPIRE_TAKER');
 ```
 
 ## `native.account()` — `INativeAccount` (lectures de compte, ex-`analytics`)
-| `getForceOrders(query?)` | `ForceOrdersQuery?` | `Promise<OrderDetail[]>` |
-| `getAdlQuantile(symbol?)` | `string?` | `Promise<AdlQuantile[]>` |
-| `getCommissionRate(symbol)` | `string` | `Promise<CommissionRate>` |
-| `getIncome(query?)` | `IncomeQuery?` | `Promise<IncomeEntry[]>` |
-| `getLeverageBracket(symbol?)` | `string?` | `Promise<LeverageBracket \| LeverageBracket[]>` |
-| `getMarginHistory(query)` | `PositionMarginHistoryQuery` | `Promise<PositionMarginHistoryEntry[]>` |
+**I/O normalisés** : entrées en vocabulaire commun (`name`, dates `YYYY-MM-DD HH:MM:SS` UTC),
+sorties typées (`Order[]` pour les ordres de liquidation ; interfaces nommées sinon — jamais `unknown`).
+
+| Méthode | Entrée | Sortie |
+|---|---|---|
+| `getForceOrders(query?)` | `ForceOrdersParams?` (`{ name?, autoCloseType?, startTime?, endTime?, limit? }`) | `Promise<Order[]>` |
+| `getAdlQuantile(name?)` | `string?` | `Promise<AdlQuantile[]>` |
+| `getCommissionRate(name)` | `string` | `Promise<CommissionRate>` |
+| `getIncome(query?)` | `IncomeParams?` (`{ name?, incomeType?, startTime?, endTime?, limit? }`) | `Promise<IncomeEntry[]>` |
+| `getLeverageBracket(name?)` | `string?` | `Promise<LeverageBracket \| LeverageBracket[]>` |
+| `getMarginHistory(query)` | `MarginHistoryParams` (`{ name, type?, startTime?, endTime?, limit? }`) | `Promise<PositionMarginHistoryEntry[]>` |
 
 ```ts
 await dex.native.account().getCommissionRate('BTCUSDT'); // { makerCommissionRate, takerCommissionRate }
 await dex.native.account().getIncome({ incomeType: 'FUNDING_FEE', limit: 100 });
 await dex.native.account().getLeverageBracket('BTCUSDT');
 await dex.native.account().getAdlQuantile();
-await dex.native.account().getForceOrders();
-await dex.native.account().getMarginHistory({ symbol: 'BTCUSDT' });
+await dex.native.account().getForceOrders();                       // Order[] (type commun)
+await dex.native.account().getMarginHistory({ name: 'BTCUSDT', startTime: '2026-01-01 00:00:00' });
 ```
 
 ## `native.perp()` — `INativePerp` (miroir natif de `perp()`)
 Surplus **perp** : lectures marché supplémentaires (publiques) **+** ordres avancés (signés).
-Formes natives Binance-like (`{ symbol:'BTCUSDT', side:'BUY', quantity }`) — hors contrat portable,
-contrairement à `dex.perp().place()`.
+**Même discipline d'I/O que le commun** : entrées en vocabulaire commun (`name`, `side:'buy'|'sell'`,
+`size`, dates `YYYY-MM-DD HH:MM:SS` UTC), sorties via convertisseurs réutilisant les types communs
+(`Trade`/`Price`/`Order`) quand le concept existe, sinon interface dédiée nommée (`FundingConfig`,
+`IndexComposition`, `ChaseResult`, `StrategyInfo`).
 
 | Méthode | Entrée | Sortie |
 |---|---|---|
-| `getAggregateTrades(query)` | `AggregateTradesParams` | `Promise<AggTrade[]>` |
-| `getHistoricalTrades(query)` | `HistoricalTradesParams` | `Promise<MarketTrade[]>` |
-| `getFundingInfo(symbol?)` | `string?` | `Promise<FundingInfo[]>` |
-| `getIndexPriceReferences(symbol)` | `string` | `Promise<IndexPriceReferences>` |
-| `getTicker24hr(symbol?)` | `string?` | `Promise<Ticker24hr \| Ticker24hr[]>` |
-| `placeBatch(orders)` | `PlaceBatchParams` | `Promise<BatchOrderResult[]>` |
-| `cancelMany(p)` | `CancelManyParams` | `Promise<BatchOrderResult[]>` |
-| `chase(p)` | `ChaseParams` | `Promise<ChaseOrder>` |
-| `placeStrategy(p)` | `PlaceStrategyParams` | `Promise<PlaceStrategyOrderResult>` |
-| `editStrategy(p)` | `EditStrategyParams` | `Promise<UpdateStrategyOrderResult[]>` |
-| `getStrategies(query)` | `StrategyOrderQuery` | `Promise<StrategyOrder>` |
-| `getStrategyHistory(query)` | `StrategyHistoryQuery` | `Promise<StrategyOrder>` |
-| `getById(p)` | `OrderQuery` | `Promise<OrderDetail>` |
-| `getOpenById(p)` | `OrderQuery` | `Promise<OrderDetail>` (endpoint `/openOrder`) |
+| `getAggregateTrades(query)` | `AggregateTradesParams` (`{ name, fromId?, startTime?, endTime?, limit? }`) | `Promise<Trade[]>` |
+| `getHistoricalTrades(query)` | `HistoricalTradesParams` (`{ name, limit?, fromId? }`) | `Promise<Trade[]>` |
+| `getFundingInfo(name?)` | `string?` | `Promise<FundingConfig[]>` |
+| `getIndexPriceReferences(name)` | `string` | `Promise<IndexComposition>` |
+| `getTicker24hr(name?)` | `string?` | `Promise<Price[]>` |
+| `placeBatch(orders)` | `PlaceOrderParams[]` (vocab commun) | `Promise<Order[]>` (1 par leg) |
+| `cancelMany(p)` | `CancelManyParams` (`{ name, ids?, clientIds? }`) | `Promise<Order[]>` (1 par ordre visé) |
+| `chase(p)` | `ChaseParams` (`{ name, side, size, … }`) | `Promise<ChaseResult>` |
+| `placeStrategy(p)` | `PlaceStrategyParams` (`{ strategyType, legs, clientId? }`) | `Promise<PlaceStrategyOrderResult>` |
+| `editStrategy(p)` | `EditStrategyParams` (`{ id, strategyType, legs }`) | `Promise<UpdateStrategyOrderResult[]>` |
+| `getStrategies(query)` | `StrategyQueryParams` (`{ strategyType, id?, clientId? }`) | `Promise<StrategyInfo>` |
+| `getStrategyHistory(query)` | `StrategyQueryParams` (+ `startTime?/endTime?/limit?`) | `Promise<StrategyInfo>` |
+| `getById(p)` | `OrderRefParams` (`{ name, id?, clientId? }`) | `Promise<Order>` |
+| `getOpenById(p)` | `OrderRefParams` | `Promise<Order>` (endpoint `/openOrder`) |
 
 ```ts
-// lectures marché
-await dex.native.perp().getAggregateTrades({ symbol: 'BTCUSDT', limit: 100 });
-await dex.native.perp().getFundingInfo();
-await dex.native.perp().getTicker24hr('BTCUSDT');
-// ordres avancés (formes natives Binance-like)
+// lectures marché (sorties = types communs Trade / Price)
+await dex.native.perp().getAggregateTrades({ name: 'BTCUSDT', limit: 100 });   // Trade[]
+await dex.native.perp().getFundingInfo();                                      // FundingConfig[]
+await dex.native.perp().getTicker24hr('BTCUSDT');                              // Price[]
+// ordres avancés (entrées en vocabulaire commun, sorties = Order)
 await dex.native.perp().placeBatch([
-  { symbol: 'BTCUSDT', side: 'BUY', type: 'LIMIT', quantity: '0.001', price: '50000' },
-]);
-await dex.native.perp().cancelMany({ symbol: 'BTCUSDT', orderIdList: [1, 2] });
-await dex.native.perp().chase({ symbol: 'BTCUSDT', side: 'BUY', quantity: '0.001' });
-await dex.native.perp().placeStrategy({ symbol: 'BTCUSDT', strategyType: 'TWAP', side: 'BUY', quantity: '1', durationSec: 3600 });
-await dex.native.perp().getById({ symbol: 'BTCUSDT', orderId: 123 });
-await dex.native.perp().getOpenById({ symbol: 'BTCUSDT', orderId: 123 });
+  { name: 'BTCUSDT', side: 'buy', type: 'limit', size: '0.001', price: '50000' },
+]);                                                                            // Order[]
+await dex.native.perp().cancelMany({ name: 'BTCUSDT', ids: ['1', '2'] });      // Order[]
+await dex.native.perp().chase({ name: 'BTCUSDT', side: 'buy', size: '0.001' }); // ChaseResult
+await dex.native.perp().placeStrategy({
+  strategyType: StrategyType.Oto,
+  legs: [{ name: 'BTCUSDT', side: 'buy', type: 'limit', size: '0.001', price: '50000' }],
+});                                                                            // PlaceStrategyOrderResult
+await dex.native.perp().getById({ name: 'BTCUSDT', id: '123' });               // Order
+await dex.native.perp().getOpenById({ name: 'BTCUSDT', id: '123' });           // Order
 ```
 
 ## `native.subAccounts()` — `ISubAccountsAdmin`
