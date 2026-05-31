@@ -19,11 +19,51 @@ import { cancelAllOrders } from '../rest/cancel-all-orders';
 import { cancelOrder } from '../rest/cancel-order';
 import { editOrder } from '../rest/edit-order';
 import { getAccountInfo } from '../rest/futures/account/get-account-info';
+// ── Surplus spécifique Aster (namespace native) ──
+import { getAdlQuantile } from '../rest/futures/account/get-adl-quantile';
+import { getCommissionRate } from '../rest/futures/account/get-commission-rate';
+import { getForceOrders } from '../rest/futures/account/get-force-orders';
+import { getIncome } from '../rest/futures/account/get-income';
+import { getLeverageBracket } from '../rest/futures/account/get-leverage-bracket';
+import { getOpenOrder } from '../rest/futures/account/get-open-order';
+import { getPositionMarginHistory } from '../rest/futures/account/get-position-margin-history';
+import { deleteMmp, getMmp, resetMmp, updateMmp } from '../rest/futures/account/mmp';
+import { queryOrder } from '../rest/futures/account/query-order';
+import { transferFuturesSpot } from '../rest/futures/account/transfer-futures-spot';
+import { approveAgent, deleteAgent, getAgents, updateAgent } from '../rest/futures/agent/agents';
+import {
+  approveBuilder,
+  deleteBuilder,
+  getBuilders,
+  updateBuilder,
+} from '../rest/futures/agent/builders';
+import { registerAndApproveAgent } from '../rest/futures/agent/register-and-approve-agent';
+import { getAggTrades } from '../rest/futures/market/get-agg-trades';
 import { getExchangeInfo } from '../rest/futures/market/get-exchange-info';
+import { getFundingInfo } from '../rest/futures/market/get-funding-info';
+import { getHistoricalTrades } from '../rest/futures/market/get-historical-trades';
+import { getIndexPriceReferences } from '../rest/futures/market/get-index-price-references';
 import { getServerTime } from '../rest/futures/market/get-server-time';
+import { getTicker24hr } from '../rest/futures/market/get-ticker-24hr';
 import { ping } from '../rest/futures/market/ping';
+import { bindSubAccount } from '../rest/futures/subaccount/bind-sub-account';
+import { createSubAccount } from '../rest/futures/subaccount/create-sub-account';
 import { getSubAccounts } from '../rest/futures/subaccount/get-sub-account-list';
+import { subAccountTransfer } from '../rest/futures/subaccount/sub-account-transfer';
+import { updateSubAccount } from '../rest/futures/subaccount/update-sub-account';
+import { batchOrders } from '../rest/futures/trade/batch-orders';
+import { cancelMultipleOrders } from '../rest/futures/trade/cancel-multiple-orders';
+import { chaseOrder } from '../rest/futures/trade/chase-order';
 import { countdownCancelAll } from '../rest/futures/trade/countdown-cancel-all';
+import { getMultiAssetsMode, updateMultiAssetsMode } from '../rest/futures/trade/multi-assets-mode';
+import { getPositionMode, updatePositionMode } from '../rest/futures/trade/position-mode';
+import { getStpMode, updateStpMode } from '../rest/futures/trade/stp-mode';
+import {
+  getStrategyHistoryOrder,
+  getStrategyOpenOrder,
+  placeStrategyOrder,
+  updateStrategyOrder,
+} from '../rest/futures/trade/strategy-order';
 import { updateIsolatedMargin } from '../rest/futures/trade/update-isolated-margin';
 import { getBalances } from '../rest/get-balances';
 import { getCandles } from '../rest/get-candles';
@@ -50,6 +90,16 @@ import { withdraw } from '../rest/spot/withdraw/withdraw';
 import { updateLeverage } from '../rest/update-leverage';
 import { updateMarginMode } from '../rest/update-margin-mode';
 import { UnifiedWsClient } from '../ws/unified-client';
+import type {
+  IAsterAdvancedOrders,
+  IAsterAgents,
+  IAsterAnalytics,
+  IAsterBuilders,
+  IAsterMarketData,
+  IAsterMmp,
+  IAsterModes,
+  IAsterSubAccounts,
+} from './aster-contract';
 import type {
   CancelAllInput,
   CancelOrderInput,
@@ -332,10 +382,189 @@ class AsterRealtime implements IRealtime, IRealtimePositions {
   }
 }
 
+// ── Surplus spécifique Aster (namespace `native`, convention partagée par les 4 SDK) ──
+
+/** Base des scopes `native` : résolution du label (lectures privées via `signed()`). */
+class AsterNativeScope {
+  constructor(
+    protected readonly client: AsterClient,
+    protected readonly label: string | undefined,
+  ) {}
+
+  protected signed(): string {
+    if (this.label === undefined) {
+      throw new Error('Action signée : aucun signer (ajoute des signers ou un défaut).');
+    }
+    return this.label;
+  }
+}
+
+class AsterAgentsScope extends AsterNativeScope implements IAsterAgents {
+  public list() {
+    return getAgents(this.client, this.signed());
+  }
+  public approve(params: Parameters<typeof approveAgent>[1]) {
+    return approveAgent(this.client, params, this.signed());
+  }
+  public register(params: Parameters<typeof registerAndApproveAgent>[1]) {
+    return registerAndApproveAgent(this.client, params, this.signed());
+  }
+  public update(params: Parameters<typeof updateAgent>[1]) {
+    return updateAgent(this.client, params, this.signed());
+  }
+  public revoke(agentAddress: string) {
+    return deleteAgent(this.client, agentAddress, this.signed());
+  }
+}
+
+class AsterBuildersScope extends AsterNativeScope implements IAsterBuilders {
+  public list() {
+    return getBuilders(this.client, this.signed());
+  }
+  public approve(params: Parameters<typeof approveBuilder>[1]) {
+    return approveBuilder(this.client, params, this.signed());
+  }
+  public update(params: Parameters<typeof updateBuilder>[1]) {
+    return updateBuilder(this.client, params, this.signed());
+  }
+  public revoke(builder: string) {
+    return deleteBuilder(this.client, builder, this.signed());
+  }
+}
+
+class AsterMmpScope extends AsterNativeScope implements IAsterMmp {
+  public get(symbol?: string) {
+    return getMmp(this.client, symbol, this.signed());
+  }
+  public set(params: Parameters<typeof updateMmp>[1]) {
+    return updateMmp(this.client, params, this.signed());
+  }
+  public reset(symbol: string) {
+    return resetMmp(this.client, symbol, this.signed());
+  }
+  public remove(symbol: string) {
+    return deleteMmp(this.client, symbol, this.signed());
+  }
+}
+
+class AsterModesScope extends AsterNativeScope implements IAsterModes {
+  public getMultiAssets() {
+    return getMultiAssetsMode(this.client, this.signed());
+  }
+  public setMultiAssets(enabled: boolean) {
+    return updateMultiAssetsMode(this.client, enabled, this.signed());
+  }
+  public getPosition() {
+    return getPositionMode(this.client, this.signed());
+  }
+  public setPosition(dualSide: boolean) {
+    return updatePositionMode(this.client, dualSide, this.signed());
+  }
+  public getStp() {
+    return getStpMode(this.client, this.signed());
+  }
+  public setStp(mode: Parameters<typeof updateStpMode>[1]) {
+    return updateStpMode(this.client, mode, this.signed());
+  }
+}
+
+class AsterAnalyticsScope extends AsterNativeScope implements IAsterAnalytics {
+  public forceOrders(query?: Parameters<typeof getForceOrders>[1]) {
+    return getForceOrders(this.client, query, this.signed());
+  }
+  public adlQuantile(symbol?: string) {
+    return getAdlQuantile(this.client, symbol, this.signed());
+  }
+  public commissionRate(symbol: string) {
+    return getCommissionRate(this.client, symbol, this.signed());
+  }
+  public income(query?: Parameters<typeof getIncome>[1]) {
+    return getIncome(this.client, query, this.signed());
+  }
+  public leverageBracket(symbol?: string) {
+    return symbol === undefined
+      ? getLeverageBracket(this.client, undefined, this.signed())
+      : getLeverageBracket(this.client, symbol, this.signed());
+  }
+  public marginHistory(query: Parameters<typeof getPositionMarginHistory>[1]) {
+    return getPositionMarginHistory(this.client, query, this.signed());
+  }
+}
+
+/** Données de marché supplémentaires : **publiques** (label optionnel). */
+class AsterMarketDataScope extends AsterNativeScope implements IAsterMarketData {
+  public aggTrades(query: Parameters<typeof getAggTrades>[1]) {
+    return getAggTrades(this.client, query, this.label);
+  }
+  public historicalTrades(query: Parameters<typeof getHistoricalTrades>[1]) {
+    return getHistoricalTrades(this.client, query, this.label);
+  }
+  public fundingInfo(symbol?: string) {
+    return getFundingInfo(this.client, symbol, this.label);
+  }
+  public indexPriceReferences(symbol: string) {
+    return getIndexPriceReferences(this.client, symbol, this.label);
+  }
+  public ticker24hr(symbol?: string) {
+    return symbol === undefined
+      ? getTicker24hr(this.client, undefined, this.label)
+      : getTicker24hr(this.client, symbol, this.label);
+  }
+}
+
+class AsterAdvancedOrdersScope extends AsterNativeScope implements IAsterAdvancedOrders {
+  public placeBatch(orders: Parameters<typeof batchOrders>[1]) {
+    return batchOrders(this.client, orders, this.signed());
+  }
+  public cancelMany(params: Parameters<typeof cancelMultipleOrders>[1]) {
+    return cancelMultipleOrders(this.client, params, this.signed());
+  }
+  public chase(params: Parameters<typeof chaseOrder>[1]) {
+    return chaseOrder(this.client, params, this.signed());
+  }
+  public placeStrategy(params: Parameters<typeof placeStrategyOrder>[1]) {
+    return placeStrategyOrder(this.client, params, this.signed());
+  }
+  public updateStrategy(params: Parameters<typeof updateStrategyOrder>[1]) {
+    return updateStrategyOrder(this.client, params, this.signed());
+  }
+  public strategyOpen(query: Parameters<typeof getStrategyOpenOrder>[1]) {
+    return getStrategyOpenOrder(this.client, query, this.signed());
+  }
+  public strategyHistory(query: Parameters<typeof getStrategyHistoryOrder>[1]) {
+    return getStrategyHistoryOrder(this.client, query, this.signed());
+  }
+  public query(params: Parameters<typeof queryOrder>[1]) {
+    return queryOrder(this.client, params, this.signed());
+  }
+  public getOpen(params: Parameters<typeof getOpenOrder>[1]) {
+    return getOpenOrder(this.client, params, this.signed());
+  }
+}
+
+class AsterSubAccountsScope extends AsterNativeScope implements IAsterSubAccounts {
+  public bind(params: Parameters<typeof bindSubAccount>[1]) {
+    return bindSubAccount(this.client, params, this.signed());
+  }
+  public create(params: Parameters<typeof createSubAccount>[1]) {
+    return createSubAccount(this.client, params, this.signed());
+  }
+  public update(params: Parameters<typeof updateSubAccount>[1]) {
+    return updateSubAccount(this.client, params, this.signed());
+  }
+  public transfer(params: Parameters<typeof subAccountTransfer>[1]) {
+    return subAccountTransfer(this.client, params, this.signed());
+  }
+  public transferFuturesSpot(params: Parameters<typeof transferFuturesSpot>[1]) {
+    return transferFuturesSpot(this.client, params, this.signed());
+  }
+}
+
 /**
  * Façade **Aster** : `const dex = new Aster({ deskA: signer }, { default: 'deskA' })`, puis
  * `dex.perp(label?)` / `dex.spot(label?)` (marché), `dex.account(label?)` (compte),
- * `dex.ws(label?)` (temps réel). `label` absent → signer par défaut ; `dex.as(label)` fige le compte.
+ * `dex.ws(label?)` (temps réel), `dex.native.<capacité>(label?)` (surplus spécifique Aster).
+ * `label` absent → signer par défaut.
  *
  * Chaque instance détient son propre {@link AsterClient} (config isolée) : plusieurs `Aster`
  * (comptes/réseaux différents) coexistent sans état global partagé.
@@ -388,6 +617,24 @@ export class Aster {
   /** Scope **temps réel** spot. */
   public wsSpot(label?: string): AsterRealtime {
     return new AsterRealtime(this.unifiedWs(this.resolve(label)), 'spot');
+  }
+
+  /**
+   * Surplus **spécifique Aster** (hors contrat commun), accès uniforme `dex.native.<capacité>(label?)` :
+   * `agents`, `builders`, `mmp`, `modes`, `analytics`, `marketData`, `advancedOrders`, `subAccounts`.
+   */
+  public get native() {
+    const resolve = (label?: string) => this.resolve(label);
+    return {
+      agents: (label?: string) => new AsterAgentsScope(this.client, resolve(label)),
+      builders: (label?: string) => new AsterBuildersScope(this.client, resolve(label)),
+      mmp: (label?: string) => new AsterMmpScope(this.client, resolve(label)),
+      modes: (label?: string) => new AsterModesScope(this.client, resolve(label)),
+      analytics: (label?: string) => new AsterAnalyticsScope(this.client, resolve(label)),
+      marketData: (label?: string) => new AsterMarketDataScope(this.client, resolve(label)),
+      advancedOrders: (label?: string) => new AsterAdvancedOrdersScope(this.client, resolve(label)),
+      subAccounts: (label?: string) => new AsterSubAccountsScope(this.client, resolve(label)),
+    };
   }
 
   /** Un client WS unifié par label (réutilisé pour partager le ref-counting des sockets). */
