@@ -58,7 +58,7 @@ await dex.native.builders().revoke('0x…');
 
 ```ts
 await dex.native.mmp().getConfig('BTCUSDT');
-await dex.native.mmp().set({ symbol: 'BTCUSDT', windowMs: 5000, frozenMs: 10000, qtyLimit: '100' });
+await dex.native.mmp().set({ symbol: 'BTCUSDT', windowTimeInMilliseconds: 5000, frozenTimeInMilliseconds: 10000, qtyLimit: 100 });
 await dex.native.mmp().reset('BTCUSDT');
 await dex.native.mmp().remove('BTCUSDT');
 ```
@@ -156,7 +156,7 @@ await dex.native.perp().getOpenById({ name: 'BTCUSDT', id: '123' });           /
 | `update(p)` | `UpdateSubAccountParams` | `Promise<CodeMsg>` |
 
 ```ts
-await dex.native.subAccounts().create({ subAccountId: 'sub1' });
+await dex.native.subAccounts().create({ subSourceAddr: '0x…', subAccountName: 'sub1', childPrivateKey: '0x…' });
 // Transfert master↔sous-compte : voir transfers() (commun) → dex.transfers().transfer({ to: { subAccount } })
 ```
 
