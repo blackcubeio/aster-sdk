@@ -126,7 +126,11 @@ Surplus **perp** : lectures marché supplémentaires (publiques) **+** ordres av
 | `getById(p)` | `OrderRefParams` (`{ name, id?, clientId? }`) | `Promise<Order>` |
 | `getOpenById(p)` | `OrderRefParams` | `Promise<Order>` (endpoint `/openOrder`) |
 
+`StrategyType` est un **enum exporté par le package** (valeur) — `import { StrategyType } from '@blackcube/aster-sdk'`.
+
 ```ts
+import { StrategyType } from '@blackcube/aster-sdk';
+
 // lectures marché (sorties = types communs Trade / Price)
 await dex.native.perp().getAggregateTrades({ name: 'BTCUSDT', limit: 100 });   // Trade[]
 await dex.native.perp().getFundingInfo();                                      // FundingConfig[]

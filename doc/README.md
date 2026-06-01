@@ -8,8 +8,8 @@ et WebSocket) est dans le [README racine](../README.md).
 
 - [**common.md**](./common.md) — surface **unifiée** (portable), **identique sur les 4 SDK** :
   scopes `perp`/`spot`/`account`/`system`/`helpers`/`ws`, interfaces in/out, méthodes, exemple par méthode.
-- [**native.md**](./native.md) — surface **`native` spécifique à Aster** (`agents`, `builders`, `mmp`,
-  `modes`, `analytics`, `marketData`, `advancedOrders`, `subAccounts`) : interfaces in/out, méthodes, exemples.
+- [**native.md**](./native.md) — surface **`native` spécifique à Aster** (`perp`, `account`, `agents`,
+  `builders`, `mmp`, `modes`, `subAccounts`, `prediction`) : interfaces in/out, méthodes, exemples.
 - [README racine](../README.md) — la classe `Aster`, REST vs WebSocket, vue d'ensemble.
 - [Signing](./signing.md) — détail des signatures EVM (EIP-712 / secp256k1) et Solana (ed25519),
   modèle de signer, nonce. Bas niveau : ce que la classe fait en interne.

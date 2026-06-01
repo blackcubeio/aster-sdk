@@ -1,18 +1,19 @@
-# Signing
+# Signature
 
-Aster V3 replaces the V1 `API key + HMAC` model with a **Web3 / agent** model: requests are signed
-with an EVM private key over an **EIP-712 typed message**, and carry a microsecond `nonce` for
-replay protection.
+Aster V3 remplace le modèle V1 `clé API + HMAC` par un modèle **Web3 / agent** : les requêtes sont
+signées avec une clé privée EVM sur un **message typé EIP-712**, et portent un `nonce` en microsecondes
+pour la protection contre le rejeu.
 
-## The `Message { msg }` envelope (agent signing)
+## L'enveloppe `Message { msg }` (signature agent)
 
-Trading and most `USER_DATA` reads are signed by the **API wallet (agent)** key. The flow:
+Le trading et la plupart des lectures `USER_DATA` sont signés par la clé de l'**API wallet (agent)**.
+Le flux :
 
-1. Build the business parameters, then append `nonce` (µs timestamp) and `signer` (agent address).
-2. Serialize them as a URL-encoded query string in **insertion order** — this is `msg`.
-3. Wrap `msg` in the EIP-712 typed data below and sign it (ECDSA secp256k1).
-4. Send the **exact** serialized string on the wire (query or `x-www-form-urlencoded` body) with
-   `&signature=0x…` appended, so the server reconstructs an identical `msg`.
+1. Construire les paramètres métier, puis ajouter `nonce` (timestamp µs) et `signer` (adresse de l'agent).
+2. Les sérialiser en query string URL-encodée dans **l'ordre d'insertion** — c'est `msg`.
+3. Envelopper `msg` dans la donnée typée EIP-712 ci-dessous et la signer (ECDSA secp256k1).
+4. Envoyer **exactement** la chaîne sérialisée sur le fil (query ou corps `x-www-form-urlencoded`) avec
+   `&signature=0x…` ajouté, pour que le serveur reconstruise un `msg` identique.
 
 ```jsonc
 {
@@ -29,89 +30,96 @@ Trading and most `USER_DATA` reads are signed by the **API wallet (agent)** key.
   "domain": {
     "name": "AsterSignTransaction",
     "version": "1",
-    "chainId": 1666,                 // mainnet — 714 on testnet
+    "chainId": 1666,                 // mainnet — 714 sur testnet
     "verifyingContract": "0x0000000000000000000000000000000000000000"
   },
-  "message": { "msg": "<url-encoded query string>" }
+  "message": { "msg": "<query string URL-encodée>" }
 }
 ```
 
-The signature is the 65-byte `r ‖ s ‖ v` hex (v = recovery + 27), exactly as `eth_account` /
-`ethers` produce.
+La signature est le hex 65 octets `r ‖ s ‖ v` (v = recovery + 27), exactement comme `eth_account` /
+`ethers` les produisent.
 
-### SDK API
+### API du SDK
+
+Ces helpers sont **exportés par le package** (valeurs). Ils sont surtout utilisés en interne par les
+endpoints signés, mais restent accessibles pour intégrer une signature sur mesure.
 
 ```ts
 import { buildSignedRequest, signMessage, hashMessage, privateKeyToAddress } from '@blackcube/aster-sdk';
 
-// Used internally by signed endpoints:
-const { body, network } = buildSignedRequest({ symbol: 'BTCUSDT', side: 'BUY', /* … */ }, 'trader');
-// body === "symbol=BTCUSDT&side=BUY&…&nonce=<µs>&signer=0x…&signature=0x…"
+// `buildSignedRequest` reçoit le client interne de la façade ; en usage applicatif courant,
+// la signature est faite automatiquement par les méthodes signées (place, withdraw, …).
+const address = privateKeyToAddress('0x…'); // adresse EVM (checksum EIP-55) dérivée de la clé
+const digest = hashMessage('symbol=BTCUSDT&side=BUY&…', 714); // digest EIP-712 (testnet)
+const signature = signMessage('symbol=BTCUSDT&side=BUY&…', '0x…', 714); // r‖s‖v
 ```
 
-- `buildSignedRequest(params, label)` — resolves the signer, appends `nonce`/`signer`, signs, and
-  returns the wire-ready form body plus the target network.
-- `signMessage(msg, privateKey, chainId)` / `hashMessage(msg, chainId)` — low-level EIP-712 sign /
-  digest.
-- `privateKeyToAddress(privateKey)` — EVM address (EIP-55 checksummed) from a key.
+- `buildSignedRequest(client, params, label?)` — résout le signer, ajoute `nonce`/`user`/`signer`, signe,
+  et renvoie le corps prêt pour le fil plus le réseau cible (`{ body, network }`).
+- `signMessage(msg, privateKey, chainId)` / `hashMessage(msg, chainId)` — signature / digest EIP-712 bas niveau.
+- `privateKeyToAddress(privateKey)` — adresse EVM (checksum EIP-55) à partir d'une clé.
 
 ## Nonce
 
-`nonce` is the current timestamp in **microseconds** (`microsecondNonce()`), strictly increasing,
-and must stay within **10 seconds** of server time. Aster keeps the 100 most recent nonces per
-user; an already-seen or too-old nonce is rejected. `Noop` reuses a nonce to cancel a queued
-order — see roadmap.
+`nonce` est le timestamp courant en **microsecondes** (`microsecondNonce()`), strictement croissant,
+et doit rester dans les **10 secondes** de l'heure serveur. Aster conserve les 100 nonces les plus
+récents par utilisateur ; un nonce déjà vu ou trop ancien est rejeté. `Noop` réutilise un nonce pour
+annuler un ordre en file — voir la roadmap.
 
-## Networks & chain IDs
+## Réseaux et chain IDs
 
-| Flow | EIP-712 `chainId` mainnet | testnet |
+| Flux | `chainId` EIP-712 mainnet | testnet |
 |---|---|---|
 | Agent (trading / user_data) | `1666` | `714` |
-| Account-management (main wallet) | `56` | `56` |
+| Gestion de compte (wallet principal) | `56` | `56` |
 
-Agent flows derive the chain ID from the signer's `network` (`AGENT_CHAIN_ID`). Account-management
-flows use a fixed `signatureChainId = 56` (`SIGNATURE_CHAIN_ID`), regardless of network.
+Les flux agent dérivent le chain ID du `network` du signer (`AGENT_CHAIN_ID`). Les flux de gestion de
+compte utilisent un `signatureChainId = 56` fixe (`SIGNATURE_CHAIN_ID`), quel que soit le réseau.
 
-## ✅ Resolved — account-management signing (`chainId = 56`)
+## ✅ Résolu — signature de gestion de compte (`chainId = 56`)
 
-Account-management endpoints (agent approval, sub-accounts, builders, withdraw, asset migration)
-are signed by the **main wallet** key (`mainPrivateKey`) and send an extra `signatureChainId`. The
-official docs were **internally contradictory** (the "Supported Algorithms" tables stated `56`,
-while the inline EIP-712 templates for the same endpoints showed `1666 / 714`).
+Les endpoints de gestion de compte (approbation d'agent, sous-comptes, builders, retrait, migration
+d'actifs) sont signés par la clé du **wallet principal** (`mainPrivateKey`) et envoient un
+`signatureChainId` supplémentaire. La doc officielle était **contradictoire en interne** (les tableaux
+« Supported Algorithms » indiquaient `56`, tandis que les gabarits EIP-712 inline des mêmes endpoints
+montraient `1666 / 714`).
 
-**Validated empirically against the Aster testnet (2026-06-01)**: an `ApproveAgent` signed in
-EIP-712 with `chainId = 56` is **accepted** (`code: 200, msg: "success"`) — no `-1022` "signature
-not valid". The whole account-management group shares this signing path (`buildMainTypedRequest`),
-so `56` is wired and correct. The signing uses a *dynamic* typed structure (named primary type,
-capitalised fields), not the `Message { msg }` envelope. See `tests/chainid-probe.testnet.test.ts`.
+**Validé empiriquement contre le testnet Aster (2026-06-01)** : un `ApproveAgent` signé en EIP-712 avec
+`chainId = 56` est **accepté** (`code: 200, msg: "success"`) — pas de `-1022` « signature not valid ».
+Tout le groupe de gestion de compte partage ce chemin de signature (`buildMainTypedRequest`), donc `56`
+est câblé et correct. La signature utilise une structure typée *dynamique* (type primaire nommé, champs
+capitalisés), pas l'enveloppe `Message { msg }`. Voir `tests/chainid-probe.testnet.test.ts`.
 
-## Solana accounts (ed25519)
+## Comptes Solana (ed25519)
 
-Aster also supports **native Solana accounts**. The SDK **auto-detects** the key type from
-`privateKey`: prefix `0x…` → EVM (secp256k1 / EIP-712) ; otherwise → **Solana** (ed25519 / base58).
-No `keyType` field to set.
+Aster supporte aussi les **comptes Solana natifs**. Le SDK **auto-détecte** le type de clé depuis
+`privateKey` : préfixe `0x…` → EVM (secp256k1 / EIP-712) ; sinon → **Solana** (ed25519 / base58).
+Aucun champ `keyType` à renseigner.
 
 ```ts
 const dex = new Aster({ sol: { privateKey: '<base58>', user: '<base58 pubkey>', network: 'mainnet' } });
 await dex.account('sol').getBalances();   // signé en ed25519
 ```
 
-- The Solana account signs the **same querystring** as EVM, but with **ed25519** (signature
-  base58) instead of EIP-712 — `signQueryString` branches on the key type. The Solana wallet is its
-  own authority (no separate `mainPrivateKey`).
-- **No API sub-accounts in Solana.** `getSubAccountList`, `createSubAccount`, `bindSubAccount`,
-  `updateSubAccount`, `subAccountTransfer` (and `withdrawSpot`) **throw** for a Solana signer
-  (`assertEvmSigner`) — verified non-functional on testnet (they require an EVM agent). Agent/builder
-  management for Solana signs ed25519 over the plain querystring.
+- Le compte Solana signe la **même query string** que l'EVM, mais en **ed25519** (signature base58)
+  au lieu d'EIP-712 — `signQueryString` branche selon le type de clé. Le wallet Solana est sa propre
+  autorité (pas de `mainPrivateKey` séparée).
+- **Pas de sous-comptes API en Solana.** `getSubAccountList`, `createSubAccount`, `bindSubAccount`,
+  `updateSubAccount`, `subAccountTransfer` (et `withdrawSpot`) **lèvent** pour un signer Solana
+  (`assertEvmSigner`) — vérifié non fonctionnel sur testnet (ils exigent un agent EVM). La gestion
+  agent/builder pour Solana signe en ed25519 sur la query string brute.
 
-## Validation status
+## Statut de validation
 
-- ✅ `privateKeyToAddress` is checked against a real key/address vector from the Aster docs
+- ✅ `privateKeyToAddress` est vérifié contre un vecteur clé/adresse réel de la doc Aster
   (`tests/signing.test.ts`).
-- ✅ `signMessage` round-trips: the signature recovers to the signer public key.
-- ✅ **End-to-end accepted by the live backend**: a real agent-signed `GET /fapi/v3/balance` on
-  **mainnet** returns the account balances (`tests/futures-signed.test.ts`) — the `Message{msg}`
-  envelope, nonce, and signature are correct.
-- ✅ **Solana ed25519** accepted on testnet (a `GET /fapi/v3/balance` signed with the Solana key
-  reached business logic — `No agent found`, not a signature error). `solanaAddress` checked against
-  the real `SOLANA_PUBLIC_KEY` vector; `signEd25519` round-trips (`tests/solana-signing.test.ts`).
+- ✅ `signMessage` fait l'aller-retour : la signature recouvre la clé publique du signer.
+- ✅ **Accepté de bout en bout par le backend live** : un `GET /fapi/v3/balance` signé agent sur
+  **mainnet** renvoie les soldes du compte (`tests/futures-signed.test.ts`) — l'enveloppe `Message{msg}`,
+  le nonce et la signature sont corrects.
+- ✅ **Solana ed25519** accepté sur testnet (un `GET /fapi/v3/balance` signé avec la clé Solana atteint
+  la logique métier — `No agent found`, pas une erreur de signature). `solanaAddress` vérifié contre le
+  vecteur `SOLANA_PUBLIC_KEY` réel ; `signEd25519` fait l'aller-retour (`tests/solana-signing.test.ts`).
+</content>
+</invoke>
