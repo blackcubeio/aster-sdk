@@ -29,11 +29,14 @@ export const AGENT_CHAIN_ID = { mainnet: 1666, testnet: 714 } as const;
 
 /**
  * `signatureChainId` envoyé par les endpoints de gestion de compte (approveAgent,
- * sous-comptes, withdraw, migrate…) signés par le main wallet EVM : 56 (BNB Chain).
+ * sous-comptes, withdraw, migrate…) signés par le main wallet EVM : **56** (BNB Chain).
  *
- * ⚠️ La doc Aster est contradictoire (table « Supported Algorithms » = 56, mais le
- * template EIP-712 montre 1666/714). À confirmer empiriquement contre le testnet
- * avant d'implémenter le groupe account-management.
+ * ✅ **Validé empiriquement contre le testnet Aster (2026-06-01)** : une `ApproveAgent`
+ * signée en EIP-712 avec chainId 56 est **acceptée** (`code: 200, msg: "success"`), aucun
+ * `-1022` « signature not valid ». La doc officielle était contradictoire (table « Supported
+ * Algorithms » = 56 vs template EIP-712 = 1666/714) ; le serveur tranche pour **56**. Tout le
+ * groupe account-management partage cette signature (`buildMainTypedRequest`). Cf.
+ * `tests/chainid-probe.testnet.test.ts`.
  */
 export const SIGNATURE_CHAIN_ID = 56;
 

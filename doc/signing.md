@@ -67,23 +67,23 @@ order — see roadmap.
 | Flow | EIP-712 `chainId` mainnet | testnet |
 |---|---|---|
 | Agent (trading / user_data) | `1666` | `714` |
+| Account-management (main wallet) | `56` | `56` |
 
-The chain ID is derived from the signer's `network`. See `AGENT_CHAIN_ID` in `common/constants`.
+Agent flows derive the chain ID from the signer's `network` (`AGENT_CHAIN_ID`). Account-management
+flows use a fixed `signatureChainId = 56` (`SIGNATURE_CHAIN_ID`), regardless of network.
 
-## ⚠️ Open question — account-management signing
+## ✅ Resolved — account-management signing (`chainId = 56`)
 
 Account-management endpoints (agent approval, sub-accounts, builders, withdraw, asset migration)
 are signed by the **main wallet** key (`mainPrivateKey`) and send an extra `signatureChainId`. The
-official docs are **internally contradictory** here:
+official docs were **internally contradictory** (the "Supported Algorithms" tables stated `56`,
+while the inline EIP-712 templates for the same endpoints showed `1666 / 714`).
 
-- the "Supported Algorithms" tables state `chainId = 56` (BNB Chain) with `signatureChainId = 56`;
-- the inline EIP-712 templates for the same endpoints show `chainId = 1666 / 714`;
-- one demo (`aster-code.py`) uses a *dynamic* typed structure (named primary type, capitalised
-  fields) instead of the `Message { msg }` envelope.
-
-This is exactly the kind of detail that must be **validated empirically** against the testnet
-before shipping. The account-management group is therefore **deferred** (see [PLAN.md](../PLAN.md));
-`SIGNATURE_CHAIN_ID = 56` is declared in `common/constants` but not yet wired to a signer.
+**Validated empirically against the Aster testnet (2026-06-01)**: an `ApproveAgent` signed in
+EIP-712 with `chainId = 56` is **accepted** (`code: 200, msg: "success"`) — no `-1022` "signature
+not valid". The whole account-management group shares this signing path (`buildMainTypedRequest`),
+so `56` is wired and correct. The signing uses a *dynamic* typed structure (named primary type,
+capitalised fields), not the `Message { msg }` envelope. See `tests/chainid-probe.testnet.test.ts`.
 
 ## Solana accounts (ed25519)
 
