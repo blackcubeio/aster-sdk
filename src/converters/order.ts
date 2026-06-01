@@ -71,7 +71,7 @@ export class OrderConverter {
       reduceOnly: order.reduceOnly as boolean,
       updateTime: order.time,
       ...order.xtras,
-    } as unknown as OrderNative;
+    } as OrderNative;
   }
 }
 

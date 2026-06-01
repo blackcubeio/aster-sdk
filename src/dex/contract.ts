@@ -109,6 +109,11 @@ export interface IMarketData {
 
 /** Métadonnées de marché du produit (infos d'échange, symboles…). */
 export interface IMarketMeta {
+  /**
+   * Infos d'échange du produit. **Brut volontaire** : passe-plat du payload natif (chaque DEX a un
+   * `exchangeInfo` de forme totalement différente) — pas de forme commune cross-DEX, donc `unknown`
+   * assumé (la façade renvoie le natif tel quel ; à narrower côté appelant si besoin du natif).
+   */
   getExchangeInfo(): Promise<unknown>;
 }
 
@@ -122,6 +127,11 @@ export interface ITrading {
   place(input: PlaceOrderParams): Promise<Order>;
   cancel(input: CancelOrderParams): Promise<void>;
   cancelAll(input: CancelAllParams): Promise<{ cancelled: number | null }>;
+  /**
+   * Modifie un ordre. Contrainte DEX : `edit` ne renvoie que **l'identité du nouvel ordre**
+   * (`{ name, id }`), **pas** un snapshot complet comme `place()` → `Order`. La modification
+   * remplace l'ordre côté venue ; l'état complet doit être relu (`getOpens`/`getById`).
+   */
   edit(input: EditOrderParams): Promise<{ name: string; id: string }>;
   updateLeverage(input: LeverageParams): Promise<unknown>;
 }
@@ -148,6 +158,10 @@ export interface IProductAccount {
   getPositions(query?: SymbolParams): Promise<Position[]>;
   getOpens(query?: SymbolParams): Promise<Order[]>;
   getUserTrades(query?: SymbolParams): Promise<UserTrade[]>;
+  /**
+   * Snapshot de compte du produit. **Brut volontaire** : passe-plat du payload natif (forme propre
+   * à chaque DEX, sans dénominateur commun) — `unknown` assumé, pas une lacune de typage.
+   */
   getAccountInfo(): Promise<unknown>;
 }
 
@@ -161,6 +175,13 @@ export interface IOrderHistory {
 /** Compte transverse (sans notion de produit) : soldes + retrait (les 3 DEX). */
 export interface IAccount {
   getBalances(): Promise<Balance[]>;
+  /**
+   * Retrait on-chain. Le **résultat** n'a **pas de forme commune cross-DEX** (Aster renvoie
+   * `{ withdrawId, hash }`, HL/Pacifica/Lighter renvoient des acks différents) → `unknown` assumé
+   * au niveau du contrat. Chaque façade peut **renforcer** ce retour vers son type concret (Aster :
+   * `WithdrawResult`). Les champs requis spécifiques au DEX passent par le `[extra]` de
+   * {@link WithdrawParams} et sont **validés par la façade avant l'appel réseau**.
+   */
   withdraw(input: WithdrawParams): Promise<unknown>;
 }
 

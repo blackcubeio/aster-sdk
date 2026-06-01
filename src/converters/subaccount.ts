@@ -16,6 +16,6 @@ export class SubAccountConverter {
   }
 
   toNative(account: SubAccount): SubAccountNative {
-    return { address: account.address, ...account.xtras } as unknown as SubAccountNative;
+    return { address: account.address, ...account.xtras } as SubAccountNative;
   }
 }

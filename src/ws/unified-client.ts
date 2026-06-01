@@ -1,6 +1,7 @@
 import type { AsterClient } from '../common/config';
 import type {
   Candle,
+  JsonValue,
   KlineInterval,
   MarketKind,
   Order,
@@ -19,10 +20,25 @@ import { type AccountPositionWsNative, PositionWsConverter } from '../converters
 import { type MarkPriceWsNative, PricesWsConverter } from '../converters/price';
 import { type AggTradeWsNative, TradeWsConverter } from '../converters/trade';
 import { type OrderTradeFillWsNative, UserTradeWsConverter } from '../converters/user-trade';
-import { createListenKey } from '../rest/futures/user-stream/listen-key';
+import { createListenKey, keepAliveListenKey } from '../rest/futures/user-stream/listen-key';
 import { FuturesWsClient } from './futures-client';
 import { FuturesUserDataStream } from './futures-user-data';
 import { SpotWsClient } from './spot-client';
+
+/** Rafraîchit le `listenKey` toutes les 30 min (moitié de la fenêtre serveur de 60 min). */
+const LISTEN_KEY_KEEPALIVE_MS = 30 * 60_000;
+
+/**
+ * Frontière de confiance **wire WebSocket** : le flux délivre du JSON brut (`JsonValue`) dont la
+ * forme exacte est documentée par chaque convertisseur WS (`KlineWsNative`, `AggTradeWsNative`…).
+ * Le narrowing `JsonValue → forme native documentée` est, par nature, un acte de confiance runtime
+ * (on ne re-valide pas chaque champ) ; cette unique fonction le **localise et le documente** plutôt
+ * que d'éparpiller des `as unknown as` aux points d'appel. Si la forme backend dérive, le
+ * convertisseur produira un `Candle`/`Trade`/… aux champs `undefined` — pas un crash silencieux.
+ */
+function fromWire<T>(raw: JsonValue): T {
+  return raw as unknown as T;
+}
 
 /**
  * Client WebSocket **unifié Blackcube** (interne ; exposé via `Aster.ws()`). Chaque méthode
@@ -36,6 +52,9 @@ import { SpotWsClient } from './spot-client';
  * `subscribeX(…) → unsubscribe()`. Converters WS **unidirectionnels** (lecture seule).
  */
 export class UnifiedWsClient {
+  /** Remonte les erreurs réseau/keepAlive non avalées (cf. §5 spec WS commune). */
+  public onError: ((error: unknown) => void) | null = null;
+
   private readonly client: AsterClient;
   private readonly label: string | undefined;
 
@@ -47,6 +66,7 @@ export class UnifiedWsClient {
   private userData: FuturesUserDataStream | null = null;
   private userDataPromise: Promise<FuturesUserDataStream> | null = null;
   private userDataRefs = 0;
+  private userDataKeepAlive: ReturnType<typeof setInterval> | null = null;
 
   constructor(client: AsterClient, label?: string) {
     this.client = client;
@@ -117,6 +137,15 @@ export class UnifiedWsClient {
       this.userDataPromise = createListenKey(this.client, label).then(({ listenKey }) => {
         const stream = new FuturesUserDataStream(this.client, listenKey, { label });
         this.userData = stream;
+        // §5 : le listenKey expire à ~60 min sans rafraîchissement → on le prolonge toutes les 30 min
+        // pour que la reconnexion sur la même URL reste valide. Les échecs remontent via onError.
+        this.userDataKeepAlive = setInterval(() => {
+          keepAliveListenKey(this.client, label).catch((error: unknown) => {
+            if (this.onError !== null) {
+              this.onError(error);
+            }
+          });
+        }, LISTEN_KEY_KEEPALIVE_MS);
         return stream.connect().then(() => stream);
       });
     }
@@ -134,7 +163,12 @@ export class UnifiedWsClient {
           off = stream.on(eventType, (event) => handler(event));
         }
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        // Ne pas avaler : une création de listenKey ratée laisse l'abonnement mort sans trace.
+        if (this.onError !== null) {
+          this.onError(error);
+        }
+      });
     return () => {
       if (cancelled === true) {
         return;
@@ -143,6 +177,10 @@ export class UnifiedWsClient {
       off();
       this.userDataRefs -= 1;
       if (this.userDataRefs <= 0 && this.userData !== null) {
+        if (this.userDataKeepAlive !== null) {
+          clearInterval(this.userDataKeepAlive);
+          this.userDataKeepAlive = null;
+        }
         this.userData.disconnect();
         this.userData = null;
         this.userDataPromise = null;
@@ -160,7 +198,7 @@ export class UnifiedWsClient {
     const converter = new CandleWsConverter(kind);
     return this.subscribeMarket(kind, (client) =>
       client.subscribeKline(params.name, params.interval as KlineInterval, (raw) => {
-        handler(converter.toCommon(raw as unknown as KlineWsNative));
+        handler(converter.toCommon(fromWire<KlineWsNative>(raw)));
       }),
     );
   }
@@ -174,7 +212,7 @@ export class UnifiedWsClient {
     const converter = new TradeWsConverter();
     return this.subscribeMarket(kind, (client) =>
       client.subscribeAggTrade(params.name, (raw) => {
-        handler(converter.toCommon(raw as unknown as AggTradeWsNative));
+        handler(converter.toCommon(fromWire<AggTradeWsNative>(raw)));
       }),
     );
   }
@@ -188,7 +226,7 @@ export class UnifiedWsClient {
     const converter = new BboWsConverter(kind);
     return this.subscribeMarket(kind, (client) =>
       client.subscribeBookTicker(params.name, (raw) => {
-        handler(converter.toCommon(raw as unknown as BookTickerWsNative));
+        handler(converter.toCommon(fromWire<BookTickerWsNative>(raw)));
       }),
     );
   }
@@ -202,7 +240,7 @@ export class UnifiedWsClient {
     const converter = new OrderBookWsConverter(kind);
     return this.subscribeMarket(kind, (client) =>
       client.subscribePartialDepth(params.name, 20, (raw) => {
-        handler(converter.toCommon(raw as unknown as DepthWsNative));
+        handler(converter.toCommon(fromWire<DepthWsNative>(raw)));
       }),
     );
   }
@@ -215,7 +253,7 @@ export class UnifiedWsClient {
     const converter = new PricesWsConverter('perp');
     return this.subscribeMarket('perp', (client) =>
       (client as FuturesWsClient).subscribeAllMarkPrices((raw) => {
-        handler(converter.toCommon(raw as unknown as MarkPriceWsNative[]));
+        handler(converter.toCommon(fromWire<MarkPriceWsNative[]>(raw)));
       }),
     );
   }

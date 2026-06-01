@@ -27,6 +27,6 @@ export class BalanceConverter {
       balance: balance.total,
       availableBalance: balance.available as string,
       ...balance.xtras,
-    } as unknown as BalanceNative;
+    } as BalanceNative;
   }
 }

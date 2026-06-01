@@ -4,12 +4,24 @@ import type { JsonValue } from '../common/types';
 import type { FuturesUserDataOptions } from '../common/ws';
 import type { EventHandler, Unsubscribe } from '../common/ws';
 import { resolveReadNetwork } from '../rest/client';
+import {
+  IDLE_TIMEOUT_MS,
+  RECONNECT_BASE_MS,
+  RECONNECT_CAP_MS,
+  RECONNECT_FACTOR,
+  RECONNECT_JITTER,
+  RECONNECT_STABLE_MS,
+} from './ws-constants';
 
 /**
  * Flux user-data futures (`fstream/ws/<listenKey>`). Connexion brute liée à un `listenKey`
  * (cf. `createListenKey`) : chaque message porte un type d'événement `e`
  * (`ACCOUNT_UPDATE`, `ORDER_TRADE_UPDATE`, `listenKeyExpired`…) sur lequel on dispatche.
- * Pense à rafraîchir le `listenKey` (`keepAliveListenKey`) toutes les ~60 min.
+ *
+ * Le `listenKey` est maintenu vivant côté client unifié (scheduler `keepAliveListenKey`,
+ * cf. `UnifiedWsClient.ensureUserData`) : la reconnexion sur **la même URL** reste donc valide.
+ * Robustesse (spec commune 4 SDK) : backoff exponentiel + jitter + cap, reset après stabilité,
+ * idle-timeout, parsing défensif. Pas de re-subscribe wire (l'URL porte le listenKey).
  */
 export class FuturesUserDataStream {
   public onMessage: ((event: JsonValue) => void) | null = null;
@@ -22,6 +34,11 @@ export class FuturesUserDataStream {
   private socket: WebSocketLike | null = null;
   private readonly handlers = new Map<string, Set<EventHandler>>();
   private shouldReconnect = false;
+  private reconnectAttempts = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastMessageAt = 0;
+  private stableTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(client: AsterClient, listenKey: string, options: FuturesUserDataOptions = {}) {
     const base = client.wsUrls.futures[resolveReadNetwork(client, options.label)];
@@ -34,7 +51,14 @@ export class FuturesUserDataStream {
     return new Promise((resolve, reject) => {
       const socket = this.createSocket(this.url);
       this.socket = socket;
-      socket.onopen = () => resolve();
+      socket.onopen = () => {
+        this.bumpIdle();
+        this.stableTimer = setTimeout(() => {
+          this.reconnectAttempts = 0;
+          this.stableTimer = null;
+        }, RECONNECT_STABLE_MS);
+        resolve();
+      };
       socket.onmessage = (event) => this.handleMessage(event.data);
       socket.onerror = (error) => {
         if (this.onError !== null) {
@@ -48,6 +72,15 @@ export class FuturesUserDataStream {
 
   public disconnect(): void {
     this.shouldReconnect = false;
+    this.stopIdleTimer();
+    if (this.stableTimer !== null) {
+      clearTimeout(this.stableTimer);
+      this.stableTimer = null;
+    }
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.socket !== null) {
       this.socket.close();
       this.socket = null;
@@ -68,7 +101,16 @@ export class FuturesUserDataStream {
   }
 
   private handleMessage(raw: unknown): void {
-    const message = JSON.parse(String(raw)) as JsonValue;
+    this.bumpIdle();
+    let message: JsonValue;
+    try {
+      message = JSON.parse(String(raw)) as JsonValue;
+    } catch {
+      if (this.onError !== null) {
+        this.onError(new Error('WebSocket : message JSON illisible ignoré'));
+      }
+      return;
+    }
     if (this.onMessage !== null) {
       this.onMessage(message);
     }
@@ -86,27 +128,78 @@ export class FuturesUserDataStream {
     }
   }
 
+  // ── Idle-timeout (pas de ping JSON applicatif côté Aster/Binance) ──
+
+  private bumpIdle(): void {
+    this.lastMessageAt = Date.now();
+    this.stopIdleTimer();
+    this.idleTimer = setTimeout(() => {
+      // Défense contre la dérive du timer (machine en veille…) : on ne force la reconnexion que si
+      // l'inactivité réelle (depuis le dernier message) atteint bien le seuil.
+      if (Date.now() - this.lastMessageAt >= IDLE_TIMEOUT_MS) {
+        this.forceReconnect();
+      } else {
+        this.bumpIdle();
+      }
+    }, IDLE_TIMEOUT_MS);
+  }
+
+  private stopIdleTimer(): void {
+    if (this.idleTimer !== null) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+  }
+
+  private forceReconnect(): void {
+    if (this.socket !== null) {
+      this.socket.close();
+    }
+  }
+
   private handleClose(): void {
+    this.stopIdleTimer();
+    if (this.stableTimer !== null) {
+      clearTimeout(this.stableTimer);
+      this.stableTimer = null;
+    }
     this.socket = null;
     if (this.onClose !== null) {
       this.onClose();
     }
     if (this.shouldReconnect === true) {
-      this.reconnect();
+      this.scheduleReconnect();
     }
   }
 
-  private reconnect(): void {
-    this.connect()
-      .then(() => {
-        if (this.onReconnect !== null) {
-          this.onReconnect();
-        }
-      })
-      .catch((error: unknown) => {
-        if (this.onError !== null) {
-          this.onError(error);
-        }
-      });
+  private scheduleReconnect(): void {
+    if (this.shouldReconnect === false) {
+      return;
+    }
+    const capped = Math.min(
+      RECONNECT_BASE_MS * RECONNECT_FACTOR ** this.reconnectAttempts,
+      RECONNECT_CAP_MS,
+    );
+    const jitter = capped * RECONNECT_JITTER * (2 * Math.random() - 1);
+    const delay = Math.max(0, Math.round(capped + jitter));
+    this.reconnectAttempts += 1;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect()
+        .then(() => this.afterReconnect())
+        .catch((error: unknown) => {
+          if (this.onError !== null) {
+            this.onError(error);
+          }
+          this.scheduleReconnect();
+        });
+    }, delay);
+  }
+
+  /** L'URL porte le listenKey (maintenu vivant côté client unifié) → rien à rejouer côté wire. */
+  private afterReconnect(): void {
+    if (this.onReconnect !== null) {
+      this.onReconnect();
+    }
   }
 }

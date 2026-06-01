@@ -18,6 +18,7 @@ import {
   SubAccountTransferKind,
   TransferKind,
 } from '../common/futures';
+import type { WithdrawParams as AsterWithdrawParams, WithdrawResult } from '../common/spot';
 import type {
   Balance,
   Candle,
@@ -291,6 +292,13 @@ class AsterMarket
   }
 
   public place(input: PlaceOrderParams): Promise<Order> {
+    // Un ordre à prix (limit/stop/takeProfit) sans `price` valide serait signé puis rejeté côté
+    // serveur (ou pire, placé à 0) : on échoue clairement AVANT l'appel réseau (cf. HL place-order).
+    const needsPrice =
+      input.type === 'limit' || input.type === 'stop' || input.type === 'takeProfit';
+    if (needsPrice === true && (input.price === undefined || input.price === '')) {
+      throw new Error(`place (Aster) : \`price\` est requis pour un ordre "${input.type}".`);
+    }
     return placeOrder(this.client, { ...input, kind: this.kind }, this.signed());
   }
   public cancel(input: CancelOrderParams): Promise<void> {
@@ -358,8 +366,35 @@ class AsterAccount implements IAccount, ISubAccounts, IDeadManSwitch {
   public getSubAccounts(): Promise<SubAccount[]> {
     return getSubAccounts(this.client, this.signed());
   }
-  public withdraw(input: WithdrawParams): Promise<unknown> {
-    return withdraw(this.client, input as never, this.signed());
+  /**
+   * Retrait on-chain. Aster **exige** `chainId`, `asset` et `fee` (en plus du `amount` commun) —
+   * fournis via le contrat ouvert `WithdrawParams` (`[extra]`). On les valide **avant** l'appel
+   * réseau (sinon l'EIP-712 serait signée avec des champs vides → retrait perdu/rejeté côté serveur).
+   * `address` = réception (défaut : `user` du signer). Estimer `fee` via `native` / `getWithdrawFeeSpot`.
+   */
+  public withdraw(input: WithdrawParams): Promise<WithdrawResult> {
+    const chainId = input.chainId;
+    const asset = input.asset;
+    const fee = input.fee;
+    if (typeof chainId !== 'string' || chainId === '') {
+      throw new Error('withdraw (Aster) : `chainId` (string, ex. "56") est requis.');
+    }
+    if (typeof asset !== 'string' || asset === '') {
+      throw new Error('withdraw (Aster) : `asset` (string) est requis.');
+    }
+    if (typeof fee !== 'string' || fee === '') {
+      throw new Error('withdraw (Aster) : `fee` (string) est requis (cf. getWithdrawFeeSpot).');
+    }
+    const params: AsterWithdrawParams = {
+      amount: input.amount,
+      chainId,
+      asset,
+      fee,
+      address: typeof input.address === 'string' ? input.address : undefined,
+      destinationChain:
+        typeof input.destinationChain === 'string' ? input.destinationChain : undefined,
+    };
+    return withdraw(this.client, params, this.signed());
   }
 
   // ── IDeadManSwitch ──

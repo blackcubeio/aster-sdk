@@ -32,7 +32,7 @@ export class TradeConverter {
       qty: trade.size,
       time: trade.time,
       ...trade.xtras,
-    } as unknown as TradeNative;
+    } as TradeNative;
   }
 }
 

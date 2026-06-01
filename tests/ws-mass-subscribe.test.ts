@@ -44,8 +44,16 @@ describe('ws() Aster — abonnement de masse (futures mainnet réel, public)', (
       off();
     }
 
-    // Avant le fix : 0 (socket fermée par la limite de débit). Après : flux multi-symboles bien vivant.
+    // Avant le `SubscriptionBatcher` : 0 (flood d'abonnements → socket fermée par la limite 10 msg/s,
+    // ban). Après : le flux multi-symboles est bien vivant.
+    //
+    // Note robustesse (spec WS 0.7.0) : abonner ~tous les perps (502) sur **une** socket dépasse les
+    // limites d'Aster côté serveur, qui ferme la connexion périodiquement. La reconnexion à **backoff
+    // exponentiel** (correcte : on n'inonde plus la venue) espace les tentatives → moins de symboles
+    // distincts vus dans une fenêtre courte qu'avec l'ancien reconnect immédiat (qui pilonnait la
+    // venue). Le test garde donc un seuil tolérant : ce qu'on prouve, c'est que le batcher évite le
+    // ban instantané et qu'un flux multi-symboles survit, pas que les 502 streams tiennent ensemble.
     expect(total).toBeGreaterThan(0);
-    expect(seen.size).toBeGreaterThan(10);
+    expect(seen.size).toBeGreaterThan(3);
   }, 50_000);
 });

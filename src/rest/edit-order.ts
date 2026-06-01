@@ -23,7 +23,7 @@ export function editOrder(
     (order) => ({
       name: params.name,
       id: String(order.orderId),
-      xtras: order as unknown as Record<string, unknown>,
+      xtras: { ...order },
     }),
   );
 }

@@ -45,7 +45,7 @@ export class PositionConverter {
       liquidationPrice: position.liquidationPrice as string,
       isolatedMargin: position.margin as string,
       ...position.xtras,
-    } as unknown as PositionNative;
+    } as PositionNative;
   }
 }
 

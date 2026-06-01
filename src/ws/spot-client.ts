@@ -5,10 +5,22 @@ import type { SpotDepthLevels, SpotWsOptions } from '../common/ws';
 import type { StreamHandler, Unsubscribe } from '../common/ws';
 import { resolveReadNetwork } from '../rest/client';
 import { SubscriptionBatcher } from './subscription-batcher';
+import {
+  IDLE_TIMEOUT_MS,
+  RECONNECT_BASE_MS,
+  RECONNECT_CAP_MS,
+  RECONNECT_FACTOR,
+  RECONNECT_JITTER,
+  RECONNECT_STABLE_MS,
+} from './ws-constants';
 
 /**
  * Client WebSocket des flux de marché spot (`sstream`), mode **combined** (`/stream`).
  * Dispatch par nom de flux ; payloads bruts (`JsonValue`). Re-souscription au reconnect.
+ *
+ * Robustesse (spec commune 4 SDK) : reconnect à backoff exponentiel + jitter + cap, reset du
+ * compteur après stabilité, idle-timeout (pas de ping JSON applicatif côté Aster/Binance),
+ * parsing défensif. Tout est interne ; l'API publique ne change pas.
  */
 export class SpotWsClient {
   public onMessage: ((message: JsonValue) => void) | null = null;
@@ -21,6 +33,12 @@ export class SpotWsClient {
   private socket: WebSocketLike | null = null;
   private readonly handlers = new Map<string, Set<StreamHandler>>();
   private shouldReconnect = false;
+  private reconnectAttempts = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastMessageAt = 0;
+  private stableTimer: ReturnType<typeof setTimeout> | null = null;
   /** Coalesce + throttle les SUBSCRIBE/UNSUBSCRIBE (limite Aster : 10 messages/s par connexion). */
   private readonly batcher = new SubscriptionBatcher((frame) => {
     this.socket?.send(frame);
@@ -39,6 +57,12 @@ export class SpotWsClient {
       this.socket = socket;
       socket.onopen = () => {
         this.batcher.setOpen(true);
+        this.startHeartbeat();
+        this.bumpIdle();
+        this.stableTimer = setTimeout(() => {
+          this.reconnectAttempts = 0;
+          this.stableTimer = null;
+        }, RECONNECT_STABLE_MS);
         resolve();
       };
       socket.onmessage = (event) => this.handleMessage(event.data);
@@ -54,6 +78,16 @@ export class SpotWsClient {
 
   public disconnect(): void {
     this.shouldReconnect = false;
+    this.stopHeartbeat();
+    this.stopIdleTimer();
+    if (this.stableTimer !== null) {
+      clearTimeout(this.stableTimer);
+      this.stableTimer = null;
+    }
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     this.batcher.setOpen(false);
     this.batcher.reset();
     if (this.socket !== null) {
@@ -140,7 +174,16 @@ export class SpotWsClient {
   }
 
   private handleMessage(raw: unknown): void {
-    const message = JSON.parse(String(raw)) as JsonValue;
+    this.bumpIdle();
+    let message: JsonValue;
+    try {
+      message = JSON.parse(String(raw)) as JsonValue;
+    } catch {
+      if (this.onError !== null) {
+        this.onError(new Error('WebSocket : message JSON illisible ignoré'));
+      }
+      return;
+    }
     if (this.onMessage !== null) {
       this.onMessage(message);
     }
@@ -162,7 +205,53 @@ export class SpotWsClient {
     }
   }
 
+  // ── Heartbeat / idle-timeout (pas de ping JSON applicatif côté Aster/Binance) ──
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  private bumpIdle(): void {
+    this.lastMessageAt = Date.now();
+    this.stopIdleTimer();
+    this.idleTimer = setTimeout(() => {
+      // Défense contre la dérive du timer (machine en veille…) : on ne force la reconnexion que si
+      // l'inactivité réelle (depuis le dernier message) atteint bien le seuil.
+      if (Date.now() - this.lastMessageAt >= IDLE_TIMEOUT_MS) {
+        this.forceReconnect();
+      } else {
+        this.bumpIdle();
+      }
+    }, IDLE_TIMEOUT_MS);
+  }
+
+  private stopIdleTimer(): void {
+    if (this.idleTimer !== null) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+  }
+
+  private forceReconnect(): void {
+    if (this.socket !== null) {
+      this.socket.close();
+    }
+  }
+
   private handleClose(): void {
+    this.stopHeartbeat();
+    this.stopIdleTimer();
+    if (this.stableTimer !== null) {
+      clearTimeout(this.stableTimer);
+      this.stableTimer = null;
+    }
     this.socket = null;
     this.batcher.setOpen(false);
     this.batcher.reset();
@@ -170,23 +259,39 @@ export class SpotWsClient {
       this.onClose();
     }
     if (this.shouldReconnect === true) {
-      this.reconnect();
+      this.scheduleReconnect();
     }
   }
 
-  private reconnect(): void {
-    this.connect()
-      .then(() => {
-        this.batcher.resubscribe(this.handlers.keys());
-        if (this.onReconnect !== null) {
-          this.onReconnect();
-        }
-      })
-      .catch((error: unknown) => {
-        if (this.onError !== null) {
-          this.onError(error);
-        }
-      });
+  private scheduleReconnect(): void {
+    if (this.shouldReconnect === false) {
+      return;
+    }
+    const capped = Math.min(
+      RECONNECT_BASE_MS * RECONNECT_FACTOR ** this.reconnectAttempts,
+      RECONNECT_CAP_MS,
+    );
+    const jitter = capped * RECONNECT_JITTER * (2 * Math.random() - 1);
+    const delay = Math.max(0, Math.round(capped + jitter));
+    this.reconnectAttempts += 1;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect()
+        .then(() => this.afterReconnect())
+        .catch((error: unknown) => {
+          if (this.onError !== null) {
+            this.onError(error);
+          }
+          this.scheduleReconnect();
+        });
+    }, delay);
+  }
+
+  private afterReconnect(): void {
+    this.batcher.resubscribe(this.handlers.keys());
+    if (this.onReconnect !== null) {
+      this.onReconnect();
+    }
   }
 }
 

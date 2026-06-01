@@ -52,6 +52,6 @@ export class PairConverter {
       quantityPrecision: pair.szDecimals,
       status: pair.status,
       ...pair.xtras,
-    } as unknown as AsterSymbol;
+    } as AsterSymbol;
   }
 }

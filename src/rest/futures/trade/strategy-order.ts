@@ -20,6 +20,8 @@ export function placeStrategyOrder(
 ): Promise<PlaceStrategyOrderResult> {
   const payload: JsonObject = {
     strategyType: params.strategyType,
+    // Frontière de sérialisation : `StrategySubOrder` est une interface structurée (sans index
+    // signature) → cast `unknown` strictement nécessaire pour l'injecter dans le payload JSON.
     subOrderList: params.subOrderList as unknown as JsonValue,
   };
   if (params.clientStrategyId !== undefined) {
@@ -46,6 +48,7 @@ export function updateStrategyOrder(
     {
       strategyId: params.strategyId,
       strategyType: params.strategyType,
+      // Frontière de sérialisation (cf. placeStrategyOrder) : interface structurée → JSON payload.
       subOrderList: params.subOrderList as unknown as JsonValue,
     },
     label,

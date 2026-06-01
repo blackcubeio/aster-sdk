@@ -54,7 +54,7 @@ export class UserTradeConverter {
       maker: trade.maker as boolean,
       time: trade.time,
       ...trade.xtras,
-    } as unknown as UserTradeNative;
+    } as UserTradeNative;
   }
 }
 
