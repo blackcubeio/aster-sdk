@@ -12,6 +12,7 @@ import {
   RECONNECT_FACTOR,
   RECONNECT_JITTER,
   RECONNECT_STABLE_MS,
+  WS_OPEN,
 } from './ws-constants';
 
 /**
@@ -43,7 +44,14 @@ export class FuturesWsClient {
   private stableTimer: ReturnType<typeof setTimeout> | null = null;
   /** Coalesce + throttle les SUBSCRIBE/UNSUBSCRIBE (limite Aster : 10 messages/s par connexion). */
   private readonly batcher = new SubscriptionBatcher((frame) => {
-    this.socket?.send(frame);
+    // On n'émet que si la socket COURANTE est réellement OPEN. Le flag `open` du batcher peut être en avance
+    // sur l'état réel (reconnexion : `this.socket` réassigné à une socket CONNECTING avant `onopen`) ; s'y fier
+    // déclenchait `send()` sur socket non connectée → « Sent before connected » (throw non rattrapé → crash).
+    // Une frame non émise n'est pas perdue : `reset()` vide l'outbox au close et `afterReconnect()` rejoue
+    // `resubscribe()` à la réouverture.
+    if (this.socket !== null && this.socket.readyState === WS_OPEN) {
+      this.socket.send(frame);
+    }
   });
 
   constructor(client: AsterClient, options: FuturesWsOptions = {}) {
