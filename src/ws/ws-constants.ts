@@ -19,3 +19,5 @@ export const RECONNECT_JITTER = 0.2;
 export const RECONNECT_STABLE_MS = 10_000;
 /** Aucun message reçu depuis cette durée → la socket est considérée morte, reconnexion forcée (ms). */
 export const IDLE_TIMEOUT_MS = 45_000;
+/** `readyState` d'une WebSocket effectivement connectée (WHATWG : CONNECTING=0, OPEN=1, CLOSING=2, CLOSED=3). */
+export const WS_OPEN = 1;
