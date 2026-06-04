@@ -144,6 +144,7 @@ import type {
   IProductAccount,
   IPublicTrades,
   IRealtime,
+  IRealtimeAllCandles,
   IRealtimePositions,
   IRemovableMargin,
   ISubAccounts,
@@ -454,7 +455,7 @@ class AsterHelpers implements KeyHelper, EvmHelper, SolanaHelper {
 }
 
 /** Scope **temps réel** lié à un `label`. `kind` porté par les méthodes spot/perp (via `ws.spot`/`ws.perp`). */
-class AsterRealtime implements IRealtime, IRealtimePositions {
+class AsterRealtime implements IRealtime, IRealtimePositions, IRealtimeAllCandles {
   constructor(
     private readonly ws: UnifiedWsClient,
     private readonly kind: MarketKind,
@@ -462,6 +463,9 @@ class AsterRealtime implements IRealtime, IRealtimePositions {
 
   public subscribeCandles(query: { name: string; interval: string }, cb: (c: Candle) => void) {
     return this.ws.subscribeCandles({ ...query, kind: this.kind }, cb);
+  }
+  public subscribeAllCandles(cb: (c: Candle) => void) {
+    return this.ws.subscribeAllCandles({ kind: this.kind }, cb);
   }
   public subscribeOrderBook(query: { name: string }, cb: (b: OrderBook) => void) {
     return this.ws.subscribeOrderBook({ ...query, kind: this.kind }, cb);
