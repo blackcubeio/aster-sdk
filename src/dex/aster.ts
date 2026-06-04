@@ -144,7 +144,6 @@ import type {
   IProductAccount,
   IPublicTrades,
   IRealtime,
-  IRealtimeAllCandles,
   IRealtimePositions,
   IRemovableMargin,
   ISubAccounts,
@@ -455,7 +454,7 @@ class AsterHelpers implements KeyHelper, EvmHelper, SolanaHelper {
 }
 
 /** Scope **temps réel** lié à un `label`. `kind` porté par les méthodes spot/perp (via `ws.spot`/`ws.perp`). */
-class AsterRealtime implements IRealtime, IRealtimePositions, IRealtimeAllCandles {
+class AsterRealtime implements IRealtime, IRealtimePositions {
   constructor(
     private readonly ws: UnifiedWsClient,
     private readonly kind: MarketKind,
