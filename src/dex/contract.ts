@@ -268,3 +268,13 @@ export interface IRealtime {
 export interface IRealtimePositions {
   subscribePositions(cb: (p: Position) => void): Unsubscribe;
 }
+
+/**
+ * Souscription « tout le marché » en UNE connexion (venues Binance-like : flux agrégé `!miniTicker@arr`).
+ * Émet une bougie 1m par symbole reconstruite à la volée depuis le flux de prix (close exact ; OHLC échantillonné
+ * ~1 s ; volume non fourni par le flux agrégé → `0`). Évite N souscriptions `@kline` (cap/throttle par connexion,
+ * crawl de re-souscription au reconnect). Capacité ségrégée : seules les venues à flux agrégé l'implémentent.
+ */
+export interface IRealtimeAllCandles {
+  subscribeAllCandles(cb: (c: Candle) => void): Unsubscribe;
+}

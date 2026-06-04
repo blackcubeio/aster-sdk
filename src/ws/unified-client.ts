@@ -203,6 +203,59 @@ export class UnifiedWsClient {
     );
   }
 
+  /**
+   * Bougies 1m de TOUT le marché en UNE souscription (flux agrégé `!miniTicker@arr`). Reconstruit une bougie 1m
+   * par symbole à la volée : `c` (close) et `E` (event time) du miniTicker → bucket 1m, OHLC échantillonné (open =
+   * 1er close du bucket, high/low = extrêmes des ticks, close = dernier). Le flux agrégé ne porte pas le volume 1m
+   * → `v = 0`. Émet la bougie EN COURS à chaque tick (l'appelant finalise au changement de bucket `t`).
+   */
+  public subscribeAllCandles(
+    params: { kind?: MarketKind },
+    handler: (candle: Candle) => void,
+  ): Unsubscribe {
+    const kind = params.kind ?? 'perp';
+    const forming = new Map<string, { t: number; o: number; h: number; l: number; c: number }>();
+    return this.subscribeMarket(kind, (client) =>
+      (client as FuturesWsClient).subscribeAllMiniTickers((raw) => {
+        const arr = fromWire<Array<{ s: string; c: string; E: number }>>(raw);
+        for (const mt of arr) {
+          const symbol = mt.s;
+          const close = Number(mt.c);
+          const eventMs = Number(mt.E);
+          if (typeof symbol !== 'string' || !Number.isFinite(close) || !Number.isFinite(eventMs)) {
+            continue;
+          }
+          const t = Math.floor(eventMs / 60_000) * 60_000;
+          let f = forming.get(symbol);
+          if (f === undefined || f.t !== t) {
+            f = { t, o: close, h: close, l: close, c: close }; // nouveau bucket 1m
+            forming.set(symbol, f);
+          } else {
+            f.h = Math.max(f.h, close);
+            f.l = Math.min(f.l, close);
+            f.c = close;
+          }
+          handler({
+            t: f.t,
+            T: f.t + 60_000,
+            s: symbol,
+            i: '1m',
+            o: String(f.o),
+            h: String(f.h),
+            l: String(f.l),
+            c: String(f.c),
+            v: '0',
+            n: 0,
+            kind,
+            qv: null,
+            tbbv: null,
+            tbqv: null,
+          });
+        }
+      }),
+    );
+  }
+
   /** Trades publics temps réel (agrégés). `kind` (défaut `perp`) route futures/spot. */
   public subscribeTrades(
     params: { name: string; kind?: MarketKind },
