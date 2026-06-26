@@ -156,6 +156,7 @@ import type {
   KeyHelper,
   LeverageParams,
   MarginModeParams,
+  MoveStopParams,
   OrderBookParams,
   PlaceOrderParams,
   SolanaHelper,
@@ -339,6 +340,25 @@ class AsterMarket
   // Annule toute la protection de la paire (conditionnels reduce-only) avant de la re-poser.
   public cancelProtection(input: { name: string }): Promise<void> {
     return this.cancelAll({ name: input.name }).then(() => undefined);
+  }
+  // Déplace le SL en posant le NOUVEAU avant d'annuler l'ANCIEN — jamais sans SL (l'API Aster ne modifie en
+  // place que les ordres LIMIT, pas les conditionnels). `side` = sens de la position → SL au sens OPPOSÉ ;
+  // SL = `stopMarket` reduce-only (déclenché au marché, sans `price`).
+  public moveStop(input: MoveStopParams): Promise<{ name: string; id: string }> {
+    const exit: 'buy' | 'sell' = input.side === 'buy' ? 'sell' : 'buy';
+    return this.place({
+      name: input.name,
+      side: exit,
+      type: 'stopMarket',
+      triggerPrice: input.triggerPrice,
+      size: input.size,
+      reduceOnly: true,
+    }).then((order) =>
+      this.cancel({ name: input.name, id: input.stopId }).then(() => ({
+        name: input.name,
+        id: order.id,
+      })),
+    );
   }
   public edit(input: EditOrderParams): Promise<{ name: string; id: string }> {
     if (input.price === undefined) {
