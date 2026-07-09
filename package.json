@@ -1,6 +1,6 @@
 {
   "name": "@blackcube/aster-sdk",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "TypeScript SDK for the Aster exchange (perpetuals & spot DEX on Aster L1 / BNB Chain): REST futures & spot V3, WebSocket, EIP-712 agent signing",
   "license": "BSD-3-Clause",
   "author": "Blackcube (https://blackcube.io)",
