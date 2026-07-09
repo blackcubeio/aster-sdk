@@ -1,5 +1,5 @@
 import type { NewOrderParams } from '../../../common/futures';
-import type { JsonObject } from '../../../common/types';
+import { type JsonObject, OrderType } from '../../../common/types';
 import { newClientOrderId } from '../../signing';
 
 /** Ajoute `key` au payload si la valeur est définie. */
@@ -13,6 +13,30 @@ export function assign(
   }
 }
 
+/**
+ * Ajoute un booléen SÉRIALISÉ EN STRING (`"true"`/`"false"`). La doc Aster type `reduceOnly`,
+ * `closePosition` et `priceProtect` en STRING, pas en booléen. En form-encoding un booléen se stringifie
+ * de lui-même (`String(true)`), mais dans le JSON du `batchOrders` un booléen natif est REJETÉ (code 400) →
+ * on stringifie à la source, valable pour les deux chemins (unitaire ET batch).
+ */
+export function assignBool(payload: JsonObject, key: string, value: boolean | undefined): void {
+  if (value !== undefined) {
+    payload[key] = value ? 'true' : 'false';
+  }
+}
+
+/**
+ * Types d'ordre qui PORTENT un `price` selon la doc Aster (« Mandatory parameters by order type ») :
+ * LIMIT, STOP, TAKE_PROFIT. Les variantes marché — MARKET, STOP_MARKET, TAKE_PROFIT_MARKET,
+ * TRAILING_STOP_MARKET — se déclenchent/exécutent au marché : `price` y est INTERDIT (la venue rejette
+ * « Parameter 'price' sent when not required »). Filtré au point d'assemblage, jamais chez l'appelant.
+ */
+const PRICE_BEARING_TYPES: ReadonlySet<OrderType> = new Set([
+  OrderType.Limit,
+  OrderType.Stop,
+  OrderType.TakeProfit,
+]);
+
 /** Construit la charge d'un ordre (partagée par `createOrder` et `batchOrders`). */
 export function buildOrderPayload(params: NewOrderParams): JsonObject {
   const payload: JsonObject = {
@@ -24,14 +48,14 @@ export function buildOrderPayload(params: NewOrderParams): JsonObject {
   assign(payload, 'positionSide', params.positionSide);
   assign(payload, 'timeInForce', params.timeInForce);
   assign(payload, 'quantity', params.quantity);
-  assign(payload, 'reduceOnly', params.reduceOnly);
-  assign(payload, 'price', params.price);
+  assignBool(payload, 'reduceOnly', params.reduceOnly);
+  assign(payload, 'price', PRICE_BEARING_TYPES.has(params.type) ? params.price : undefined);
   assign(payload, 'stopPrice', params.stopPrice);
-  assign(payload, 'closePosition', params.closePosition);
+  assignBool(payload, 'closePosition', params.closePosition);
   assign(payload, 'activationPrice', params.activationPrice);
   assign(payload, 'callbackRate', params.callbackRate);
   assign(payload, 'workingType', params.workingType);
-  assign(payload, 'priceProtect', params.priceProtect);
+  assignBool(payload, 'priceProtect', params.priceProtect);
   assign(payload, 'newOrderRespType', params.newOrderRespType);
   assign(payload, 'pegPriceType', params.pegPriceType);
   assign(payload, 'pegOffset', params.pegOffset);
