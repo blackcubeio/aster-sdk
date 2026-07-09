@@ -28,8 +28,10 @@ import type {
   Order,
   OrderBook,
   Pair,
+  PlaceProtectionParams,
   Position,
   Price,
+  ProtectionTp,
   Side,
   Signer,
   SubAccount,
@@ -154,6 +156,7 @@ import type {
   KeyHelper,
   LeverageParams,
   MarginModeParams,
+  MoveStopParams,
   OrderBookParams,
   PlaceOrderParams,
   SolanaHelper,
@@ -306,6 +309,56 @@ class AsterMarket
   }
   public cancelAll(input: CancelAllParams): Promise<{ cancelled: number | null }> {
     return cancelAllOrders(this.client, { ...input, kind: this.kind }, this.signed());
+  }
+  // Protection d'une position : SL plein + N TPs partiels, tous reduce-only, posés en un lot
+  // (`placeBatch` de conditionnels). `side` = sens de la POSITION → ordres au sens OPPOSÉ. SL =
+  // `stopMarket`, TP = `takeProfitMarket` (Aster : conditionnels au prix de déclenchement, sans `price`).
+  public placeProtection(input: PlaceProtectionParams): Promise<Order[]> {
+    const exit: 'buy' | 'sell' = input.side === 'buy' ? 'sell' : 'buy';
+    const legs: CommonPlaceOrderParams[] = [
+      {
+        name: input.name,
+        side: exit,
+        type: 'stopMarket',
+        triggerPrice: input.sl.triggerPrice,
+        size: input.sl.size,
+        reduceOnly: true,
+      },
+      ...input.tps.map(
+        (tp: ProtectionTp): CommonPlaceOrderParams => ({
+          name: input.name,
+          side: exit,
+          type: 'takeProfitMarket',
+          triggerPrice: tp.triggerPrice,
+          size: tp.size,
+          reduceOnly: true,
+        }),
+      ),
+    ];
+    return placeBatchOrders(this.client, legs, this.signed());
+  }
+  // Annule toute la protection de la paire (conditionnels reduce-only) avant de la re-poser.
+  public cancelProtection(input: { name: string }): Promise<void> {
+    return this.cancelAll({ name: input.name }).then(() => undefined);
+  }
+  // Déplace le SL en posant le NOUVEAU avant d'annuler l'ANCIEN — jamais sans SL (l'API Aster ne modifie en
+  // place que les ordres LIMIT, pas les conditionnels). `side` = sens de la position → SL au sens OPPOSÉ ;
+  // SL = `stopMarket` reduce-only (déclenché au marché, sans `price`).
+  public moveStop(input: MoveStopParams): Promise<{ name: string; id: string }> {
+    const exit: 'buy' | 'sell' = input.side === 'buy' ? 'sell' : 'buy';
+    return this.place({
+      name: input.name,
+      side: exit,
+      type: 'stopMarket',
+      triggerPrice: input.triggerPrice,
+      size: input.size,
+      reduceOnly: true,
+    }).then((order) =>
+      this.cancel({ name: input.name, id: input.stopId }).then(() => ({
+        name: input.name,
+        id: order.id,
+      })),
+    );
   }
   public edit(input: EditOrderParams): Promise<{ name: string; id: string }> {
     if (input.price === undefined) {

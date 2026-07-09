@@ -26,6 +26,82 @@ describe('buildOrderPayload', () => {
     expect(typeof payload.newClientOrderId).toBe('string');
     expect(payload).not.toHaveProperty('stopPrice');
   });
+
+  it('retire `price` sur STOP_MARKET (doc Aster : price interdit sur les *_MARKET)', () => {
+    const payload = buildOrderPayload({
+      symbol: 'BTCUSDT',
+      side: OrderSide.Sell,
+      type: OrderType.StopMarket,
+      quantity: '0.01',
+      price: '48000',
+      stopPrice: '48000',
+      reduceOnly: true,
+    });
+    expect(payload).not.toHaveProperty('price');
+    expect(payload.stopPrice).toBe('48000');
+    expect(payload.reduceOnly).toBe('true');
+  });
+
+  it('sérialise reduceOnly en STRING "true"/"false" (doc Aster : type STRING, exigé par batchOrders)', () => {
+    const on = buildOrderPayload({
+      symbol: 'BTCUSDT',
+      side: OrderSide.Sell,
+      type: OrderType.StopMarket,
+      quantity: '0.01',
+      stopPrice: '48000',
+      reduceOnly: true,
+    });
+    const off = buildOrderPayload({
+      symbol: 'BTCUSDT',
+      side: OrderSide.Buy,
+      type: OrderType.Limit,
+      timeInForce: TimeInForce.Gtc,
+      quantity: '0.01',
+      price: '50000',
+      reduceOnly: false,
+    });
+    expect(on.reduceOnly).toBe('true');
+    expect(off.reduceOnly).toBe('false');
+    // dans le JSON du batch, le booléen serait rejeté : on veut bien une string
+    expect(JSON.stringify(on)).toContain('"reduceOnly":"true"');
+  });
+
+  it('retire `price` sur TAKE_PROFIT_MARKET', () => {
+    const payload = buildOrderPayload({
+      symbol: 'BTCUSDT',
+      side: OrderSide.Sell,
+      type: OrderType.TakeProfitMarket,
+      quantity: '0.01',
+      price: '52000',
+      stopPrice: '52000',
+    });
+    expect(payload).not.toHaveProperty('price');
+    expect(payload.stopPrice).toBe('52000');
+  });
+
+  it('retire `price` sur MARKET', () => {
+    const payload = buildOrderPayload({
+      symbol: 'BTCUSDT',
+      side: OrderSide.Buy,
+      type: OrderType.Market,
+      quantity: '0.01',
+      price: '50000',
+    });
+    expect(payload).not.toHaveProperty('price');
+  });
+
+  it('garde `price` sur STOP (conditionnel LIMITE : price requis par la doc)', () => {
+    const payload = buildOrderPayload({
+      symbol: 'BTCUSDT',
+      side: OrderSide.Sell,
+      type: OrderType.Stop,
+      quantity: '0.01',
+      price: '48000',
+      stopPrice: '48500',
+    });
+    expect(payload.price).toBe('48000');
+    expect(payload.stopPrice).toBe('48500');
+  });
 });
 
 describe('buildOrderRef', () => {
