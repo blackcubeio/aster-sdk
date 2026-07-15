@@ -78,7 +78,9 @@ export function placeBatchOrders(
           tif: leg.tif ?? null,
           reduceOnly: leg.reduceOnly ?? null,
           time: Date.now(),
-          xtras: { code: res.code, msg: res.msg },
+          // On garde le leg d'erreur COMPLET (pas seulement code/msg) : Aster peut renvoyer d'autres champs
+          // diagnostiques, et un `msg` vide (code 400 nu) laissait la cause du rejet illisible a posteriori.
+          xtras: { ...(res as unknown as Record<string, unknown>) },
         };
       }
       return converter.toCommon(res);
