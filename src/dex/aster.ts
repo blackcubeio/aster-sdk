@@ -337,6 +337,37 @@ class AsterMarket
     ];
     return placeBatchOrders(this.client, legs, this.signed());
   }
+  // Ouvre une position AVEC sa protection en un lot ATOMIQUE : le leg d'entrée en tête, puis SL plein + N TPs
+  // partiels reduce-only (identique à `placeProtection`). Entrée non remplie → les conditionnels ne se placent
+  // pas. `protection.side` = sens de la POSITION → protection au sens OPPOSÉ ; l'entrée garde son sens propre.
+  public createEntryWithProtection(
+    entry: CommonPlaceOrderParams,
+    protection: PlaceProtectionParams,
+  ): Promise<Order[]> {
+    const exit: 'buy' | 'sell' = protection.side === 'buy' ? 'sell' : 'buy';
+    const legs: CommonPlaceOrderParams[] = [
+      entry,
+      {
+        name: protection.name,
+        side: exit,
+        type: 'stopMarket',
+        triggerPrice: protection.sl.triggerPrice,
+        size: protection.sl.size,
+        reduceOnly: true,
+      },
+      ...protection.tps.map(
+        (tp: ProtectionTp): CommonPlaceOrderParams => ({
+          name: protection.name,
+          side: exit,
+          type: 'takeProfitMarket',
+          triggerPrice: tp.triggerPrice,
+          size: tp.size,
+          reduceOnly: true,
+        }),
+      ),
+    ];
+    return placeBatchOrders(this.client, legs, this.signed());
+  }
   // Annule toute la protection de la paire (conditionnels reduce-only) avant de la re-poser.
   public cancelProtection(input: { name: string }): Promise<void> {
     return this.cancelAll({ name: input.name }).then(() => undefined);
