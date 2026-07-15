@@ -167,6 +167,16 @@ export interface ITrading {
    * (Aster : batch de conditionnels ; HL : batch `grouping:positionTpsl` ; Pacifica : `placeTpsl`/`placeStop`).
    */
   placeProtection(input: PlaceProtectionParams): Promise<Order[]>;
+  /**
+   * Ouvre une position AVEC sa protection en un seul geste ATOMIQUE : entrée + SL + N TPs. Si l'entrée ne
+   * remplit pas, la protection ne naît jamais (aucun orphelin). Mécanisme natif par DEX (Aster : batch de
+   * conditionnels ; HL : batch `grouping:normalTpsl` ; Pacifica : TP/SL embarqués dans l'ordre). Le premier
+   * `Order` retourné = l'entrée ; `entry.side` = sens de la position, `protection.side` = idem (legs opposés).
+   */
+  createEntryWithProtection(
+    entry: PlaceOrderParams,
+    protection: PlaceProtectionParams,
+  ): Promise<Order[]>;
   /** Annule la protection (SL/TPs reduce-only) de la paire — à appeler avant de la re-poser. */
   cancelProtection(input: { name: string }): Promise<void>;
   /**
